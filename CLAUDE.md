@@ -1,1 +1,1 @@
-Unsure what to do? AGENTS.md routes tasks.
+Design work runs through the `start` skill.
