@@ -1,4 +1,7 @@
 {
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": false
+  },
   "env": {
     "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0",
     "CLAUDE_CODE_DISABLE_ARTIFACT": "1",
