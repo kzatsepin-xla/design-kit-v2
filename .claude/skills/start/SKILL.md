@@ -22,4 +22,4 @@ Ask only once the mode is settled.
 2. **Another one** — ask for a link: npm package, docs site or Storybook. Record it in `designSystem.url`.
 3. **None** — build from scratch.
 
-Then install what that choice needs and start the work. Pull nothing the answers did not ask for.
+Then run `node scripts/init.mjs <screen>` — it creates only the files that are missing, nothing else.
