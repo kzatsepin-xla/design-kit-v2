@@ -29,9 +29,10 @@
 //  скрипт лишь готовит место. Не ставит ничего, чего вы не выбирали.
 //
 //  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  «Пакеты @xsolla/xui-* приватные» — значит нет доступа к внутреннему хранилищу
-//  Xsolla. Файлы при этом уже созданы; скажите об этом агенту, он подскажет,
-//  что делать дальше. Прототип не открывается — попросите агента запустить npm run dev.
+//  «не вышло» при установке — чаще всего нет интернета или корпоративная сеть режет
+//  доступ к хранилищу пакетов. Файлы при этом уже созданы, ничего не потеряно:
+//  скажите агенту, он повторит установку. Прототип не открывается — попросите
+//  агента запустить npm run dev.
 //
 
 import fs from 'node:fs'
@@ -62,7 +63,13 @@ function write(rel, body) {
 // ——— зависимости под выбранную дизайн-систему ———
 
 const deps = { react: '^19', 'react-dom': '^19' }
-if (ds === 'xui') Object.assign(deps, { '@xsolla/xui-core': 'latest' })
+if (ds === 'xui') {
+  // базовый набор: покрывает обычный экран без доустановок по одному
+  for (const p of ['core', 'typography', 'layout', 'button', 'input', 'input-phone', 'select',
+                   'modal', 'toast', 'avatar', 'badge', 'divider', 'list', 'tooltip',
+                   'field-group', 'icons-base']) deps['@xsolla/xui-' + p] = 'latest'
+  deps['styled-components'] = 'latest'   // требуют почти все компоненты XUI
+}
 if (ds === 'custom' && dsUrl && !/^https?:/.test(dsUrl)) deps[dsUrl] = 'latest'
 
 write('package.json', JSON.stringify({
@@ -147,6 +154,18 @@ if (!fs.existsSync(path.join(root, 'node_modules'))) {
     } else {
       console.error('\n' + msg.split('\n').slice(0, 3).join('\n'))
     }
+  }
+}
+
+// ——— справочник по дизайн-системе ———
+// Без него агент выясняет состав библиотеки чтением служебных файлов: в замере это
+// стоило 100k против 17k на том же экране. Справочник собирается из установленного.
+
+if (ds !== 'none' && fs.existsSync(path.join(root, 'node_modules'))) {
+  try {
+    execSync('node scripts/ds-catalog.mjs', { stdio: 'inherit' })
+  } catch {
+    console.log('справочник собрать не вышло — не критично, агент разберётся по типам')
   }
 }
 
