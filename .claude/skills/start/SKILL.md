@@ -28,3 +28,6 @@ Ask only once the mode is settled.
 3. **None** — build from scratch.
 
 Then run `node scripts/init.mjs <screen>` — it creates only the files that are missing, nothing else.
+
+In the full-product mode, hold that command until the design work actually reaches a screen:
+requirements first, code when there is something to build. In every other mode, run it right away.
