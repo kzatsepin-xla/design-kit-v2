@@ -3,7 +3,8 @@
     "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0",
     "CLAUDE_CODE_DISABLE_ARTIFACT": "1",
     "CLAUDE_CODE_DISABLE_WORKFLOWS": "1",
-    "CLAUDE_CODE_DISABLE_CRON": "1"
+    "CLAUDE_CODE_DISABLE_CRON": "1",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "haiku"
   },
   "hooks": {
     "SessionStart": [
@@ -12,7 +13,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.mjs"
+            ],
             "timeout": 10
           }
         ]
@@ -25,7 +28,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"
+            ],
             "timeout": 10,
             "statusMessage": "Проверяю, ваш ли это файл…"
           }
@@ -38,7 +43,9 @@
           {
             "type": "command",
             "command": "node",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/notes-gate.mjs"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/notes-gate.mjs"
+            ],
             "timeout": 10,
             "statusMessage": "Смотрю, есть ли что записать…"
           }

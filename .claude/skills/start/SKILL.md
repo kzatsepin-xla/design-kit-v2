@@ -1,5 +1,6 @@
 ---
 name: start
+model: haiku
 description: Decide how the designer wants to work and which design system to build on, then record it — full product cycle, prototype first with docs later, Figma screens only, or their own way. Use at the start of a session, when the designer describes new work, or whenever state.json has no mode.
 ---
 
