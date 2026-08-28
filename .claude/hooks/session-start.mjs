@@ -50,7 +50,7 @@ if (hookInput.session_id) {
   fs.writeFileSync(path.join(os.tmpdir(), "notes-baseline-" + hookInput.session_id), String(found ?? 0))
 }
 
-const file = path.join(process.env.CLAUDE_PROJECT_DIR || process.cwd(), 'state.json')
+const file = path.join(projectRoot, 'state.json')
 
 let state
 try {
@@ -71,4 +71,12 @@ if (state.next) bits.push(`next: ${state.next}`)
 if (state.debt?.length) bits.push(`debt: ${state.debt.join(', ')}`)
 
 console.log('[state] ' + bits.join(' · '))
+
+// Решения дизайнера — то, от чего он уже отказался. Без них агент предлагает заново
+// то, что вчера отвергли: тёмную тему, яркие кнопки, карточки вместо таблицы.
+if (Array.isArray(state.decisions) && state.decisions.length) {
+  const recent = state.decisions.slice(-6).map((d) => String(d).slice(0, 90))
+  console.log('[decided] ' + recent.join(' · '))
+  console.log('[decided] Settled with the designer. Do not re-propose what is listed here.')
+}
 console.log('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')

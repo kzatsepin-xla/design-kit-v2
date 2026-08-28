@@ -171,8 +171,30 @@ if (!fs.existsSync(notes)) {
     'by hand, defaults that caught you, anything a screen would trip over. One line per finding,',
     'newest first. Never delete another line.',
     '',
+    'A line like --- 0.213.0 --- marks a library version. Findings below the last such line were',
+    'made against the version installed now; anything above an older line may already be fixed —',
+    'treat it as a hint to check, not as fact, and strike it out when it no longer reproduces.',
+    '',
+    '--- ' + (version || 'unknown') + ' ---',
+    '',
   ].join(newline))
   console.log('  заметки о поведении: ' + path.relative(root, notes))
+}
+
+// Находки стареют молча: после обновления библиотеки старая запись может уже врать.
+// Версию не проставляет агент (забудет) — её задаёт положение записи в файле:
+// всё, что ниже последней черты, записано для текущей версии.
+if (fs.existsSync(notes) && version) {
+  const text = fs.readFileSync(notes, "utf8")
+  let seen = null
+  for (const line of text.split(newline)) {
+    if (line.startsWith("--- ") && line.endsWith(" ---")) seen = line.slice(4, -4).trim().split(" ")[0]
+  }
+  if (seen !== version) {
+    const today = new Date().toISOString().slice(0, 10)
+    fs.appendFileSync(notes, newline + "--- " + version + " · " + today + " ---" + newline)
+    console.log("  библиотека обновилась " + seen + " -> " + version + ": находки выше черты стоит перепроверять")
+  }
 }
 console.log(`справочник собран: ${componentCount} компонентов из ${sections.length} пакетов`)
 console.log(`  ${path.relative(root, out)} — ${(fs.statSync(out).size / 1024).toFixed(1)} КБ`)

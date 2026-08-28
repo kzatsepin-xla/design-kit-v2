@@ -1,6 +1,9 @@
 {
   "mode": null,
+  "modeNote": null,
+  "designSystem": { "kind": null, "url": null },
   "feature": null,
   "next": null,
-  "debt": []
+  "debt": [],
+  "decisions": []
 }
