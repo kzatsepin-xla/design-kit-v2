@@ -128,6 +128,18 @@ ${names.size} icons, each imported by its own name. For example: ${sample}. Need
 
 // ——— запись справочника ———
 
+const newline = String.fromCharCode(10)
+
+const known = [
+  '',
+  '## Known quirks',
+  '',
+  '- `XUIProvider` starts in dark mode. On a light page pass `initialMode="light"`.',
+  '- `Avatar` prop `text` renders initials, not a full name — pass "KZ", not "Kirill Zatsepin".',
+  '- `Badge` at size `sm`/`xs` is a dot with no text. Use `md` or larger when you need a label.',
+  '- `Typography` renders inline. Wrap a title and its description in a flex column, or they run together.',
+].join(newline)
+
 const out = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
 fs.mkdirSync(path.dirname(out), { recursive: true })
 fs.writeFileSync(out, `---
@@ -147,21 +159,17 @@ Import each component from the package it is listed under. Colours, spacing and 
 the provider — never hardcode them. If a prop is not listed here, read that package's types
 instead of guessing.
 
-${sections.join('\n\n')}
+${[known, ...sections].join('\n\n')}
 `)
 
-const newline = String.fromCharCode(10)
 const notes = path.join(path.dirname(out), 'notes.md')
 if (!fs.existsSync(notes)) {
   fs.writeFileSync(notes, [
     '# XUI — what the types do not tell',
     '',
-    'The catalogue says what exists. This file says what surprises. One line per finding,',
-    'newest first. Append here whenever you lose time on something; never delete another line.',
-    '',
-    '- `XUIProvider` starts in dark mode. On a light page pass `initialMode="light"`.',
-    '- `Avatar` prop `text` renders initials, not a full name — pass "KZ", not "Kirill Zatsepin".',
-    '- `Badge` at size `sm`/`xs` is a dot with no text. Use `md` or larger when you need a label.',
+    'The catalogue says what exists. This file says what surprises: behaviour you had to work out',
+    'by hand, defaults that caught you, anything a screen would trip over. One line per finding,',
+    'newest first. Never delete another line.',
     '',
   ].join(newline))
   console.log('  заметки о поведении: ' + path.relative(root, notes))

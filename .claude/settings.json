@@ -4,5 +4,46 @@
     "CLAUDE_CODE_DISABLE_ARTIFACT": "1",
     "CLAUDE_CODE_DISABLE_WORKFLOWS": "1",
     "CLAUDE_CODE_DISABLE_CRON": "1"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"],
+            "timeout": 10,
+            "statusMessage": "Проверяю, ваш ли это файл…"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/notes-gate.mjs"],
+            "timeout": 10,
+            "statusMessage": "Смотрю, есть ли что записать…"
+          }
+        ]
+      }
+    ]
   }
 }

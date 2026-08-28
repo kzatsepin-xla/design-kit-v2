@@ -7,6 +7,10 @@ description: Decide how the designer wants to work and which design system to bu
 
 Two questions, then the work begins. Record every answer in `state.json` — never ask twice.
 
+Number both lists 1, 2, 3 — never letters, never a mix. A designer answering "2 and 1" means
+the second option of the first question and the first of the second; say back what you understood
+in one short line before acting, so a misread costs a word instead of a screen.
+
 ## 1. How they want to work
 
 1. **Full product work** — secure a PRD first, then go stage by stage.
