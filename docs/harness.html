@@ -564,50 +564,65 @@
         <div class="role">Помнит</div>
         <h3>Находки</h3>
         <p>То, чего нет в документации: как компоненты ведут себя на самом деле.
-          Пишет их агент, когда обо что-то споткнулся.</p>
+          Пишет их агент, когда обо что-то споткнулся. Обновилась библиотека — скрипт отчёркивает
+          старые записи, чтобы им не верили слепо.</p>
         <div class="when">пополняется по ходу</div>
       </div>
       <div class="card">
+        <div class="role">Помнит</div>
+        <h3>Решения</h3>
+        <p>«Только спокойные кнопки», «тёмную тему не делаем» — то, от чего вы отказались.
+          Показывается агенту в начале каждой сессии, чтобы он не предлагал это заново.</p>
+        <div class="when">записывается в момент отказа</div>
+      </div>
+      <div class="card">
         <div class="role">Охраняет</div>
-        <h3>Три проверки</h3>
-        <p>Подставляют состояние, требуют записать находки, запрещают трогать служебные файлы.</p>
+        <h3>Четыре проверки</h3>
+        <p>Подставляют состояние и решения, требуют записать находки, ловят момент отказа,
+          запрещают трогать служебные файлы.</p>
         <div class="when">срабатывают сами</div>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Три проверки, которые срабатывают сами</h2>
+    <h2>Четыре проверки, которые срабатывают сами</h2>
     <p class="muted">
       Главное отличие от прошлой версии кита. Раньше правила были написаны текстом — и агент их
       игнорировал ровно тогда, когда они были нужны. Теперь их выполняет не он, а программа.
     </p>
 
     <figure>
-      <svg viewBox="0 0 900 190" role="img" aria-label="Лента сессии с тремя моментами: на старте подставляется состояние, перед записью файла срабатывает защита, в конце ответа проверяется, записаны ли находки">
-        <line class="s-soft" x1="60" y1="96" x2="840" y2="96" marker-end="url(#ar)" stroke="currentColor"></line>
+      <svg viewBox="0 0 900 190" role="img" aria-label="Лента сессии с четырьмя моментами: на старте подставляются состояние и решения, при вашем сообщении ловится отказ, перед записью файла срабатывает защита, в конце ответа проверяется, записаны ли находки">
+        <line class="s-soft" x1="50" y1="96" x2="850" y2="96" marker-end="url(#ar)" stroke="currentColor"></line>
 
-        <circle class="s-accent-fill" cx="120" cy="96" r="7"></circle>
-        <line class="s-accent" x1="120" y1="88" x2="120" y2="52"></line>
-        <text class="t" x="120" y="42" text-anchor="middle">Сессия началась</text>
-        <text class="t-sm" x="120" y="128" text-anchor="middle">кладёт состояние</text>
-        <text class="t-sm" x="120" y="144" text-anchor="middle">в разговор</text>
+        <circle class="s-accent-fill" cx="110" cy="96" r="7"></circle>
+        <line class="s-accent" x1="110" y1="88" x2="110" y2="52"></line>
+        <text class="t" x="110" y="42" text-anchor="middle">Сессия началась</text>
+        <text class="t-sm" x="110" y="128" text-anchor="middle">кладёт состояние</text>
+        <text class="t-sm" x="110" y="144" text-anchor="middle">и решения</text>
 
-        <circle class="s-accent-fill" cx="450" cy="96" r="7"></circle>
-        <line class="s-accent" x1="450" y1="88" x2="450" y2="52"></line>
-        <text class="t" x="450" y="42" text-anchor="middle">Собирается записать файл</text>
-        <text class="t-sm" x="450" y="128" text-anchor="middle">служебные файлы кита</text>
-        <text class="t-sm" x="450" y="144" text-anchor="middle">трогать нельзя</text>
+        <circle class="s-accent-fill" cx="350" cy="96" r="7"></circle>
+        <line class="s-accent" x1="350" y1="88" x2="350" y2="52"></line>
+        <text class="t" x="350" y="42" text-anchor="middle">Вы отправили сообщение</text>
+        <text class="t-sm" x="350" y="128" text-anchor="middle">похоже на отказ —</text>
+        <text class="t-sm" x="350" y="144" text-anchor="middle">запиши как решение</text>
 
-        <circle class="s-accent-fill" cx="780" cy="96" r="7"></circle>
-        <line class="s-accent" x1="780" y1="88" x2="780" y2="52"></line>
-        <text class="t" x="780" y="42" text-anchor="middle">Закончил отвечать</text>
-        <text class="t-sm" x="780" y="128" text-anchor="middle">разбирался с библиотекой —</text>
-        <text class="t-sm" x="780" y="144" text-anchor="middle">запиши, что узнал</text>
+        <circle class="s-accent-fill" cx="590" cy="96" r="7"></circle>
+        <line class="s-accent" x1="590" y1="88" x2="590" y2="52"></line>
+        <text class="t" x="590" y="42" text-anchor="middle">Собирается записать файл</text>
+        <text class="t-sm" x="590" y="128" text-anchor="middle">служебные файлы кита</text>
+        <text class="t-sm" x="590" y="144" text-anchor="middle">трогать нельзя</text>
 
-        <text class="t-mono" x="60" y="176">ход сессии</text>
+        <circle class="s-accent-fill" cx="810" cy="96" r="7"></circle>
+        <line class="s-accent" x1="810" y1="88" x2="810" y2="52"></line>
+        <text class="t" x="810" y="42" text-anchor="middle">Закончил отвечать</text>
+        <text class="t-sm" x="810" y="128" text-anchor="middle">разбирался с библиотекой —</text>
+        <text class="t-sm" x="810" y="144" text-anchor="middle">запиши, что узнал</text>
+
+        <text class="t-mono" x="50" y="176">ход сессии</text>
       </svg>
-      <figcaption>Проверки стоят в трёх точках разговора. В остальное время их не видно и они ничего не стоят.</figcaption>
+      <figcaption>Проверки стоят в четырёх точках разговора. В остальное время их не видно и они ничего не стоят.</figcaption>
     </figure>
 
     <div class="checks">
@@ -631,6 +646,16 @@
       </div>
       <div class="check">
         <div class="n">03</div>
+        <div>
+          <h3>Решение ловится в момент отказа</h3>
+          <p>Когда вы говорите «не надо», «убери», «давай не будем», агенту приходит подсказка:
+            если это правило на будущее, а не разовая правка — запиши. Записанное показывается ему
+            в начале каждой следующей сессии.</p>
+          <div class="before">Было: вы отказывались от тёмной темы, а через неделю он предлагал её снова.</div>
+        </div>
+      </div>
+      <div class="check">
+        <div class="n">04</div>
         <div>
           <h3>Служебные файлы защищены</h3>
           <p>Попытка изменить настройки кита или его скрипты не проходит. Ваши экраны, стили,
@@ -697,18 +722,22 @@
   <section>
     <h2>Чего ещё нет</h2>
     <p class="muted">
-      <strong style="color:var(--ink)">Решения</strong> — «кнопки поспокойнее», «тёмную тему не делаем» —
-      записывать некуда, и агент может предложить заново то, от чего вы отказались.
-      <strong style="color:var(--ink)">Старение находок</strong>: после обновления библиотеки старая запись
-      может врать, а агент ей поверит. <strong style="color:var(--ink)">Сценарий с Figma</strong> ещё не
-      проверен. И <strong style="color:var(--ink)">доставка</strong>: получить кит сегодня можно только
-      копированием папки — установки одной командой пока нет.
+      <strong style="color:var(--ink)">Доставка</strong>: получить кит сегодня можно только копированием
+      папки — установки одной командой пока нет, и это главное, что мешает отдать его живому дизайнеру.
+      <strong style="color:var(--ink)">Сценарий с Figma</strong> — третья ветка, где приносят макет —
+      ещё не проверен. И <strong style="color:var(--ink)">работа в Cursor</strong>: механика переносится
+      один в один, но отложена, пока не доведён один рантайм.
+    </p>
+    <p class="muted">
+      Отдельно честно: <strong style="color:var(--ink)">молчаливое решение</strong> — когда вы просто
+      не одобрили макет и разговор ушёл в сторону — не поймает ни одна проверка. Эта часть
+      полностью автоматической не станет.
     </p>
   </section>
 
   <footer>
     <span>28 августа 2026</span>
-    <span>8 файлов · 34 КБ</span>
+    <span>9 файлов · 38 КБ</span>
     <span>постоянная доля в памяти: 220</span>
   </footer>
 
