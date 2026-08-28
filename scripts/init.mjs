@@ -50,6 +50,7 @@ const state = fs.existsSync('state.json') ? JSON.parse(fs.readFileSync('state.js
 const ds = state.designSystem?.kind ?? 'none'   // xui | custom | none
 const dsUrl = state.designSystem?.url ?? null
 
+const newline = String.fromCharCode(10)
 const created = []
 const skipped = []
 function write(rel, body) {
@@ -106,30 +107,112 @@ write('index.html', `<!doctype html>
 `)
 
 const mount = ds === 'xui'
-  ? `import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { XUIProvider } from '@xsolla/xui-core'
-import { Screen } from './screens/${screen}/screen'
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <XUIProvider>
-      <Screen />
-    </XUIProvider>
-  </StrictMode>,
-)
-`
-  : `import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Screen } from './screens/${screen}/screen'
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <Screen />
-  </StrictMode>,
-)
-`
+  ? [
+      "import { StrictMode } from 'react'",
+      "import { createRoot } from 'react-dom/client'",
+      "import { XUIProvider } from '@xsolla/xui-core'",
+      "import { App } from './app'",
+      '',
+      "createRoot(document.getElementById('root')!).render(",
+      '  <StrictMode>',
+      '    <XUIProvider>',
+      '      <App />',
+      '    </XUIProvider>',
+      '  </StrictMode>,',
+      ')',
+      '',
+    ].join(newline)
+  : [
+      "import { StrictMode } from 'react'",
+      "import { createRoot } from 'react-dom/client'",
+      "import { App } from './app'",
+      '',
+      "createRoot(document.getElementById('root')!).render(",
+      '  <StrictMode>',
+      '    <App />',
+      '  </StrictMode>,',
+      ')',
+      '',
+    ].join(newline)
 write('src/main.tsx', mount)
+
+write('src/app.tsx', [
+  "import { useEffect, useState } from 'react'",
+  '',
+  '// Каждая папка в screens/ — это экран. Ничего регистрировать не нужно:',
+  '// создали src/screens/<имя>/screen.tsx — он появился в списке сам.',
+  "const found = import.meta.glob('./screens/*/screen.tsx', { eager: true }) as Record<",
+  '  string,',
+  '  { Screen: () => any }',
+  '>',
+  '',
+  'const screens = Object.fromEntries(',
+  "  Object.entries(found).map(([file, mod]) => [file.split('/')[2], mod.Screen]),",
+  ')',
+  '',
+  'export function App() {',
+  "  const [name, setName] = useState(() => location.hash.slice(1))",
+  '',
+  '  useEffect(() => {',
+  "    const sync = () => setName(location.hash.slice(1))",
+  "    addEventListener('hashchange', sync)",
+  "    return () => removeEventListener('hashchange', sync)",
+  '  }, [])',
+  '',
+  '  const names = Object.keys(screens).sort()',
+  '  const current = screens[name] ? name : names[0]',
+  '  const Screen = screens[current]',
+  '',
+  '  return (',
+  '    <>',
+  '      {names.length > 1 && <ScreenSwitch names={names} current={current} />}',
+  '      {Screen ? <Screen /> : <p>No screens yet.</p>}',
+  '    </>',
+  '  )',
+  '}',
+  '',
+  '// Переключатель экранов для работы над прототипом. Виден только на dev-сервере:',
+  '// в собранной версии его нет, демонстрацию он не портит.',
+  'function ScreenSwitch({ names, current }: { names: string[]; current: string }) {',
+  '  if (!import.meta.env.DEV) return null',
+  '  return (',
+  '    <nav',
+  '      style={{',
+  "        position: 'fixed',",
+  "        bottom: 12,",
+  "        left: 12,",
+  "        zIndex: 9999,",
+  "        display: 'flex',",
+  "        gap: 4,",
+  "        padding: 4,",
+  "        borderRadius: 8,",
+  "        background: 'rgba(20,20,20,.72)',",
+  "        backdropFilter: 'blur(6px)',",
+  "        fontFamily: 'ui-sans-serif, system-ui, sans-serif',",
+  "        fontSize: 12,",
+  '      }}',
+  '    >',
+  '      {names.map((n) => (',
+  '        <a',
+  '          key={n}',
+  '          href={`#${n}`}',
+  '          style={{',
+  "            padding: '4px 8px',",
+  "            borderRadius: 5,",
+  "            textDecoration: 'none',",
+  "            color: n === current ? '#111' : '#eee',",
+  "            background: n === current ? '#fff' : 'transparent',",
+  '          }}',
+  '        >',
+  '          {n}',
+  '        </a>',
+  '      ))}',
+  '    </nav>',
+  '  )',
+  '}',
+  '',
+].join(newline))
+
 
 write(`src/screens/${screen}/screen.tsx`, `export function Screen() {
   return <h1>${screen}</h1>
@@ -175,8 +258,4 @@ console.log()
 if (created.length) console.log('создано:\n' + created.map((f) => '  ' + f).join('\n'))
 if (skipped.length) console.log('уже было:\n' + skipped.map((f) => '  ' + f).join('\n'))
 
-const mainRendersOther = fs.readFileSync(path.join(root, 'src/main.tsx'), 'utf8').includes(`screens/${screen}/`) === false
-if (mainRendersOther) console.log(`\nвнимание: main.tsx рендерит другой экран — подключи ${screen} сам`)
 
-console.log(`\nдизайн-система: ${ds}${dsUrl ? ` (${dsUrl})` : ''}`)
-console.log(installed || fs.existsSync(path.join(root, 'node_modules')) ? 'дальше: npm run dev' : 'дальше: npm install, затем npm run dev')
