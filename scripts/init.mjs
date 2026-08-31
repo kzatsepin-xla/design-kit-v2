@@ -247,6 +247,7 @@ if (!fs.existsSync(path.join(root, 'node_modules'))) {
 if (ds !== 'none' && fs.existsSync(path.join(root, 'node_modules'))) {
   try {
     execSync('node scripts/ds-catalog.mjs', { stdio: 'inherit' })
+    execSync('node scripts/fetch-ds-skill.mjs', { stdio: 'inherit' })   // руководство от команды DS
   } catch {
     console.log('справочник собрать не вышло — не критично, агент разберётся по типам')
   }
