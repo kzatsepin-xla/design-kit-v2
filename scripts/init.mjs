@@ -77,13 +77,12 @@ write('package.json', JSON.stringify({
   name: path.basename(root),
   private: true,
   type: 'module',
-  scripts: { dev: 'vite', build: 'vite build', shot: 'node scripts/shot.mjs' },
+  scripts: { dev: 'vite', build: 'vite build' },
   dependencies: deps,
   devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest' },
 }, null, 2) + '\n')
 
 write('.gitignore', `node_modules/
-.shots/
 dist/
 `)
 
