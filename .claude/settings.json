@@ -35,6 +35,20 @@
             "statusMessage": "Проверяю, ваш ли это файл…"
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/skill-guard.mjs"
+            ],
+            "timeout": 10,
+            "statusMessage": "Проверяю, есть ли способ дешевле…"
+          }
+        ]
       }
     ],
     "Stop": [

@@ -140,6 +140,42 @@ const known = [
   '- `Typography` renders inline. Wrap a title and its description in a flex column, or they run together.',
 ].join(newline)
 
+// Промахи, которые агент делает на XUI снова и снова. Источник — страница команды
+// дизайн-системы «Vibe-Coding XUI Toolkit Components» (Confluence, XFP). Взято только то,
+// что применимо к прототипу: требования к контрибьюции компонентов В библиотеку
+// (Storybook, JSDoc, React 16) сюда намеренно не попали — прототип никому не поставляется
+// и живёт на актуальном React.
+const traps = [
+  '',
+  '## Never write these',
+  '',
+  'Each row is a mistake assistants repeat on XUI. The right-hand column is what to write instead.',
+  '',
+  '| Do not write | Instead |',
+  '|---|---|',
+  '| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | These do not exist. Colours, spacing and radius are runtime JS objects: `theme.colors.*`, `theme.spacing.*`, `theme.radius.*` |',
+  '| `import "./Component.css"`, CSS Modules, Tailwind | Styling is styled-components + theme tokens |',
+  '| `background: "#0F0F0F"`, `padding: 16px` | Never hardcode a colour, space or radius — always a token |',
+  '| `onClick` on a DS component | `onPress`. Checkbox/switch/radio use `onValueChange`; inputs use `onChange`/`onChangeText` |',
+  '| `<Button><Icon/></Button>` | Icons are props: `leftIcon` / `rightIcon` |',
+  '| bare `div` / `span` for DS layout | `Box` / `Text` with `as="button"`, `as="label"`, `as="a"` polymorphism |',
+  '| `useDesignSystem()` to read tokens | `useResolvedTheme({ themeMode, themeProductContext })`. `useDesignSystem` is only for global `setMode` / `setProductContext` |',
+  '| `<ThemeProvider>` / `<ThemeScope>` wrappers | No such component. Pass `themeMode` per instance, or call `useResolvedTheme({ themeMode })` |',
+  '| `style={...}` to restyle a DS component | Most do not forward `style`. Wrap it: ``styled(Button)`&& { min-width: 200px; }` `` |',
+  '',
+  '**The one exception.** Responsive typography *is* delivered through CSS variables, injected by',
+  '`XUIProvider`: `var(--xui-font-size-{step})` and `var(--xui-lh-{display|compact|text}-{step})`,',
+  '13 steps from 75 to 750, switching at the 768px breakpoint. `@xsolla/xui-core` exports `cssVar.fontSize("350")`.',
+  'Prefer the `Typography` component, which picks the right one. Any *other* `--xui-*` variable is a hallucination.',
+  '',
+  '**Prop vocabulary.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.',
+  '`variant`: primary | secondary | tertiary | ghost. Control colours resolve from `theme.colors.control[tone][variant]`.',
+  '',
+  '**Provider values.** `ThemeMode`: dark | light | pentagram-dark | pentagram-light | ltg-dark.',
+  '`ProductContext`: b2c | b2b | paystation | presentation (default b2b) — it changes typography scale and',
+  'font family only, never colours.',
+].join(newline)
+
 const out = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
 fs.mkdirSync(path.dirname(out), { recursive: true })
 fs.writeFileSync(out, `---
@@ -159,7 +195,7 @@ Import each component from the package it is listed under. Colours, spacing and 
 the provider — never hardcode them. If a prop is not listed here, read that package's types
 instead of guessing.
 
-${[known, ...sections].join('\n\n')}
+${[known, traps, ...sections].join('\n\n')}
 `)
 
 const notes = path.join(path.dirname(out), 'notes.md')
