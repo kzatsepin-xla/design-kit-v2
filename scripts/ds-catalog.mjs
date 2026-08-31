@@ -195,6 +195,26 @@ Import each component from the package it is listed under. Colours, spacing and 
 the provider — never hardcode them. If a prop is not listed here, read that package's types
 instead of guessing.
 
+## Not here? It may still exist
+
+This lists what is **installed**, not what XUI has. The registry holds more packages than this
+project pulls in: \`Switch\`, \`Checkbox\`, \`Radio\`, \`Tabs\`, \`Tooltip\` and others are published at the
+same version but not installed by default.
+
+Before you conclude a component is missing and build a workaround:
+
+1. Look up the component in the \`xui-toolkit-v2\` skill — it maps every component to its package.
+2. Check the registry: \`npm view @xsolla/xui-<name> version\`
+3. If it is there, install it and regenerate this file:
+   \`npm i @xsolla/xui-<name> && node scripts/ds-catalog.mjs\`
+
+Ask the designer first only if the component is a design decision (a Switch instead of two
+buttons is not — it is the right control for an on/off row).
+
+**Never write "XUI has no such component" in notes.md after checking only \`node_modules\`.**
+That is a claim about the registry made from the wrong evidence, and every later session will
+believe it. Say "not installed here" instead.
+
 ${[known, traps, ...sections].join('\n\n')}
 `)
 
