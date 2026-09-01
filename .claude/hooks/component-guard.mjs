@@ -54,7 +54,14 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
     const cat = fs.readFileSync(cat0, 'utf8')
     const st = body.match(/styled\(\s*([A-Z][A-Za-z0-9]*)\s*\)/)
     const target = st && cat.includes('- **' + st[1] + '**') ? st[1] : null
-    const forcing = /!important/.test(body) && /@xsolla\/xui-/.test(body)
+    // Правка приходит куском: импорта дизайн-системы в нём нет, даже когда он есть в файле.
+    // Поэтому смотрим и на файл целиком — иначе !important проносят отдельной правкой.
+    let whole = body
+    try { whole += fs.readFileSync(input.tool_input.file_path, 'utf8') } catch { /* новый файл */ }
+    const usesDS = /@xsolla\/xui-/.test(whole)
+    // `& > button` — прицел во внутренности системного компонента в обход его настроек.
+    const reachIn = /[>&]\s*(?:button|input|a)\s*[,{]/.test(body)
+    const forcing = usesDS && (/!important/.test(body) || reachIn)
     if (target || forcing) {
       const what = target || 'компонент дизайн-системы'
       deny(
