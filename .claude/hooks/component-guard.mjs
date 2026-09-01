@@ -45,6 +45,34 @@ if (input.tool_name === 'Bash') {
   deny('Файлы компонентов не создаются через оболочку — это обход проверки, а не решение.')
 }
 
+// Подгонка системного компонента под макет — тоже решение «сделаю сам». Ловим её до того,
+// как она попадёт в файл: styled(Кнопка) или !important рядом с импортом дизайн-системы.
+if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
+  const body = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
+  const cat0 = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
+  if (body && fs.existsSync(cat0)) {
+    const cat = fs.readFileSync(cat0, 'utf8')
+    const st = body.match(/styled\(\s*([A-Z][A-Za-z0-9]*)\s*\)/)
+    const target = st && cat.includes('- **' + st[1] + '**') ? st[1] : null
+    const forcing = /!important/.test(body) && /@xsolla\/xui-/.test(body)
+    if (target || forcing) {
+      const what = target || 'компонент дизайн-системы'
+      deny(
+        'Похоже, вы подгоняете ' + what + ' под макет: ' +
+        (target ? 'styled(' + target + ')' : '!important поверх стилей системы') + '.\n' +
+        'Так делать нельзя — это тихий форк системного компонента.\n\n' +
+        'Остановитесь и спросите дизайнера. Ваше сообщение ему:\n' +
+        '  «В макете ' + what + ' отличается от системного, настройками это не покрывается.\n' +
+        '   Варианты: (1) поставить системный в ближайшей конфигурации — перечислите, какие\n' +
+        '   варианты, тона и размеры есть и какой ближе к макету; (2) рисовать новый компонент\n' +
+        '   под своим именем. Что выбираем?»\n\n' +
+        'Решение принимает дизайнер, не вы. Дождитесь ответа — и не пишите «согласовано»,\n' +
+        'если согласования не было: описание макета в задаче согласованием не является.',
+      )
+    }
+  }
+}
+
 if (input.tool_name !== 'Write') process.exit(0)
 
 const file = String(input.tool_input?.file_path || '').split(path.sep).join('/')

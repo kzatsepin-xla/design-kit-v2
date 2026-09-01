@@ -80,3 +80,16 @@ if (Array.isArray(state.decisions) && state.decisions.length) {
   console.log('[decided] Settled with the designer. Do not re-propose what is listed here.')
 }
 console.log('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')
+
+// Сломанную проверку Claude Code пропускает молча — правило просто перестаёт действовать,
+// и об этом никто не узнаёт. Один раз так и вышло: опечатка в component-guard, целый
+// прогон без защиты. Дешевле проверить их все здесь, чем ловить последствия.
+import { execFileSync } from 'node:child_process'
+const hooksDir = path.join(projectRoot, '.claude', 'hooks')
+if (fs.existsSync(hooksDir)) {
+  const broken = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.mjs')).filter((f) => {
+    try { execFileSync(process.execPath, ['--check', path.join(hooksDir, f)], { stdio: 'ignore' }); return false }
+    catch { return true }
+  })
+  if (broken.length) console.log('[broken] проверки не работают: ' + broken.join(', ') + ' — правило не действует, пока не починено')
+}
