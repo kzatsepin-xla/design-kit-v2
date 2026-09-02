@@ -72,17 +72,6 @@ if (state.debt?.length) bits.push(`debt: ${state.debt.join(', ')}`)
 
 console.log('[state] ' + bits.join(' · '))
 
-// Решения дизайнера — то, от чего он уже отказался. Без них агент предлагает заново
-// то, что вчера отвергли: тёмную тему, яркие кнопки, карточки вместо таблицы.
-const decisionsFile = path.join(projectRoot, 'knowledge', 'decisions.md')
-if (fs.existsSync(decisionsFile)) {
-  const agreed = fs.readFileSync(decisionsFile, 'utf8').split('\n')
-    .filter((l) => l.startsWith('- ')).slice(-6).map((l) => l.slice(2, 100))
-  if (agreed.length) {
-    console.log('[decided] ' + agreed.join(' · '))
-    console.log('[decided] Settled with the designer in knowledge/decisions.md. Do not re-propose what is listed there.')
-  }
-}
 console.log('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')
 
 // Сломанную проверку Claude Code пропускает молча — правило просто перестаёт действовать,
@@ -105,9 +94,7 @@ const dsIndex = path.join(projectRoot, '.claude', 'ds', 'index.json')
 if (fs.existsSync(dsIndex)) {
   try {
     const ds = JSON.parse(fs.readFileSync(dsIndex, 'utf8'))
-    console.log('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length + ' installed. ' +
-      'Before building any UI element run `node scripts/ds.mjs <what you need>` — it forgives ' +
-      'inexact names. Rules for working with the design system: .claude/ds/rules.md (read once, ' +
-      'before the first component). What is already known about its behaviour: knowledge/design-system.md.')
+    console.log('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length +
+      ' installed. Search before you build anything: `node scripts/ds.mjs <what you need>`.')
   } catch { /* база битая — молчим, поиск сам пожалуется */ }
 }
