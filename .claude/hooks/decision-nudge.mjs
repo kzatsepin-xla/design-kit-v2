@@ -30,15 +30,21 @@ import os from 'node:os'
 let input = {}
 try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
 
-// Язык дизайнера. Агент по умолчанию отвечает по-английски, и дизайнер, написавший
-// по-русски, получает ответ на чужом языке. Определяем один раз за сессию по первому
-// сообщению и говорим агенту держаться его языка.
-const firstFlag = path.join(os.tmpdir(), 'lang-' + (input.session_id || 'x'))
-if (!fs.existsSync(firstFlag)) {
-  try { fs.writeFileSync(firstFlag, '1') } catch { /* не смогли — просто повторимся */ }
-  if (/[Ѐ-ӿ]/.test(String(input.prompt || ''))) {
-    console.log('[lang] The designer writes in Russian. Answer in Russian for the whole session — ' +
-      'chat, questions, option labels, reports. Code, file names and identifiers stay as they are.')
+// Язык дизайнера. У Claude Code есть своя глобальная настройка языка, и она сильнее
+// здравого смысла: дизайнер пишет по-английски, а ответ приходит по-русски (или наоборот).
+// Определяем язык первого сообщения сессии и говорим держаться его — что написано, на том
+// и отвечаем.
+const langFlag = path.join(os.tmpdir(), 'lang-' + (input.session_id || 'x'))
+if (!fs.existsSync(langFlag)) {
+  const text = String(input.prompt || '')
+  const cyr = /[Ѐ-ӿ]/.test(text)
+  const lat = /[A-Za-z]/.test(text)
+  if (cyr || lat) {
+    try { fs.writeFileSync(langFlag, '1') } catch { /* не смогли — повторимся на следующем ходе */ }
+    const lang = cyr ? 'Russian' : 'English'
+    console.log('[lang] The designer wrote in ' + lang + '. Answer in ' + lang + ' for the whole ' +
+      'session — chat, questions, option labels, reports — whatever the global language setting says. ' +
+      'Code, file names and identifiers stay as they are.')
   }
 }
 
