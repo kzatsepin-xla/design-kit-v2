@@ -89,7 +89,7 @@ if (avail.length) {
 }
 
 // Заметки о поведении — показываем только те, что про найденное.
-const notes = path.join(root, '.claude', 'ds', 'notes.md')
+const notes = path.join(root, 'knowledge', 'design-system.md')
 if (fs.existsSync(notes)) {
   const lines = fs.readFileSync(notes, 'utf8').split('\n')
     .filter((l) => l.startsWith('- ') && found.some((f) => hit(f.short) && (hit(l) || f.names.some((n) => l.includes(n)))))

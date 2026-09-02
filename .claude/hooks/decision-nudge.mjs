@@ -63,6 +63,6 @@ if (!markers.some((m) => prompt.includes(m))) process.exit(0)
 
 console.log(
   '[decision?] The designer just rejected or redirected something. If this is a standing rule ' +
-  'rather than a one-off tweak, append one short line in their own words to decisions[] in state.json ' +
+  'rather than a one-off tweak, append one short line in their own words to knowledge/decisions.md ' +
   'and follow it from now on. If it is a one-off, write nothing and ignore this note.'
 )

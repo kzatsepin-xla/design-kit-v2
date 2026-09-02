@@ -52,6 +52,36 @@ if (input.tool_name === 'Bash') {
   deny('Файлы компонентов не создаются через оболочку — это обход проверки, а не решение.')
 }
 
+// Самодельный элемент вместо системного. Живой случай: агент упёрся в предел системного
+// ProgressBar (высота 10px, нет штриховки), собрал свой `const Track = styled.div` прямо
+// в секции экрана и оставил в комментарии обоснование — вместо того чтобы спросить.
+// Ловим по роли в имени: Track/Fill — это про прогресс, Chip — про тег, Tile — про карточку.
+const ROLES = {
+  track: 'progress', fill: 'progress', bar: 'progress', meter: 'progress',
+  chip: 'tag', pill: 'tag', tile: 'card', card: 'card', toggle: 'switch',
+  crumbs: 'breadcrumbs', loader: 'spinner', spinner: 'spinner', hint: 'tooltip',
+  tooltip: 'tooltip', dropdown: 'dropdown', avatar: 'avatar', badge: 'badge',
+  slider: 'slider', dialog: 'modal', modal: 'modal', tabs: 'tabs', pager: 'pagination',
+}
+if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
+  const body0 = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
+  let pubs = []
+  try { pubs = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ds', 'index.json'), 'utf8')).published } catch {}
+  for (const m of body0.matchAll(/const ([A-Z][A-Za-z0-9]*)\s*=\s*styled[.(]/g)) {
+    const words = m[1].replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(' ')
+    const role = words.map((w) => ROLES[w]).find(Boolean)
+    if (!role) continue
+    if (!pubs.some((p) => p.includes(role))) continue
+    deny(
+      'Похоже, вы собираете свой «' + m[1] + '» — а в дизайн-системе есть готовое про «' + role + '».\n' +
+      'Сначала посмотрите: `node scripts/ds.mjs ' + role + '`.\n\n' +
+      'Если системный не подходит по виду или размеру — это не повод собрать своё молча.\n' +
+      'Скажите дизайнеру, что именно не сходится, и предложите выбор: взять системный как есть\n' +
+      'или завести отдельный компонент. Решает он.',
+    )
+  }
+}
+
 // Подгонка системного компонента под макет — тоже решение «сделаю сам». Ловим её до того,
 // как она попадёт в файл: styled(Кнопка) или !important рядом с импортом дизайн-системы.
 if (input.tool_name === 'Write' || input.tool_name === 'Edit') {

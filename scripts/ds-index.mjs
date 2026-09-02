@@ -90,6 +90,20 @@ const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
 const text = JSON.stringify(index, null, 1)
 if (text !== before) fs.writeFileSync(file, text)
 
+// Находки живут в knowledge/ — рядом с договорённостями, а не среди служебных файлов агента:
+// это документ проекта, дизайнер в него заглядывает и правит.
+const notes = path.join(root, 'knowledge', 'design-system.md')
+const version = installed.find((p) => p.version)?.version
+if (fs.existsSync(notes) && version) {
+  const text = fs.readFileSync(notes, 'utf8')
+  const marks = [...text.matchAll(/^--- ([0-9][^ ]*)/gm)]
+  const seen = marks.length ? marks[marks.length - 1][1] : null
+  if (seen !== version) {
+    fs.appendFileSync(notes, '\n--- ' + version + ' ---\n')
+    console.log('  библиотека обновилась ' + (seen || '?') + ' -> ' + version + ': находки выше черты стоит перепроверить')
+  }
+}
+
 const comps = installed.reduce((n, p) => n + p.components.length, 0)
 console.log(`база дизайн-системы: ${published.length} пакетов опубликовано · ${installed.length} установлено · ${comps} компонентов`)
 console.log(`  ${path.relative(root, file)} — ${(fs.statSync(file).size / 1024).toFixed(0)} КБ`)

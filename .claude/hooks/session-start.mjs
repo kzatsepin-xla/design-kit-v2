@@ -74,10 +74,14 @@ console.log('[state] ' + bits.join(' · '))
 
 // Решения дизайнера — то, от чего он уже отказался. Без них агент предлагает заново
 // то, что вчера отвергли: тёмную тему, яркие кнопки, карточки вместо таблицы.
-if (Array.isArray(state.decisions) && state.decisions.length) {
-  const recent = state.decisions.slice(-6).map((d) => String(d).slice(0, 90))
-  console.log('[decided] ' + recent.join(' · '))
-  console.log('[decided] Settled with the designer. Do not re-propose what is listed here.')
+const decisionsFile = path.join(projectRoot, 'knowledge', 'decisions.md')
+if (fs.existsSync(decisionsFile)) {
+  const agreed = fs.readFileSync(decisionsFile, 'utf8').split('\n')
+    .filter((l) => l.startsWith('- ')).slice(-6).map((l) => l.slice(2, 100))
+  if (agreed.length) {
+    console.log('[decided] ' + agreed.join(' · '))
+    console.log('[decided] Settled with the designer in knowledge/decisions.md. Do not re-propose what is listed there.')
+  }
 }
 console.log('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')
 
@@ -104,6 +108,6 @@ if (fs.existsSync(dsIndex)) {
     console.log('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length + ' installed. ' +
       'Before building any UI element run `node scripts/ds.mjs <what you need>` — it forgives ' +
       'inexact names. Rules for working with the design system: .claude/ds/rules.md (read once, ' +
-      'before the first component). What is already known about its behaviour: .claude/ds/notes.md.')
+      'before the first component). What is already known about its behaviour: knowledge/design-system.md.')
   } catch { /* база битая — молчим, поиск сам пожалуется */ }
 }

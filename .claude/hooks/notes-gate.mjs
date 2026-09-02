@@ -22,7 +22,7 @@
 //  Срабатывает не чаще одного раза за разговор, чтобы не превращаться в зануду.
 //
 //  ГДЕ КОПЯТСЯ ЗАМЕТКИ
-//  .claude/skills/<дизайн-система>/notes.md — их можно читать и править руками.
+//  knowledge/design-system.md — их можно читать и править руками.
 //
 import fs from 'node:fs'
 import path from 'node:path'
@@ -41,14 +41,7 @@ const flag = path.join(os.tmpdir(), `notes-gate-${input.session_id || 'x'}`)
 if (fs.existsSync(flag)) process.exit(0)
 
 // Заметки живут рядом со справочником по дизайн-системе; нет справочника — нечего требовать.
-const skills = path.join(root, '.claude', 'skills')
-let notes = null
-try {
-  for (const dir of fs.readdirSync(skills)) {
-    const candidate = path.join(skills, dir, 'notes.md')
-    if (fs.existsSync(candidate)) { notes = candidate; break }
-  }
-} catch { process.exit(0) }
+const notes = path.join(root, 'knowledge', 'design-system.md')
 if (!notes) process.exit(0)
 
 const log = fs.readFileSync(transcript, 'utf8')
