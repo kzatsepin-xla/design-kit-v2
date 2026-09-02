@@ -33,16 +33,15 @@ if (!Name || !/^[A-Z][A-Za-z0-9]*$/.test(Name)) {
 // ——— есть ли такой в дизайн-системе ———
 
 const kebab = Name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()
-const catalogue = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
-
-if (fs.existsSync(catalogue)) {
-  const text = fs.readFileSync(catalogue, 'utf8')
-  const line = text.split('\n').find((l) => l.startsWith('- **' + Name + '**'))
-  if (line) {
-    console.error('«' + Name + '» уже есть в установленной дизайн-системе:')
-    console.error('  ' + line.slice(0, 160))
-    console.error('\nБерите его. Отличия от макета — через настройки компонента и тему,')
-    console.error('а не через свой компонент с тем же именем.')
+const dsFile = path.join(root, '.claude', 'ds', 'index.json')
+if (fs.existsSync(dsFile)) {
+  const ds = JSON.parse(fs.readFileSync(dsFile, 'utf8'))
+  for (const pkg of ds.installed) {
+    const c = pkg.components.find((x) => x.name === Name)
+    if (!c) continue
+    console.error('«' + Name + '» уже установлен: ' + pkg.pkg)
+    if (c.props.length) console.error('  ' + c.props.slice(0, 8).map((x) => x.name).join(' · '))
+    console.error('\nБерите его. Отличия от макета — настройками и темой, а не своей копией.')
     process.exit(1)
   }
 }
@@ -56,10 +55,13 @@ try {
 
 if (registry) {
   console.error('«' + Name + '» есть в дизайн-системе, но не установлен: @xsolla/xui-' + kebab + '@' + registry)
-  console.error('\n  npm i @xsolla/xui-' + kebab + ' && node scripts/ds-catalog.mjs')
+  console.error('\n  npm i @xsolla/xui-' + kebab + ' && node scripts/ds-index.mjs')
   console.error('\nСвой компонент с этим именем не заводите.')
   process.exit(1)
 }
+
+// Имя могли не найти из-за неточности: в системе progress-bar, а не Progress.
+console.log('перед тем как заводить своё — убедитесь, что искали: node scripts/ds.mjs ' + Name.toLowerCase())
 
 // ——— заводим ———
 

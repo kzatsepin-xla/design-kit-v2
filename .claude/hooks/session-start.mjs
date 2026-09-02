@@ -93,3 +93,17 @@ if (fs.existsSync(hooksDir)) {
   })
   if (broken.length) console.log('[broken] проверки не работают: ' + broken.join(', ') + ' — правило не действует, пока не починено')
 }
+
+// Дизайн-система больше не скилл, а база + поиск. Скилл висел в контексте целиком и всё равно
+// не спасал: агент искал глазами и промахивался мимо префиксов b2b/b2c. Теперь одна строка
+// здесь, а подробности он достаёт поиском ровно про то, что ему нужно.
+const dsIndex = path.join(projectRoot, '.claude', 'ds', 'index.json')
+if (fs.existsSync(dsIndex)) {
+  try {
+    const ds = JSON.parse(fs.readFileSync(dsIndex, 'utf8'))
+    console.log('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length + ' installed. ' +
+      'Before building any UI element run `node scripts/ds.mjs <what you need>` — it forgives ' +
+      'inexact names. Rules for working with the design system: .claude/ds/rules.md (read once, ' +
+      'before the first component). What is already known about its behaviour: .claude/ds/notes.md.')
+  } catch { /* база битая — молчим, поиск сам пожалуется */ }
+}

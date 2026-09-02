@@ -29,6 +29,13 @@ let input = {}
 try { input = JSON.parse(raw) } catch { process.exit(0) }
 
 const root = input.cwd || process.cwd()
+
+const dsNames = () => {
+  try {
+    const ds = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ds', 'index.json'), 'utf8'))
+    return new Set(ds.installed.flatMap((p) => p.components.map((c) => c.name)))
+  } catch { return new Set() }
+}
 const deny = (reason) => {
   process.stdout.write(JSON.stringify({
     hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason },
@@ -49,11 +56,10 @@ if (input.tool_name === 'Bash') {
 // как она попадёт в файл: styled(Кнопка) или !important рядом с импортом дизайн-системы.
 if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
   const body = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
-  const cat0 = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
-  if (body && fs.existsSync(cat0)) {
-    const cat = fs.readFileSync(cat0, 'utf8')
+    if (body) {
+    const known = dsNames()
     const st = body.match(/styled\(\s*([A-Z][A-Za-z0-9]*)\s*\)/)
-    const target = st && cat.includes('- **' + st[1] + '**') ? st[1] : null
+    const target = st && known.has(st[1]) ? st[1] : null
     // Правка приходит куском: импорта дизайн-системы в нём нет, даже когда он есть в файле.
     // Поэтому смотрим и на файл целиком — иначе !important проносят отдельной правкой.
     let whole = body
@@ -90,8 +96,7 @@ const Name = m[1]
 const real = (p) => { try { return fs.statSync(p).size > 0 } catch { return false } }
 if (real(input.tool_input.file_path)) process.exit(0)
 
-const catalogue = path.join(root, '.claude', 'skills', 'xui', 'SKILL.md')
-const inDS = fs.existsSync(catalogue) && fs.readFileSync(catalogue, 'utf8').includes('- **' + Name + '**')
+const inDS = dsNames().has(Name)
 
 if (inDS) {
   deny(
