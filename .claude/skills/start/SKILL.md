@@ -1,33 +1,35 @@
 ---
 name: start
 model: haiku
-description: Decide how the designer wants to work and which design system to build on, then record it — full product cycle, prototype first with docs later, Figma screens only, or their own way. Use at the start of a session, when the designer describes new work, or whenever state.json has no mode.
+description: Decide how the designer wants to work and which design system to build on, then record it — full product cycle, prototype first with docs later, screens from Figma, or their own way. Use at the start of a session, when the designer describes new work, or whenever state.json has no mode.
 ---
 
 # Start
 
-Two questions, then the work begins. Record every answer in `state.json` — never ask twice.
+Ask both questions in **one AskUserQuestion call** — the designer picks, never types. Do not
+print the options as chat text: a list in the chat costs them a reply and risks a misread.
 
-Number both lists 1, 2, 3 — never letters, never a mix. A designer answering "2 and 1" means
-the second option of the first question and the first of the second; say back what you understood
-in one short line before acting, so a misread costs a word instead of a screen.
+Write the options in the designer's own language. Record every answer in `state.json` —
+never ask twice.
 
-## 1. How they want to work
+## Question 1 — how they want to work
 
-1. **Full product work** — secure a PRD first, then go stage by stage.
-2. **Prototype now, docs later** — start building; record the skipped docs in `debt`.
-3. **Figma screens only** — no product work at all.
-4. **Their own way** — let them describe it in their words, write it into `modeNote`, follow that.
+- **Full product work** — secure a PRD first, then stage by stage.
+- **Prototype now, docs later** — start building; record the skipped docs in `debt`.
+- **Screens from Figma** — turn existing Figma mock-ups into screens, no product work.
 
-## 2. Which design system
+The tool adds its own free-text option: if they use it, write their words into `modeNote`
+and follow that.
 
-Ask only once the mode is settled.
+## Question 2 — which design system
 
-1. **XUI** — the Xsolla design system (`@xsolla/xui-*`).
-2. **Another one** — ask for a link: npm package, docs site or Storybook. Record it in `designSystem.url`.
-3. **None** — build from scratch.
+- **XUI** — the Xsolla design system (`@xsolla/xui-*`).
+- **Another one** — then ask for a link (npm package, docs or Storybook), record it in `designSystem.url`.
+- **None** — build from scratch.
 
-Then run `node scripts/init.mjs <screen>` — it creates only the files that are missing, nothing else.
+## Then
 
-In the full-product mode, hold that command until the design work actually reaches a screen:
-requirements first, code when there is something to build. In every other mode, run it right away.
+Run `node scripts/init.mjs <screen>` — it creates only the files that are missing.
+
+In full-product mode hold that command until the work actually reaches a screen: requirements
+first, code when there is something to build. In every other mode run it right away.

@@ -24,9 +24,23 @@
 //  Скажите «убери это из решений» — список открыт, правится одной строкой.
 //
 import fs from 'node:fs'
+import path from 'node:path'
+import os from 'node:os'
 
 let input = {}
 try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
+
+// Язык дизайнера. Агент по умолчанию отвечает по-английски, и дизайнер, написавший
+// по-русски, получает ответ на чужом языке. Определяем один раз за сессию по первому
+// сообщению и говорим агенту держаться его языка.
+const firstFlag = path.join(os.tmpdir(), 'lang-' + (input.session_id || 'x'))
+if (!fs.existsSync(firstFlag)) {
+  try { fs.writeFileSync(firstFlag, '1') } catch { /* не смогли — просто повторимся */ }
+  if (/[Ѐ-ӿ]/.test(String(input.prompt || ''))) {
+    console.log('[lang] The designer writes in Russian. Answer in Russian for the whole session — ' +
+      'chat, questions, option labels, reports. Code, file names and identifiers stay as they are.')
+  }
+}
 
 const prompt = String(input.prompt || '').toLowerCase()
 if (!prompt) process.exit(0)
