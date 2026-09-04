@@ -35,6 +35,9 @@ try {
     .map((o) => ({ pkg: o.package.name, version: o.package.version }))
     .filter((p) => p.pkg.startsWith('@xsolla/xui-'))
     .sort((a, b) => a.pkg.localeCompare(b.pkg))
+    // Версия с дефисом — сборка из ветки, а не релиз. Такие пакеты `latest` отдаёт молча:
+    // в живом прогоне xui-b2c-game-card приехал как 0.157.0-pr298 и притащил свою копию core.
+    .map((p) => (/-/.test(p.version) ? { ...p, branchOnly: true } : p))
 } catch {
   console.error('реестр недоступен — беру только установленное')
 }
@@ -73,7 +76,11 @@ if (fs.existsSync(nm)) {
       for (const m of src.matchAll(/export \{[^}]*?\b([A-Z][A-Za-z0-9]*)\b[^}]*?\}/g)) names.add(m[1])
       for (const name of [...names].sort()) components.push({ name, props: propsOf(src, name) })
     }
-    installed.push({ pkg: '@xsolla/' + dir, version, components })
+    // Пакет, собранный со своей копией styled-components, поднимает второй экземпляр
+    // библиотеки: на одном экране с соседями его стили молча слетают.
+    let ownStyled = false
+    try { ownStyled = /styled-components(\.esm)?\.js/.test(fs.readFileSync(path.join(base, 'web', 'index.js'), 'utf8')) } catch {}
+    installed.push({ pkg: '@xsolla/' + dir, version, components, ownStyled })
   }
 }
 
@@ -82,6 +89,7 @@ if (fs.existsSync(nm)) {
 const index = {
   builtAt: null,                     // ставит вызывающий, чтобы файл не менялся впустую
   published: published.map((p) => p.pkg),
+  branchOnly: published.filter((p) => p.branchOnly).map((p) => p.pkg),
   installed,
 }
 

@@ -31,7 +31,8 @@ paths:
 
 | Не пиши | Пиши |
 |---|---|
-| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | их не существует: `theme.colors.*`, `theme.spacing.*`, `theme.radius.*` |
+| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | их не существует: `theme.colors.*`, `theme.spacing.*` |
+| `theme.radius.*` | тоже не существует: скругления в `theme.shape` — `shape.button.<size>.borderRadius`, `shape.cell.borderRadius` |
 | `import "./Component.css"`, CSS Modules, Tailwind | styled-components + токены темы |
 | `background: "#0F0F0F"`, `padding: 16px` | только токен, никогда своё значение |
 | `onClick` на компоненте системы | `onPress`; `onValueChange` у переключателей; `onChange`/`onChangeText` у полей |

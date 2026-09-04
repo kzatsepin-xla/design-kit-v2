@@ -49,6 +49,7 @@ const norm = (s) => s.toLowerCase().replace(/[@\/\s_-]/g, '')
 const hit = (hay) => terms.some((t) => norm(hay).includes(norm(t)))
 
 const installedByPkg = new Map(index.installed.map((p) => [p.pkg, p]))
+const branchOnly = new Set(index.branchOnly || [])
 const found = []
 
 for (const pkg of index.published) {
@@ -73,7 +74,7 @@ if (ready.length) {
     for (const c of f.inst.components) {
       const p = c.props.slice(0, 10).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
       const more = c.props.length > 10 ? ` … +${c.props.length - 10}` : ''
-      console.log(`  ${c.name}  ${f.pkg}`)
+      console.log(`  ${c.name}  ${f.pkg}${f.inst.ownStyled ? '  ⚠ со своим styled-components' : ''}`)
       if (p.length) console.log(`    ${p.join(' · ')}${more}`)
     }
     if (!f.inst.components.length) console.log(`  ${f.pkg} (компоненты не разобраны — читайте типы пакета)`)
@@ -83,9 +84,22 @@ if (ready.length) {
 if (avail.length) {
   if (ready.length) console.log('')
   console.log('ЕСТЬ В СИСТЕМЕ, НО НЕ УСТАНОВЛЕНО — ставьте, не рисуйте своё:')
-  for (const f of avail) console.log('  ' + f.pkg)
+  for (const f of avail) console.log('  ' + f.pkg + (branchOnly.has(f.pkg) ? '  ⚠ только сборки из веток, релиза нет' : ''))
   console.log('')
   console.log('  npm i ' + avail.map((f) => f.pkg).join(' ') + ' && node scripts/ds-index.mjs')
+}
+
+if (ready.some((f) => f.inst.ownStyled)) {
+  console.log('')
+  console.log('⚠ Пакет со своим styled-components поднимает вторую копию библиотеки: на одном')
+  console.log('  экране с такими же соседями его стили молча слетают. Проверить:')
+  console.log('  grep -l "styled-components" node_modules/@xsolla/*/web/index.js')
+}
+if (avail.some((f) => branchOnly.has(f.pkg))) {
+  console.log('')
+  console.log('⚠ У помеченных пакетов нет релизов — `latest` отдаёт сборку из ветки разработки')
+  console.log('  и она может тянуть свою копию @xsolla/xui-core. Ставьте, только если без него никак,')
+  console.log('  и скажите дизайнеру, что взяли неготовый пакет.')
 }
 
 // Заметки о поведении — показываем только те, что про найденное.
