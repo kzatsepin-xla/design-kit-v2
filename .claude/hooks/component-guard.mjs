@@ -43,6 +43,28 @@ const deny = (reason) => {
   process.exit(0)
 }
 
+// Установка пакета, у которого нет релизов. В живом прогоне так приехал xui-b2c-game-card
+// (все версии — сборки из ветки pr298) и притащил свою копию xui-core: тема до компонента
+// не дошла. `npm i` про это молчит, поэтому смотрим сами.
+if (input.tool_name === 'Bash') {
+  const cmd0 = String(input.tool_input?.command || '')
+  const inst = cmd0.match(/npm\s+(?:i|install|add)\s+([^&|;]+)/)
+  if (inst) {
+    let branchOnly = []
+    try { branchOnly = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ds', 'index.json'), 'utf8')).branchOnly || [] } catch {}
+    const risky = branchOnly.filter((p) => inst[1].includes(p))
+    if (risky.length) {
+      deny(
+        'У этих пакетов нет релизов, только сборки из веток разработки:\n' +
+        risky.map((p) => '  ' + p).join('\n') + '\n\n' +
+        'Такая сборка может принести свою копию @xsolla/xui-core — тогда тема до компонента\n' +
+        'не дойдёт, и это заметно не сразу. Скажите дизайнеру, что компонент неготов, и спросите:\n' +
+        'берём как есть, собираем из готовых частей или обходимся без него.',
+      )
+    }
+  }
+}
+
 // Через оболочку файл создаётся так же легко, как через Write, — и это обходило проверку.
 if (input.tool_name === 'Bash') {
   const cmd = String(input.tool_input?.command || '')
@@ -80,6 +102,18 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
       'или завести отдельный компонент. Решает он.',
     )
   }
+}
+
+// Иконка, выгруженная из макета. В прогоне агент вытащил логотипы Steam, Xsolla и монету
+// картинками, хотя всё это есть пакетами — потом сам нашёл и переделал.
+if (input.tool_name === 'Write' && /[\\\/]assets[\\\/][^\\\/]+\.svg$/i.test(String(input.tool_input?.file_path || ''))) {
+  deny(
+    'Похоже, это иконка или логотип из макета. В системе они есть пакетами:\n' +
+    '  xui-icons-base — интерфейсные · xui-icons-brand — Steam, Epic, GOG\n' +
+    '  xui-icons-currency — валюты · xui-logos-xsolla — логотипы Xsolla\n\n' +
+    'Поищите: `node scripts/ds.mjs <что за иконка>`. Картинками из макета тащат только\n' +
+    'контент — обложки, арты, скриншоты.',
+  )
 }
 
 // Подгонка системного компонента под макет — тоже решение «сделаю сам». Ловим её до того,
