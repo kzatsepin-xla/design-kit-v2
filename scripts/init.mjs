@@ -260,6 +260,12 @@ if (ds !== 'none' && fs.existsSync(path.join(root, 'node_modules'))) {
   }
 }
 
+// Свод правил о текстах интерфейса. Лежит в vendor/ и сам собой не запускается:
+// агент открывает его только по просьбе дизайнера — см. .claude/commands/ux.md.
+try {
+  execSync('node scripts/uxw.mjs install', { stdio: 'inherit' })
+} catch {}
+
 // ——— отчёт ———
 
 console.log()
