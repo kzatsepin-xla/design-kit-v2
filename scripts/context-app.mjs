@@ -218,8 +218,9 @@ function fetchApp() {
 // На dev-сервере Vite перехватывает запрос попапа (/context-app/?embed=1&…) своим
 // SPA-fallback и отдаёт в iframe index.html прототипа — попап показывает прототип
 // второй раз вместо себя. На стенде и в сборке этого нет.
-const VITE_PLAIN = 'export default defineConfig({ plugins: [react()] })'
-const VITE_FIXED = `function contextAppDevFallback() {
+// Плагины вписываются в конфиг сборки не по точному тексту, а вставкой: конфиг мог
+// уже поменять кто-то другой (например, псевдоним витрины дописывает vibe.mjs).
+const VITE_FUNCS = `function contextAppDevFallback() {
   return {
     name: 'context-app-dev-fallback',
     configureServer(server) {
@@ -238,10 +239,10 @@ const VITE_FIXED = `function contextAppDevFallback() {
   }
 }
 
-// Метки для инспектора компонентов в Context App: на каждом вызове компонента
-// дизайн-системы остаётся след — имя, откуда он, пропсы, файл и строка. Без
-// этого инспектор показывает не «Button», а внутренний Box, из которого тот собран.
-// Отдельным шагом, а не опцией React-плагина: в шестой версии опции babel нет.
+// Метки для инспектора компонентов: на каждом вызове компонента дизайн-системы
+// остаётся след — имя, откуда он, пропсы, файл и строка. Без этого инспектор
+// показывает не «Button», а внутренний Box, из которого тот собран. Отдельным
+// шагом, а не опцией React-плагина: в шестой версии опции babel нет.
 function xuiSourceTagPlugin() {
   return {
     name: 'xui-source-tag',
@@ -261,11 +262,7 @@ function xuiSourceTagPlugin() {
       return out && out.code ? { code: out.code, map: out.map } : null
     },
   }
-}
-
-export default defineConfig({
-  plugins: [xuiSourceTagPlugin(), react(), contextAppDevFallback()],
-})`
+}`
 
 function ensureViteFix() {
   const file = path.join(root, 'vite.config.ts')
@@ -273,26 +270,26 @@ function ensureViteFix() {
   const text = read(file)
   if (text.indexOf('xui-source-tag') !== -1) return null
 
-  const head = (text.indexOf('import path') === -1 ? "import path from 'node:path'" + NL : '')
-    + (text.indexOf('import fs') === -1 ? "import fs from 'node:fs'" + NL : '')
+  const at = text.indexOf('export default')
+  if (at === -1 || !/plugins:\s*\[/.test(text)) {
+    return 'vite.config.ts непривычного вида — впишите в него плагины context-app-dev-fallback и xui-source-tag руками, иначе попап покажет сам прототип, а инспектор — Box вместо компонентов'
+  }
+
+  const head = (text.indexOf("import path") === -1 ? "import path from 'node:path'" + NL : '')
+    + (text.indexOf("import fs") === -1 ? "import fs from 'node:fs'" + NL : '')
     + "import * as babel from '@babel/core'" + NL
     + "import xuiSourceTag from './scripts/xui-source-tag.ts'" + NL
 
-  const older = text.indexOf('function contextAppDevFallback')
-  if (older !== -1) {                     // конфиг прошлой версии — дописываем инспектор
-    fs.writeFileSync(file, head + text.slice(0, older) + VITE_FIXED + NL)
-    return null
-  }
-  if (text.indexOf(VITE_PLAIN) === -1) {
-    return 'vite.config.ts переписан — впишите в него плагины context-app-dev-fallback и xui-source-tag руками, иначе попап покажет сам прототип, а инспектор — Box вместо компонентов'
-  }
-  fs.writeFileSync(file, head + text.replace(VITE_PLAIN, VITE_FIXED))
+  // Порядок важен: сначала правим массив плагинов в самом конфиге, и только потом
+  // дописываем функции. Наоборот — и замена попадёт в первый plugins: [ внутри них.
+  let out = text.replace(/plugins:\s*\[/, 'plugins: [xuiSourceTagPlugin(), contextAppDevFallback(), ')
+  const exportAt = out.indexOf('export default')
+  out = out.slice(0, exportAt) + VITE_FUNCS + NL + NL + out.slice(exportAt)
+  fs.writeFileSync(file, head + out)
   return null
 }
 
-// Таблица, в которую плагин складывает данные о вызовах компонентов. Плагин
-// дописывает импорт на неё из каждого файла, поэтому лежать она обязана
-// строго здесь: src/kit/xui-source-meta.ts.
+
 // Плагин меток работает через @babel/core. Ставим его здесь, когда инспектор
 // действительно включают, а не заранее «на будущее».
 function ensureBabel() {

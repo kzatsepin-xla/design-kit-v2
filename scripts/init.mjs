@@ -266,16 +266,22 @@ try {
   execSync('node scripts/uxw.mjs install', { stdio: 'inherit' })
 } catch {}
 
+// Кнопка Context — сразу. Раньше здесь была подсказка агенту «подключи сам», и в живом
+// прогоне он её пропустил: дизайнер открыл прототип, а кнопки нет. Подключение
+// идемпотентно и ничего не стоит, поэтому делаем его, а не советуем.
+if (created.includes('index.html')) {
+  try {
+    execSync('node scripts/context-app.mjs connect', { stdio: 'inherit' })
+  } catch {}
+}
+
 // ——— отчёт ———
 
 console.log()
 if (created.length) console.log('создано:\n' + created.map((f) => '  ' + f).join('\n'))
 if (skipped.length) console.log('уже было:\n' + skipped.map((f) => '  ' + f).join('\n'))
 
-// Прототип, который никто не увидит, бесполезен: подсказываем, чем его показать.
 if (created.length) {
   console.log()
-  console.log('открыть: npm run dev')
-  console.log('показать команде — кнопка Context с картой экранов и комментариями:')
-  console.log('  node scripts/context-app.mjs connect')
+  console.log('открыть: npm run dev — кнопка Context внизу справа уже на месте')
 }
