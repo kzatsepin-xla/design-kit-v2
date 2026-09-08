@@ -54,7 +54,12 @@ const STAND = 'https://prototype.xsolla.dev/context-app/embed.js'
 
 const statePath = path.join(root, 'state.json')
 const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {}
-const saveState = (patch) => fs.writeFileSync(statePath, JSON.stringify({ ...state, ...patch }, null, 2) + NL)
+// Меняем и снимок в памяти: без этого вторая запись за прогон затирает первую —
+// prototypeId сохранялся, а папка деплоя следом исчезала.
+const saveState = (patch) => {
+  Object.assign(state, patch)
+  fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + NL)
+}
 
 const read = (p) => fs.readFileSync(p, 'utf8')
 const exists = (p) => fs.existsSync(path.join(root, p))
