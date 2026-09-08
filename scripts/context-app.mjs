@@ -41,6 +41,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 import { exportContextData } from './context-app/export-context-data.mjs'
 import { validateManifest } from './context-app/context-data-schema.mjs'
 
@@ -181,6 +182,70 @@ function extraProblems(manifest) {
 
 // ——— команды ———
 
+// Копия приложения для localhost. Со стенда его на localhost не подключить: OKTA
+// отдаёт 401 на межсайтовый запрос, а Chrome блокирует запросы к localhost. Прямое
+// зеркало по IP — единственный адрес, который скрипт может забрать сам. Не вышло —
+// не беда: на стенде кнопка работает и без копии.
+const APP_URL = 'http://34.102.7.243/context-app-open/context-app-dist.tgz'
+
+function fetchApp() {
+  const dest = path.join(root, 'public', 'context-app')
+  if (fs.existsSync(path.join(dest, 'embed.js'))) return 'уже была'
+  const tmp = path.join(os.tmpdir(), 'context-app-' + process.pid)
+  const tgz = path.join(tmp, 'app.tgz')
+  try {
+    fs.mkdirSync(tmp, { recursive: true })
+    const dl = spawnSync('curl', ['-fsSL', '--max-time', '30', '-o', tgz, APP_URL], { stdio: 'ignore' })
+    if (dl.status !== 0 || !fs.existsSync(tgz)) return 'не вышло скачать'
+    // tar запускаем ИЗ временной папки: путь с буквой диска (C:\…) GNU tar
+    // принимает за адрес удалённого сервера и падает с «Cannot connect to C:».
+    if (spawnSync('tar', ['-xzf', 'app.tgz'], { cwd: tmp, stdio: 'ignore' }).status !== 0) return 'не вышло распаковать'
+    const from = fs.existsSync(path.join(tmp, 'context-app')) ? path.join(tmp, 'context-app') : tmp
+    fs.rmSync(dest, { recursive: true, force: true })
+    fs.mkdirSync(path.dirname(dest), { recursive: true })
+    fs.cpSync(from, dest, { recursive: true })
+    return 'скачана'
+  } catch {
+    return 'не вышло'
+  } finally {
+    fs.rmSync(tgz, { force: true })
+    fs.rmSync(tmp, { recursive: true, force: true })
+  }
+}
+
+// На dev-сервере Vite перехватывает запрос попапа (/context-app/?embed=1&…) своим
+// SPA-fallback и отдаёт в iframe index.html прототипа — попап показывает прототип
+// второй раз вместо себя. На стенде и в сборке этого нет.
+const VITE_PLAIN = 'export default defineConfig({ plugins: [react()] })'
+const VITE_FIXED = `function contextAppDevFallback() {
+  return {
+    name: 'context-app-dev-fallback',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url && req.url.startsWith('/context-app/') && !path.extname(req.url.split('?')[0])) {
+          req.url = '/context-app/index.html'
+        }
+        next()
+      })
+    },
+  }
+}
+
+export default defineConfig({ plugins: [react(), contextAppDevFallback()] })`
+
+function ensureViteFix() {
+  const file = path.join(root, 'vite.config.ts')
+  if (!fs.existsSync(file)) return null
+  const text = read(file)
+  if (text.indexOf('context-app-dev-fallback') !== -1) return null
+  if (text.indexOf(VITE_PLAIN) === -1) {
+    return 'vite.config.ts изменён — допишите в него плагин context-app-dev-fallback, иначе на dev-сервере попап покажет сам прототип'
+  }
+  const head = text.indexOf('import path') === -1 ? "import path from 'node:path'" + NL : ''
+  fs.writeFileSync(file, head + text.replace(VITE_PLAIN, VITE_FIXED))
+  return null
+}
+
 async function cmdExport({ quiet } = {}) {
   const registry = buildRegistry()
   const tmp = path.join(os.tmpdir(), 'context-registry-' + process.pid + '.json')
@@ -239,12 +304,13 @@ function cmdConnect(proto) {
   saveState({ contextApp: { proto: deploy } })
   return cmdExport({ quiet: true }).then(() => {
     console.log('Данные собраны: ' + OUT)
+    const app = fetchApp()
+    console.log('Копия приложения для localhost: ' + app)
+    const warning = ensureViteFix()
+    if (warning) console.log('Внимание: ' + warning)
     console.log('')
-    console.log('На стенде кнопка заработает сразу после выкладки.')
-    console.log('Локально нужна своя копия приложения — со стенда на localhost её не подключить,')
-    console.log('там OKTA отдаёт 401. Скачать и распаковать в public/context-app/:')
-    console.log('  curl -o ca.tgz http://34.102.7.243/context-app-open/context-app-dist.tgz')
-    console.log('  mkdir -p public/context-app && tar -xzf ca.tgz -C public/context-app --strip-components=1')
+    console.log('Откройте npm run dev — кнопка Context появится внизу справа.')
+    console.log('Комментарии работают только на стенде: их привязывает к деплою сам сервер.')
   })
 }
 
