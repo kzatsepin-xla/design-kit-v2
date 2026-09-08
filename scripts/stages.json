@@ -2,163 +2,565 @@
   "note": "Стадии продуктовой работы. Это данные, а не проза: список читают и docs.mjs, и анкета в скилле start. Менять состав стадий — только здесь.",
   "stages": [
     {
-      "id": "00", "dir": "00_context", "title": "Context", "ru": "Контекст",
+      "id": "00",
+      "dir": "00_context",
+      "title": "Context",
+      "ru": "Контекст",
       "why": "бриф по PRD, боли пользователей, аналоги, платформа",
-      "default": true, "needs": [],
+      "default": true,
+      "needs": [],
       "artifacts": [
-        { "file": "brief.md", "title": "Brief", "sections": [
-          { "h": "Task summary", "hint": "One paragraph: what we are doing and why. Pull it from the PRD." },
-          { "h": "Problem and opportunity", "table": ["Aspect", "Details"], "rows": ["Problem", "Opportunity", "Success metric"] },
-          { "h": "Target users", "table": ["Role", "Primary goal"] },
-          { "h": "Scope", "hint": "In scope and explicitly out of scope — one list each." },
-          { "h": "Sources", "table": ["Type", "Link"], "rows": ["PRD", "Jira", "Figma", "Research"] },
-          { "h": "Open questions", "table": ["ID", "Question", "Status"], "ids": "OQ" }
-        ]},
-        { "file": "pain-points.md", "title": "Pain points", "sections": [
-          { "h": "Pains", "table": ["ID", "Pain", "Where it comes from", "Impact"], "ids": "PP" }
-        ]},
-        { "file": "competitive-analysis.md", "title": "Competitive analysis", "sections": [
-          { "h": "Analogues", "table": ["Product", "What they do", "What is worth borrowing"] }
-        ]},
-        { "file": "platform-context.md", "title": "Platform context", "sections": [
-          { "h": "Platform", "hint": "web / mobile / both, target devices and browsers." },
-          { "h": "Constraints", "hint": "What the environment forbids or dictates." }
-        ]}
+        {
+          "file": "brief.md",
+          "title": "Brief",
+          "sections": [
+            {
+              "h": "Task summary",
+              "hint": "One paragraph: what we are doing and why. Pull it from the PRD."
+            },
+            {
+              "h": "Problem and opportunity",
+              "table": [
+                "Aspect",
+                "Details"
+              ],
+              "rows": [
+                "Problem",
+                "Opportunity",
+                "Success metric"
+              ]
+            },
+            {
+              "h": "Target users",
+              "table": [
+                "Role",
+                "Primary goal"
+              ]
+            },
+            {
+              "h": "Scope",
+              "hint": "In scope and explicitly out of scope — one list each."
+            },
+            {
+              "h": "Sources",
+              "table": [
+                "Type",
+                "Link"
+              ],
+              "rows": [
+                "PRD",
+                "Jira",
+                "Figma",
+                "Research"
+              ]
+            },
+            {
+              "h": "Open questions",
+              "table": [
+                "ID",
+                "Question",
+                "Status"
+              ],
+              "ids": "OQ"
+            }
+          ]
+        },
+        {
+          "file": "pain-points.md",
+          "title": "Pain points",
+          "sections": [
+            {
+              "h": "Pains",
+              "table": [
+                "ID",
+                "Pain",
+                "Where it comes from",
+                "Impact"
+              ],
+              "ids": "PP"
+            }
+          ]
+        },
+        {
+          "file": "competitive-analysis.md",
+          "title": "Competitive analysis",
+          "sections": [
+            {
+              "h": "Analogues",
+              "table": [
+                "Product",
+                "What they do",
+                "What is worth borrowing"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "platform-context.md",
+          "title": "Platform context",
+          "sections": [
+            {
+              "h": "Platform",
+              "hint": "web / mobile / both, target devices and browsers."
+            },
+            {
+              "h": "Constraints",
+              "hint": "What the environment forbids or dictates."
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "01", "dir": "01_domain", "title": "Domain", "ru": "Домен",
+      "id": "01",
+      "dir": "01_domain",
+      "title": "Domain",
+      "ru": "Домен",
       "why": "сущности, бизнес-правила, роли, жизненные циклы",
-      "default": false, "needs": ["00"],
+      "default": false,
+      "needs": [
+        "00"
+      ],
       "artifacts": [
-        { "file": "entity-map.md", "title": "Entity map", "sections": [
-          { "h": "Entities", "table": ["Entity", "What it is", "Related to"] }
-        ]},
-        { "file": "business-rules.md", "title": "Business rules", "sections": [
-          { "h": "Rules", "table": ["ID", "Rule", "Source", "Affects"], "ids": "BR" }
-        ]},
-        { "file": "roles-and-goals.md", "title": "Roles and goals", "sections": [
-          { "h": "Roles", "table": ["Role", "Goal", "What they may not do"] }
-        ]},
-        { "file": "status-machines.md", "title": "Status machines", "sections": [
-          { "h": "Life cycles", "hint": "One block per entity: states and allowed transitions." }
-        ]}
+        {
+          "file": "entity-map.md",
+          "title": "Entity map",
+          "sections": [
+            {
+              "h": "Entities",
+              "table": [
+                "Entity",
+                "What it is",
+                "Related to"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "business-rules.md",
+          "title": "Business rules",
+          "sections": [
+            {
+              "h": "Rules",
+              "table": [
+                "ID",
+                "Rule",
+                "Source",
+                "Affects"
+              ],
+              "ids": "BR"
+            }
+          ]
+        },
+        {
+          "file": "roles-and-goals.md",
+          "title": "Roles and goals",
+          "sections": [
+            {
+              "h": "Roles",
+              "table": [
+                "Role",
+                "Goal",
+                "What they may not do"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "status-machines.md",
+          "title": "Status machines",
+          "sections": [
+            {
+              "h": "Life cycles",
+              "hint": "One block per entity: states and allowed transitions."
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "02", "dir": "02_service-blueprints", "title": "Service blueprints", "ru": "Блюпринты сервиса",
+      "id": "02",
+      "dir": "02_service-blueprints",
+      "title": "Service blueprints",
+      "ru": "Блюпринты сервиса",
       "why": "действие пользователя, что делает фронт, что делает бэк, где рвётся",
-      "default": false, "needs": ["01"],
+      "default": false,
+      "needs": [
+        "01"
+      ],
       "artifacts": [
-        { "file": "blueprint.md", "title": "Blueprint", "sections": [
-          { "h": "Process", "table": ["Step", "User action", "Frontend", "Backend", "Where it breaks"] }
-        ]}
+        {
+          "file": "blueprint.md",
+          "title": "Blueprint",
+          "sections": [
+            {
+              "h": "Process",
+              "table": [
+                "Step",
+                "User action",
+                "Frontend",
+                "Backend",
+                "Where it breaks"
+              ]
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "03", "dir": "03_jobs-and-tasks", "title": "Jobs and tasks", "ru": "Задачи и JTBD",
+      "id": "03",
+      "dir": "03_jobs-and-tasks",
+      "title": "Jobs and tasks",
+      "ru": "Задачи и JTBD",
       "why": "топ-задачи, job stories, декомпозиция",
-      "default": false, "needs": ["01"],
+      "default": false,
+      "needs": [
+        "01"
+      ],
       "artifacts": [
-        { "file": "top-tasks.md", "title": "Top tasks", "sections": [
-          { "h": "Tasks by priority", "table": ["#", "Task", "Role", "How often"] }
-        ]},
-        { "file": "job-stories.md", "title": "Job stories", "sections": [
-          { "h": "Stories", "table": ["ID", "When", "I want to", "So that", "Role"], "ids": "JS" }
-        ]},
-        { "file": "task-decomposition.md", "title": "Task decomposition", "sections": [
-          { "h": "Steps", "hint": "One block per top task: the steps the user takes." }
-        ]}
+        {
+          "file": "top-tasks.md",
+          "title": "Top tasks",
+          "sections": [
+            {
+              "h": "Tasks by priority",
+              "table": [
+                "#",
+                "Task",
+                "Role",
+                "How often"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "job-stories.md",
+          "title": "Job stories",
+          "sections": [
+            {
+              "h": "Stories",
+              "table": [
+                "ID",
+                "When",
+                "I want to",
+                "So that",
+                "Role"
+              ],
+              "ids": "JS"
+            }
+          ]
+        },
+        {
+          "file": "task-decomposition.md",
+          "title": "Task decomposition",
+          "sections": [
+            {
+              "h": "Steps",
+              "hint": "One block per top task: the steps the user takes."
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "04", "dir": "04_scenarios", "title": "Scenarios", "ru": "Сценарии",
+      "id": "04",
+      "dir": "04_scenarios",
+      "title": "Scenarios",
+      "ru": "Сценарии",
       "why": "счастливые пути, крайние случаи, сбои и восстановление — хребет будущих экранов",
-      "default": true, "needs": ["00"],
+      "default": true,
+      "needs": [
+        "00"
+      ],
       "artifacts": [
-        { "file": "scenario-matrix.md", "title": "Scenario matrix", "sections": [
-          { "h": "All scenarios", "table": ["ID", "Scenario", "Role", "Screens", "Status"] }
-        ]},
-        { "file": "happy-paths.md", "title": "Happy paths", "sections": [
-          { "h": "HP-1 — name", "hint": "Role, precondition, expected outcome, then a step table: step, user action, system response, screen.", "ids": "HP" }
-        ]},
-        { "file": "edge-cases.md", "title": "Edge cases", "sections": [
-          { "h": "Cases", "table": ["ID", "Situation", "What the interface does", "Related HP"], "ids": "EC" }
-        ]},
-        { "file": "failure-and-recovery.md", "title": "Failure and recovery", "sections": [
-          { "h": "Failures", "table": ["ID", "What breaks", "What the user sees", "How they recover"], "ids": "FR" }
-        ]}
+        {
+          "file": "scenario-matrix.md",
+          "title": "Scenario matrix",
+          "sections": [
+            {
+              "h": "All scenarios",
+              "table": [
+                "ID",
+                "Scenario",
+                "Role",
+                "Screens",
+                "Status"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "happy-paths.md",
+          "title": "Happy paths",
+          "sections": [
+            {
+              "h": "HP-1 — name",
+              "hint": "Role, precondition, expected outcome, then a step table: step, user action, system response, screen.",
+              "ids": "HP"
+            }
+          ]
+        },
+        {
+          "file": "edge-cases.md",
+          "title": "Edge cases",
+          "sections": [
+            {
+              "h": "Cases",
+              "table": [
+                "ID",
+                "Situation",
+                "What the interface does",
+                "Related HP"
+              ],
+              "ids": "EC"
+            }
+          ]
+        },
+        {
+          "file": "failure-and-recovery.md",
+          "title": "Failure and recovery",
+          "sections": [
+            {
+              "h": "Failures",
+              "table": [
+                "ID",
+                "What breaks",
+                "What the user sees",
+                "How they recover"
+              ],
+              "ids": "FR"
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "05", "dir": "05_ia", "title": "Information architecture", "ru": "Информационная архитектура",
+      "id": "05",
+      "dir": "05_ia",
+      "title": "Information architecture",
+      "ru": "Информационная архитектура",
       "why": "навигация, объекты на экране, матрица прав",
-      "default": false, "needs": ["04"],
+      "default": false,
+      "needs": [
+        "04"
+      ],
       "artifacts": [
-        { "file": "navigation-model.md", "title": "Navigation model", "sections": [
-          { "h": "Where the feature lives", "hint": "Entry points and how the user gets back." }
-        ]},
-        { "file": "object-model.md", "title": "Object model", "sections": [
-          { "h": "Objects on screen", "table": ["Object", "Shown as", "Actions"] }
-        ]},
-        { "file": "permission-matrix.md", "title": "Permission matrix", "sections": [
-          { "h": "Role by action", "table": ["Action", "Role A", "Role B"], "hint": "Unavailable means hidden, not disabled." }
-        ]}
+        {
+          "file": "navigation-model.md",
+          "title": "Navigation model",
+          "sections": [
+            {
+              "h": "Where the feature lives",
+              "hint": "Entry points and how the user gets back."
+            }
+          ]
+        },
+        {
+          "file": "object-model.md",
+          "title": "Object model",
+          "sections": [
+            {
+              "h": "Objects on screen",
+              "table": [
+                "Object",
+                "Shown as",
+                "Actions"
+              ]
+            }
+          ]
+        },
+        {
+          "file": "permission-matrix.md",
+          "title": "Permission matrix",
+          "sections": [
+            {
+              "h": "Role by action",
+              "table": [
+                "Action",
+                "Role A",
+                "Role B"
+              ],
+              "hint": "Unavailable means hidden, not disabled."
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "06", "dir": "06_state-design", "title": "State design", "ru": "Состояния экранов",
+      "id": "06",
+      "dir": "06_state-design",
+      "title": "State design",
+      "ru": "Состояния экранов",
       "why": "девять состояний на каждый экран, а не только «всё хорошо»",
-      "default": true, "needs": ["04"], "perScreen": true,
+      "default": true,
+      "needs": [
+        "04"
+      ],
+      "perScreen": true,
       "artifacts": [
-        { "file": "state-matrix-<screen>.md", "title": "State matrix", "states": true }
+        {
+          "file": "state-matrix-<screen>.md",
+          "title": "State matrix",
+          "states": true
+        }
       ]
     },
     {
-      "id": "07", "dir": "07_screen-specs", "title": "Screen specs", "ru": "Прототип",
+      "id": "07",
+      "dir": "07_screen-specs",
+      "title": "Screen specs",
+      "ru": "Прототип",
       "why": "контракт экрана: что на нём, откуда данные, что делает каждое действие",
-      "default": true, "needs": ["06"], "perScreen": true,
+      "default": true,
+      "needs": [
+        "06"
+      ],
+      "perScreen": true,
       "artifacts": [
-        { "file": "screen-contracts/contract-<screen>.md", "title": "Screen contract", "sections": [
-          { "h": "Purpose", "hint": "What this screen is for, in one sentence, and which scenarios it serves (HP-N)." },
-          { "h": "Blocks", "table": ["Block", "Content", "Component"] },
-          { "h": "Actions", "table": ["Action", "What happens", "Where it leads"] },
-          { "h": "Data", "table": ["Field", "Source", "Value when empty"] },
-          { "h": "States", "hint": "Link to the state matrix; list only what differs from it." }
-        ]}
+        {
+          "file": "screen-contracts/contract-<screen>.md",
+          "title": "Screen contract",
+          "sections": [
+            {
+              "h": "Purpose",
+              "hint": "What this screen is for, in one sentence, and which scenarios it serves (HP-N)."
+            },
+            {
+              "h": "Mockup",
+              "hint": "Link to the Figma frame for this screen (the URL must carry ?node-id=). /review compares the built screen against it — without this link there is nothing to compare."
+            },
+            {
+              "h": "Blocks",
+              "table": [
+                "Block",
+                "Content",
+                "Component"
+              ]
+            },
+            {
+              "h": "Actions",
+              "table": [
+                "Action",
+                "What happens",
+                "Where it leads"
+              ]
+            },
+            {
+              "h": "Data",
+              "table": [
+                "Field",
+                "Source",
+                "Value when empty"
+              ]
+            },
+            {
+              "h": "States",
+              "hint": "Link to the state matrix; list only what differs from it."
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "08", "dir": "08_design-system", "title": "Validation", "ru": "Валидация",
+      "id": "08",
+      "dir": "08_design-system",
+      "title": "Validation",
+      "ru": "Валидация",
       "why": "сверка прототипа с задуманным: сценарии прослежены, состояния покрыты",
-      "default": false, "needs": ["07"],
+      "default": false,
+      "needs": [
+        "07"
+      ],
       "artifacts": [
-        { "file": "patterns.md", "title": "Patterns and deviations", "sections": [
-          { "h": "Own components", "table": ["Component", "Why not from the design system", "Agreed with"] },
-          { "h": "Deviations", "table": ["What", "Where", "Reason"] }
-        ]}
+        {
+          "file": "patterns.md",
+          "title": "Patterns and deviations",
+          "sections": [
+            {
+              "h": "Own components",
+              "table": [
+                "Component",
+                "Why not from the design system",
+                "Agreed with"
+              ]
+            },
+            {
+              "h": "Deviations",
+              "table": [
+                "What",
+                "Where",
+                "Reason"
+              ]
+            }
+          ]
+        }
       ]
     },
     {
-      "id": "09", "dir": "09_progress-reviews", "title": "Review", "ru": "Ревью",
+      "id": "09",
+      "dir": "09_progress-reviews",
+      "title": "Review",
+      "ru": "Ревью",
       "why": "обратная связь после показа и что с ней сделали",
-      "default": false, "needs": ["07"],
+      "default": false,
+      "needs": [
+        "07"
+      ],
       "artifacts": [
-        { "file": "review.md", "title": "Review", "sections": [
-          { "h": "Feedback", "table": ["#", "Who", "What they said", "Decision"] }
-        ]}
+        {
+          "file": "review.md",
+          "title": "Review",
+          "sections": [
+            {
+              "h": "Feedback",
+              "table": [
+                "#",
+                "Who",
+                "What they said",
+                "Decision"
+              ]
+            }
+          ]
+        }
       ]
     }
   ],
   "nineStates": [
-    ["Empty", "нет данных, первый вход"],
-    ["Loading", "данные грузятся"],
-    ["Partial", "часть данных есть, часть грузится или недоступна"],
-    ["Normal", "всё хорошо, данные загружены"],
-    ["Degraded", "часть функций временно недоступна"],
-    ["Error", "ошибка, требующая действия"],
-    ["Blocked", "нет прав или условия не выполнены"],
-    ["Conflict", "параллельное редактирование, рассинхрон"],
-    ["Recovery", "восстановление после сбоя"]
+    [
+      "Empty",
+      "нет данных, первый вход"
+    ],
+    [
+      "Loading",
+      "данные грузятся"
+    ],
+    [
+      "Partial",
+      "часть данных есть, часть грузится или недоступна"
+    ],
+    [
+      "Normal",
+      "всё хорошо, данные загружены"
+    ],
+    [
+      "Degraded",
+      "часть функций временно недоступна"
+    ],
+    [
+      "Error",
+      "ошибка, требующая действия"
+    ],
+    [
+      "Blocked",
+      "нет прав или условия не выполнены"
+    ],
+    [
+      "Conflict",
+      "параллельное редактирование, рассинхрон"
+    ],
+    [
+      "Recovery",
+      "восстановление после сбоя"
+    ]
   ]
 }
