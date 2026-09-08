@@ -42,10 +42,12 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { exportContextData } from './context-app/export-context-data.mjs'
 import { validateManifest } from './context-app/context-data-schema.mjs'
 
 const root = process.cwd()
+const here = path.dirname(fileURLToPath(import.meta.url))   // папка scripts/ этого кита
 const NL = String.fromCharCode(10)
 const OUT = 'public/context-app-data'
 const STAND = 'https://prototype.xsolla.dev/context-app/embed.js'
@@ -236,20 +238,76 @@ const VITE_FIXED = `function contextAppDevFallback() {
   }
 }
 
-export default defineConfig({ plugins: [react(), contextAppDevFallback()] })`
+// Метки для инспектора компонентов в Context App: на каждом вызове компонента
+// дизайн-системы остаётся след — имя, откуда он, пропсы, файл и строка. Без
+// этого инспектор показывает не «Button», а внутренний Box, из которого тот собран.
+// Отдельным шагом, а не опцией React-плагина: в шестой версии опции babel нет.
+function xuiSourceTagPlugin() {
+  return {
+    name: 'xui-source-tag',
+    enforce: 'pre',
+    async transform(code, id) {
+      const file = id.split('?')[0]
+      if (!file.endsWith('.tsx') || file.includes('node_modules')) return null
+      const out = await babel.transformAsync(code, {
+        filename: file,
+        root: process.cwd(),
+        babelrc: false,
+        configFile: false,
+        sourceMaps: true,
+        plugins: [xuiSourceTag],
+        parserOpts: { plugins: ['typescript', 'jsx'] },
+      })
+      return out && out.code ? { code: out.code, map: out.map } : null
+    },
+  }
+}
+
+export default defineConfig({
+  plugins: [xuiSourceTagPlugin(), react(), contextAppDevFallback()],
+})`
 
 function ensureViteFix() {
   const file = path.join(root, 'vite.config.ts')
   if (!fs.existsSync(file)) return null
   const text = read(file)
-  if (text.indexOf('context-app-dev-fallback') !== -1) return null
-  if (text.indexOf(VITE_PLAIN) === -1) {
-    return 'vite.config.ts изменён — допишите в него плагин context-app-dev-fallback, иначе на dev-сервере попап покажет сам прототип'
-  }
+  if (text.indexOf('xui-source-tag') !== -1) return null
+
   const head = (text.indexOf('import path') === -1 ? "import path from 'node:path'" + NL : '')
     + (text.indexOf('import fs') === -1 ? "import fs from 'node:fs'" + NL : '')
+    + "import * as babel from '@babel/core'" + NL
+    + "import xuiSourceTag from './scripts/xui-source-tag.ts'" + NL
+
+  const older = text.indexOf('function contextAppDevFallback')
+  if (older !== -1) {                     // конфиг прошлой версии — дописываем инспектор
+    fs.writeFileSync(file, head + text.slice(0, older) + VITE_FIXED + NL)
+    return null
+  }
+  if (text.indexOf(VITE_PLAIN) === -1) {
+    return 'vite.config.ts переписан — впишите в него плагины context-app-dev-fallback и xui-source-tag руками, иначе попап покажет сам прототип, а инспектор — Box вместо компонентов'
+  }
   fs.writeFileSync(file, head + text.replace(VITE_PLAIN, VITE_FIXED))
   return null
+}
+
+// Таблица, в которую плагин складывает данные о вызовах компонентов. Плагин
+// дописывает импорт на неё из каждого файла, поэтому лежать она обязана
+// строго здесь: src/kit/xui-source-meta.ts.
+// Плагин меток работает через @babel/core. Ставим его здесь, когда инспектор
+// действительно включают, а не заранее «на будущее».
+function ensureBabel() {
+  if (fs.existsSync(path.join(root, 'node_modules', '@babel', 'core'))) return 'уже стоит'
+  if (!fs.existsSync(path.join(root, 'package.json'))) return 'нет package.json — пропускаю'
+  const r = spawnSync('npm', ['install', '-D', '@babel/core', '--no-audit', '--no-fund'],
+    { cwd: root, stdio: 'ignore', shell: true })
+  return r.status === 0 ? 'поставлен' : 'не удалось поставить'
+}
+
+function ensureSourceMeta() {
+  const dest = path.join(root, 'src', 'kit', 'xui-source-meta.ts')
+  if (fs.existsSync(dest)) return
+  fs.mkdirSync(path.dirname(dest), { recursive: true })
+  fs.copyFileSync(path.join(here, 'xui-source-meta.ts'), dest)
 }
 
 async function cmdExport({ quiet } = {}) {
@@ -312,6 +370,8 @@ function cmdConnect(proto) {
     console.log('Данные собраны: ' + OUT)
     const app = fetchApp()
     console.log('Копия приложения для localhost: ' + app)
+    ensureSourceMeta()
+    console.log('Метки для инспектора компонентов: ' + ensureBabel())
     const warning = ensureViteFix()
     if (warning) console.log('Внимание: ' + warning)
     console.log('')
