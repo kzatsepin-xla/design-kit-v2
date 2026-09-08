@@ -46,8 +46,39 @@ if (!notes) process.exit(0)
 
 const log = fs.readFileSync(transcript, 'utf8')
 
-// Признак разведки — реальный заход внутрь пакетов, а не упоминание библиотеки в импортах.
-const dug = log.includes(".d.ts") || log.includes("node_modules/@") || log.includes("node_modules\\@")
+// Признак разведки — заход внутрь пакетов дизайн-системы В ЭТОМ ходе. Раньше проверка
+// искала «.d.ts» по всему разговору целиком и цеплялась к сессиям, где библиотеку вообще
+// не открывали: хватало упоминания пути в чужом выводе. Тогда агенту приходилось
+// оправдываться, что он ничего не нашёл, — шум вместо пользы.
+const NL = String.fromCharCode(10)
+const BS = String.fromCharCode(92)
+const lines = log.split(NL).filter(Boolean)
+
+// Где начался текущий ход: последнее сообщение дизайнера, а не ответ инструмента.
+let turnStart = 0
+lines.forEach((line, i) => {
+  try {
+    const e = JSON.parse(line)
+    const content = e.message?.content
+    const isToolResult = Array.isArray(content) && content.some((c) => c.type === "tool_result")
+    if (e.type === "user" && !isToolResult) turnStart = i
+  } catch {}
+})
+
+const digging = (text) =>
+  text.includes("node_modules/@xsolla") ||
+  text.includes("node_modules" + BS + "@xsolla") ||
+  (text.includes("@xsolla") && text.includes(".d.ts"))
+
+let dug = false
+for (const line of lines.slice(turnStart)) {
+  try {
+    const e = JSON.parse(line)
+    for (const c of e.message?.content || []) {
+      if (c.type === "tool_use" && digging(JSON.stringify(c.input))) dug = true
+    }
+  } catch {}
+}
 if (!dug) process.exit(0)
 
 // Сколько находок было на старте сессии — снимок сделал session-start.
@@ -70,6 +101,6 @@ console.error(
   `You read the design system's internals this session but wrote nothing down.\n` +
   `Append one line to ${rel} for each thing you had to work out — behaviour, defaults, ` +
   `anything a screen would trip over. Skip what is already there or plainly visible in the types. ` +
-  `Then finish. If you truly learned nothing new, append nothing and say so.`
+  `Then finish. Learned nothing new — append nothing and just finish: no explanations, the designer does not need a report about the absence of findings.`
 )
 process.exit(2)                                  // ход не завершается, агент дописывает
