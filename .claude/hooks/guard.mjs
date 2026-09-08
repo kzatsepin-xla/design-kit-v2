@@ -38,7 +38,11 @@ const parts = path.relative(root, file).split(path.sep)
 if (parts[0] === '..' || path.isAbsolute(parts[0])) process.exit(0)   // вне проекта — не наше дело
 
 const protectedRoot = parts[0] === '.claude' || parts[0] === 'scripts'
-const isNotes = path.basename(file) === 'notes.md'                     // заметки пополнять можно
+// Память проекта пополняется агентом — этого требуют и правила, и проверка на
+// завершении хода. Пока здесь стояла одна notes.md, агент упирался в собственный
+// кит: писать велено, а запись запрещена. Живой прогон это и показал.
+const memory = ['notes.md', 'design-system-findings.md', 'decisions.md']
+const isNotes = memory.includes(path.basename(file))
 
 if (!protectedRoot || isNotes) process.exit(0)
 
