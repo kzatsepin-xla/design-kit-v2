@@ -228,6 +228,11 @@ const VITE_FIXED = `function contextAppDevFallback() {
         next()
       })
     },
+    // Копия приложения нужна только на dev-сервере: на стенде тег грузится со
+    // стенда, и лишние 650 КБ в сборке — мёртвый груз. После сборки выкидываем.
+    closeBundle() {
+      fs.rmSync('dist/context-app', { recursive: true, force: true })
+    },
   }
 }
 
@@ -241,7 +246,8 @@ function ensureViteFix() {
   if (text.indexOf(VITE_PLAIN) === -1) {
     return 'vite.config.ts изменён — допишите в него плагин context-app-dev-fallback, иначе на dev-сервере попап покажет сам прототип'
   }
-  const head = text.indexOf('import path') === -1 ? "import path from 'node:path'" + NL : ''
+  const head = (text.indexOf('import path') === -1 ? "import path from 'node:path'" + NL : '')
+    + (text.indexOf('import fs') === -1 ? "import fs from 'node:fs'" + NL : '')
   fs.writeFileSync(file, head + text.replace(VITE_PLAIN, VITE_FIXED))
   return null
 }
