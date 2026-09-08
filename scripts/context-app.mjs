@@ -78,7 +78,7 @@ function statesOfMatrix(file) {
     const mark = /^\*\*(Применимо|Applicable):\*\*\s*(.+)$/.exec(line.trim())
     if (!mark) continue
     const value = mark[2].trim()
-    if (value.indexOf('N/A') === -1 && /^(да|yes)\s*$/i.test(value)) out.push(current)
+    if (value.indexOf('N/A') === -1 && /^(да|yes)([ ,.:;\u2014-]|$)/i.test(value)) out.push(current)
     current = null
   }
   return out
