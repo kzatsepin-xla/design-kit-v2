@@ -84,6 +84,39 @@ if (fs.existsSync(nm)) {
   }
 }
 
+// ——— витрина xui-vibe ———
+// Общая галерея команды: компоненты, которых в дизайн-системе нет, но которые уже
+// написал кто-то из дизайнеров. Ищутся наравне с системными — чтобы не рисовать
+// в третий раз то, что дважды написано.
+
+const gallery = []
+const vibeSrc = path.join(root, 'vendor', 'xui-vibe', 'src')
+if (fs.existsSync(vibeSrc)) {
+  let publicSurface = ''
+  try { publicSurface = fs.readFileSync(path.join(vibeSrc, 'index.ts'), 'utf8') } catch {}
+
+  const scan = (dir, group) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue
+      const inner = path.join(dir, entry.name)
+      const file = path.join(inner, entry.name + '.tsx')
+      if (fs.existsSync(file)) {
+        let props = []
+        try { props = propsOf(fs.readFileSync(file, 'utf8'), entry.name) } catch {}
+        gallery.push({
+          name: entry.name,
+          group: group || null,
+          exported: publicSurface.includes('/' + entry.name),
+          props,
+        })
+      } else if (!group) {
+        scan(inner, entry.name)                 // папка-раздел витрины
+      }
+    }
+  }
+  try { scan(path.join(vibeSrc, 'components'), null) } catch {}
+}
+
 // ——— пишем ———
 
 const index = {
@@ -91,6 +124,7 @@ const index = {
   published: published.map((p) => p.pkg),
   branchOnly: published.filter((p) => p.branchOnly).map((p) => p.pkg),
   installed,
+  gallery,
 }
 
 const file = path.join(out, 'index.json')
@@ -113,5 +147,6 @@ if (fs.existsSync(notes) && version) {
 }
 
 const comps = installed.reduce((n, p) => n + p.components.length, 0)
+if (gallery.length) console.log('витрина xui-vibe: ' + gallery.length + ' компонентов')
 console.log(`база дизайн-системы: ${published.length} пакетов опубликовано · ${installed.length} установлено · ${comps} компонентов`)
 console.log(`  ${path.relative(root, file)} — ${(fs.statSync(file).size / 1024).toFixed(0)} КБ`)

@@ -59,8 +59,12 @@ for (const pkg of index.published) {
   if (hit(short) || names.some((n) => hit(n))) found.push({ pkg, short, inst, names })
 }
 
-if (!found.length) {
-  console.log('в дизайн-системе ничего похожего на «' + query + '» нет.')
+// Витрина команды — компоненты, которых в системе нет, но которые уже кем-то написаны.
+const inGallery = (index.gallery || []).filter((c) => hit(c.name) || (c.group && hit(c.group)))
+
+if (!found.length && !inGallery.length) {
+  console.log('ни в дизайн-системе, ни в витрине команды ничего похожего на «' + query + '» нет.')
+  if (!(index.gallery || []).length) console.log('(витрина не подключена: node scripts/vibe.mjs connect)')
   console.log('Заводите свой: node scripts/new-component.mjs <Name>')
   process.exit(0)
 }
@@ -87,6 +91,17 @@ if (avail.length) {
   for (const f of avail) console.log('  ' + f.pkg + (branchOnly.has(f.pkg) ? '  ⚠ только сборки из веток, релиза нет' : ''))
   console.log('')
   console.log('  npm i ' + avail.map((f) => f.pkg).join(' ') + ' && node scripts/ds-index.mjs')
+}
+
+if (inGallery.length) {
+  if (found.length) console.log('')
+  console.log('ЕСТЬ В ВИТРИНЕ КОМАНДЫ — импортируйте из @xui-vibe, не пишите заново:')
+  for (const c of inGallery) {
+    const p = c.props.slice(0, 8).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
+    console.log('  ' + c.name + (c.group ? '  (' + c.group + ')' : '') + (c.exported ? '' : '  ⚠ не выведен в @xui-vibe, импорт по пути'))
+    if (p.length) console.log('    ' + p.join(' · '))
+  }
+  console.log('  В системе таких компонентов нет: это работа коллег, а не дизайн-система.')
 }
 
 if (ready.some((f) => f.inst.ownStyled)) {
