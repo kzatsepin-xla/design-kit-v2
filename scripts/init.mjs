@@ -143,30 +143,37 @@ write('src/app.tsx', [
   '// создали src/screens/<имя>/screen.tsx — он появился в списке сам.',
   "const found = import.meta.glob('./screens/*/screen.tsx', { eager: true }) as Record<",
   '  string,',
-  '  { Screen: () => any }',
+  '  { Screen: (props: { state: string | null }) => any }',
   '>',
   '',
   'const screens = Object.fromEntries(',
   "  Object.entries(found).map(([file, mod]) => [file.split('/')[2], mod.Screen]),",
   ')',
   '',
+  '// Адрес экрана: #<экран>, а если нужно конкретное состояние — #<экран>?state=empty.',
+  '// Так узел карты экранов Context App открывает прототип сразу в нужном состоянии.',
+  'function readHash() {',
+  "  const [name, query] = location.hash.slice(1).split('?')",
+  "  return { name, state: new URLSearchParams(query).get('state') }",
+  '}',
+  '',
   'export function App() {',
-  "  const [name, setName] = useState(() => location.hash.slice(1))",
+  '  const [route, setRoute] = useState(readHash)',
   '',
   '  useEffect(() => {',
-  "    const sync = () => setName(location.hash.slice(1))",
+  '    const sync = () => setRoute(readHash())',
   "    addEventListener('hashchange', sync)",
   "    return () => removeEventListener('hashchange', sync)",
   '  }, [])',
   '',
   '  const names = Object.keys(screens).sort()',
-  '  const current = screens[name] ? name : names[0]',
+  '  const current = screens[route.name] ? route.name : names[0]',
   '  const Screen = screens[current]',
   '',
   '  return (',
   '    <>',
   '      {names.length > 1 && <ScreenSwitch names={names} current={current} />}',
-  '      {Screen ? <Screen /> : <p>No screens yet.</p>}',
+  '      {Screen ? <Screen state={route.state} /> : <p>No screens yet.</p>}',
   '    </>',
   '  )',
   '}',
@@ -259,4 +266,10 @@ console.log()
 if (created.length) console.log('создано:\n' + created.map((f) => '  ' + f).join('\n'))
 if (skipped.length) console.log('уже было:\n' + skipped.map((f) => '  ' + f).join('\n'))
 
-
+// Прототип, который никто не увидит, бесполезен: подсказываем, чем его показать.
+if (created.length) {
+  console.log()
+  console.log('открыть: npm run dev')
+  console.log('показать команде — кнопка Context с картой экранов и комментариями:')
+  console.log('  node scripts/context-app.mjs connect')
+}

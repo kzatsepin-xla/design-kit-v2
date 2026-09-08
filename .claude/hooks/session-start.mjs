@@ -69,6 +69,7 @@ if (state.designSystem?.kind && state.designSystem.kind !== 'none') {
 }
 if (state.next) bits.push(`next: ${state.next}`)
 if (state.debt?.length) bits.push(`debt: ${state.debt.join(', ')}`)
+if (state.stages?.length) bits.push(`doc stages: ${state.stages.join(' ')} — where they stand: node scripts/docs.mjs`)
 
 console.log('[state] ' + bits.join(' · '))
 
