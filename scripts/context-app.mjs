@@ -132,7 +132,67 @@ function flowMapOf(featureId) {
     }
   }
   if (!nodes.length) return null
-  return { featureId, title: featureId, flows, nodes, edges: [] }
+
+  // Стрелка ведёт в точку входа экрана — состояние Normal, если оно есть.
+  const entry = (screen) => {
+    const own = nodes.filter((n) => n.target.sectionId === screen)
+    return (own.find((n) => n.isEntryPoint) || own[0])?.id
+  }
+  const mapped = [...new Set(nodes.map((n) => n.target.sectionId))]
+  const edges = []
+  const seen = new Set()
+  for (const t of transitionsOf(featureId, mapped)) {
+    const from = entry(t.from)
+    const to = entry(t.to)
+    if (!from || !to) continue
+    const key = from + '>' + to
+    if (seen.has(key)) continue
+    seen.add(key)
+    // Возврат помечаем возвратом — иначе автораскладка карты ломается. Определяем
+    // по подписи действия, а не по порядку обхода: файлы читаются по алфавиту, и
+    // «Возврат» из achievements попадался раньше, чем «See all» из home.
+    const back = /возврат|вернут|назад|back|отмена|cancel|закрыть|close/i.test(t.label) || /^к\s+/i.test(t.label)
+    edges.push({ from, to, label: t.label, kind: back ? 'back' : 'primary' })
+  }
+  return { featureId, title: featureId, flows, nodes, edges }
+}
+
+// ——— переходы между экранами ———
+
+// Стрелки на карте — это ответ на вопрос «что откуда открывается», и он уже записан
+// в контракте экрана: таблица Actions, колонка «куда ведёт». Придумывать переходы
+// программой нельзя, а руками их писать некуда — карта пересобирается каждый ход.
+// Поэтому берём только то, что названо однозначно: ровно один известный экран в ячейке
+// и не тот же самый. Всё остальное — «home или портал», внешние разделы, «остаётся тут» —
+// пропускаем молча: три верные стрелки лучше десяти выдуманных.
+function transitionsOf(featureId, screens) {
+  const dir = path.join(root, 'docs', 'features', featureId, '07_screen-specs', 'screen-contracts')
+  if (!fs.existsSync(dir)) return []
+  const out = []
+
+  for (const name of fs.readdirSync(dir).sort()) {
+    const m = /^contract-(.+)\.md$/.exec(name)
+    if (!m || !screens.includes(m[1])) continue
+    const from = m[1]
+
+    let inActions = false
+    for (const line of read(path.join(dir, name)).split(NL)) {
+      if (/^##\s/.test(line)) { inActions = /^##\s+Actions/i.test(line); continue }
+      if (!inActions || !line.trim().startsWith('|')) continue
+
+      const cells = line.split('|').slice(1, -1).map((c) => c.trim())
+      if (cells.length < 3) continue
+      if (/^-+$/.test(cells[0]) || /^Action$/i.test(cells[0])) continue      // шапка и разделитель
+
+      const target = cells[cells.length - 1]
+      const named = screens.filter((s) => s !== from && new RegExp('(^|[^a-z0-9-])' + s + '([^a-z0-9-]|$)', 'i').test(target))
+      if (named.length !== 1) continue
+
+      const label = cells[0].replace(/[«»"]/g, '').slice(0, 40)
+      out.push({ from, to: named[0], label })
+    }
+  }
+  return out
 }
 
 function summaryOf(featureId) {
