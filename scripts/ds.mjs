@@ -62,9 +62,29 @@ for (const pkg of index.published) {
 // Витрина команды — компоненты, которых в системе нет, но которые уже кем-то написаны.
 const inGallery = (index.gallery || []).filter((c) => hit(c.name) || (c.group && hit(c.group)))
 
+// Находки больше не грузятся в сессию сами — сюда они и доезжают. Отбор щедрый:
+// слово запроса в строке, имя пакета или имя компонента. Вызывается и когда компонент
+// найден, и когда нет: «шрифт» или «тема» — не компонент, а находка про них есть.
+function findings() {
+  const file = path.join(root, '.claude', 'ds', 'findings.md')
+  if (!fs.existsSync(file)) return []
+  const related = (l) =>
+    hit(l) ||
+    found.some((f) => l.includes(f.short) || l.includes(f.pkg)) ||
+    found.some((f) => f.names.some((n) => new RegExp('(^|[^A-Za-z])' + n + '([^A-Za-z]|$)').test(l)))
+  return fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.startsWith('- ') && related(l))
+}
+
 if (!found.length && !inGallery.length) {
   console.log('ни в дизайн-системе, ни в витрине команды ничего похожего на «' + query + '» нет.')
   if (!(index.gallery || []).length) console.log('(витрина не подключена: node scripts/vibe.mjs connect)')
+  const known = findings()
+  if (known.length) {
+    console.log('')
+    console.log('НО ПРО ЭТО УЖЕ ЧТО-ТО ВЫЯСНЯЛИ:')
+    for (const l of known.slice(0, 4)) console.log('  ' + l.slice(2, 200))
+  }
+  console.log('')
   console.log('Заводите свой: node scripts/new-component.mjs <Name>')
   process.exit(0)
 }
@@ -123,8 +143,7 @@ if (avail.some((f) => branchOnly.has(f.pkg))) {
 // Заметки о поведении — показываем только те, что про найденное.
 const notes = path.join(root, '.claude', 'ds', 'findings.md')
 if (fs.existsSync(notes)) {
-  const lines = fs.readFileSync(notes, 'utf8').split('\n')
-    .filter((l) => l.startsWith('- ') && found.some((f) => hit(f.short) && (hit(l) || f.names.some((n) => l.includes(n)))))
+  const lines = findings()
   if (lines.length) {
     console.log('')
     console.log('ЧТО УЖЕ ВЫЯСНИЛИ ПРО НИХ:')
