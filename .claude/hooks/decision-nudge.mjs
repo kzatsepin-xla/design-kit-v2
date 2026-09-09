@@ -63,6 +63,9 @@ if (!markers.some((m) => prompt.includes(m))) process.exit(0)
 
 console.log(
   '[decision?] The designer just rejected or redirected something. If this is a standing rule ' +
-  'rather than a one-off tweak, append one short line in their own words to .claude/rules/decisions.md ' +
-  'and follow it from now on. If it is a one-off, write nothing and ignore this note.'
+  'rather than a one-off tweak, append one short line in their own words to the decision file that ' +
+  'matches its scope: .claude/rules/decisions-code.md for screens, components, copy or the build; ' +
+  '.claude/rules/decisions-docs.md for product documents; .claude/rules/decisions.md only when it fits ' +
+  'neither, because that one is loaded in every session. A decision already enforced by a check goes ' +
+  'nowhere — the check is the rule. If it is a one-off, write nothing and ignore this note.'
 )
