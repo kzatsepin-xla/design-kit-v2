@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 //
-//  notes-gate — не даёт агенту забыть то, что он выяснил
-//  ────────────────────────────────────────────────────
+//  notes-gate — предлагает запомнить то, что выяснилось по ходу работы
+//  ──────────────────────────────────────────────────────────────────
 //
 //  ЗАЧЕМ ЭТО НУЖНО
-//  Пока агент верстает, он натыкается на особенности дизайн-системы, которых нет
-//  ни в какой документации: этот компонент по умолчанию тёмный, у того текст ведёт
-//  себя не так, как ждёшь. Он разбирается, чинит — и забывает, потому что разговор
-//  заканчивается. В следующий раз он потратит на то же самое столько же времени.
+//  Пока агент верстает, он натыкается на особенности библиотеки, которых нет ни в какой
+//  документации: этот компонент по умолчанию тёмный, у того текст ведёт себя не так,
+//  как ждёшь. Он разбирается, чинит — и забывает, потому что разговор заканчивается.
+//  В следующий раз потратит на то же самое столько же времени.
 //
-//  В справочнике есть просьба записывать такие находки. Мы проверили: просьбы агент
-//  не выполняет. Поэтому теперь это не просьба, а условие завершения работы: если он
-//  копался во внутренностях библиотеки и ничего не записал — ход не засчитывается,
-//  и ему возвращается требование записать одной строкой, что он узнал.
+//  Записывать такое молча мы пробовали — получалась память, которую никто не выбирал.
+//  Теперь решаете вы: агент показывает находку обычными словами и спрашивает, стоит ли
+//  её запомнить. Записывается только то, на что вы согласились.
 //
 //  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Сам, в момент, когда агент считает работу законченной.
+//  Сам, в момент, когда агент считает работу законченной, и только если он правда
+//  копался внутри библиотеки. Не чаще одного раза за разговор.
 //
 //  ЧТО ВЫ УВИДИТЕ
-//  Изредка — что агент, прежде чем отчитаться, дописывает строку в заметки.
-//  Срабатывает не чаще одного раза за разговор, чтобы не превращаться в зануду.
+//  Вопрос с кнопками: «запомнить это на будущее?» — с объяснением, что заметили
+//  и чем это поможет в следующий раз. Отказ ничего не ломает.
 //
 //  ГДЕ КОПЯТСЯ ЗАМЕТКИ
 //  .claude/rules/design-system-findings.md — их можно читать и править руками.
@@ -94,13 +94,33 @@ const current = fs.readFileSync(notes, "utf8").split(String.fromCharCode(10))
 
 if (current > baseline) process.exit(0)          // что-то дописал — всё в порядке
 
+// Спросил и получил «не надо» — это тоже закрытый вопрос: молчим.
+const asked = lines.slice(turnStart).some((line) => {
+  try {
+    const e = JSON.parse(line)
+    return (e.message?.content || []).some((c) => c.type === 'tool_use' && /AskUserQuestion/i.test(c.name || ''))
+  } catch { return false }
+})
+if (asked) process.exit(0)
+
 fs.writeFileSync(flag, '1')
 
 const rel = path.relative(root, notes).split(path.sep).join("/")
 console.error(
-  `You read the design system's internals this session but wrote nothing down.\n` +
-  `Append one line to ${rel} for each thing you had to work out — behaviour, defaults, ` +
-  `anything a screen would trip over. Skip what is already there or plainly visible in the types. ` +
-  `Then finish. Learned nothing new — append nothing and just finish: no explanations, the designer does not need a report about the absence of findings.`
+  `You dug inside the design system this turn and nothing was offered to the designer's memory.
+` +
+  `Ask them — do not decide yourself and do not write anything unasked. One AskUserQuestion call, ` +
+  `one question per finding worth keeping (at most two; drop the rest).
+` +
+  `Speak their language: they are a designer or a manager, not a developer. Say in one sentence what ` +
+  `the interface does that you did not expect, and in one more what it saves next time — no package ` +
+  `names, no props, no versions in the question itself.
+` +
+  `Options: keep it / not worth it. Only if they say keep, append one line to ${rel} — there the line ` +
+  `may be technical, it is written for the agent, not for them.
+` +
+  `Nothing worth asking about — finish quietly, no report about the absence of findings.
+` +
+  `The question tool is unavailable (headless) — say so in one line and finish.`
 )
 process.exit(2)                                  // ход не завершается, агент дописывает
