@@ -50,10 +50,11 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
 
 ## The project's own file
 
-`AGENTS.md` at the root belongs to the project, not to this kit. When you learn what the
-product is — from the conversation, a PRD or a mockup — fill its **About this product**
-section: who uses it, what it is for, what matters visually, whatever cannot be read off
-the code. Two or three sentences, updated as you learn more. Nobody else will write it.
+`AGENTS.md` at the root belongs to the project, not to this kit. It ships empty on purpose.
+Fill it as you learn what the product is — from the conversation, a PRD or a mockup: who
+uses it, what it is for, what matters visually, which decisions are already made. Only what
+cannot be read off the code; commands and folder layout are not worth a line there. A few
+sentences, extended as you learn more. Nobody else will write it.
 
 ## Memory — ask first, write after
 
