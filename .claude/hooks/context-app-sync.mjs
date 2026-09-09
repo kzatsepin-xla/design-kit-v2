@@ -51,6 +51,14 @@ function newest(dir, best = 0) {
   return best
 }
 
+// И сразу — сошлись ли документы с кодом. Быстрая проверка, без браузера: иначе агент
+// заканчивает ход с отчётом, который перестал быть правдой в этом же ходу.
+const quick = spawnSync(process.execPath, ['scripts/screens.mjs', '--quick'], { cwd: root, encoding: 'utf8' })
+if (quick.status === 1 && quick.stdout.trim()) {
+  console.log('[screens] документы и экраны разошлись — скажи об этом дизайнеру, не отчитывайся зелёным:')
+  for (const line of quick.stdout.trim().split(String.fromCharCode(10)).slice(0, 5)) console.log('  ' + line)
+}
+
 const built = fs.statSync(manifest).mtimeMs
 const changed = Math.max(
   newest(path.join(root, 'docs', 'features')),
@@ -70,4 +78,5 @@ if (run.status !== 0) {
 // Из отчёта экспортёра берём строку про узлы — она и есть полезная новость.
 const nodes = /узлов на карте: (\d+)/.exec(run.stdout || '')
 console.log('[context-app] данные пересобраны' + (nodes ? ', узлов на карте: ' + nodes[1] : ''))
+
 process.exit(0)
