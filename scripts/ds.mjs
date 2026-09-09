@@ -28,19 +28,7 @@ if (!fs.existsSync(file)) { console.error('базы нет — соберите:
 
 const index = JSON.parse(fs.readFileSync(file, 'utf8'))
 
-// Русские слова, которыми дизайнер называет то же самое.
-const ru = {
-  карточ: 'card', кнопк: 'button', прогресс: 'progress', меню: 'menu navigation',
-  вкладк: 'tabs', таблиц: 'table', переключ: 'switch toggle', галочк: 'checkbox',
-  поле: 'input', ввод: 'input', список: 'list select', выпада: 'select dropdown',
-  подсказ: 'tooltip toggletip', модал: 'modal', окно: 'modal', уведомл: 'toast notification',
-  аватар: 'avatar', значок: 'badge tag', иконк: 'icons', загруз: 'uploader spinner',
-  календ: 'calendar date', слайдер: 'slider', шаг: 'stepper pagination', ссылк: 'link',
-  навигац: 'navigation nav breadcrumbs', поиск: 'autocomplete', текст: 'typography',
-  разделит: 'divider', полос: 'progress line', страниц: 'pagination', футер: 'nav-bar',
-}
 let terms = [query]
-for (const [k, v] of Object.entries(ru)) if (query.includes(k)) terms.push(...v.split(' '))
 // «media card» ищем и как mediacard, и по каждому слову
 terms.push(query.replace(/[\s_-]/g, ''), ...query.split(/[\s_-]+/).filter((w) => w.length > 2))
 terms = [...new Set(terms.filter(Boolean))]
@@ -76,7 +64,10 @@ function findings() {
 }
 
 if (!found.length && !inGallery.length) {
-  console.log('ни в дизайн-системе, ни в витрине команды ничего похожего на «' + query + '» нет.')
+  console.log('nothing like "' + query + '" in the design system or the team gallery.')
+  // The catalogue is indexed in English on purpose: language is the agent's job, not this
+  // script's. A designer typing in their own language gets pointed at the English term.
+  if (!/^[ -]+$/.test(query)) console.log('(the catalogue is in English — try the English term)')
   if (!(index.gallery || []).length) console.log('(витрина не подключена: node scripts/vibe.mjs connect)')
   const known = findings()
   if (known.length) {

@@ -1,30 +1,30 @@
 #!/usr/bin/env node
 //
-//  debt — что агент решил за вас, пока вас не было рядом
-//  ────────────────────────────────────────────────────
+//  debt — what the agent decided for you while you were away
+//  ────────────────────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Работая, агент постоянно упирается в развилки: в макете скругление, которого нет
-//  в токенах; в контракте два варианта, а вы не ответили; данных нет, поставил заглушку.
-//  Останавливаться на каждой — значит не двигаться вовсе, поэтому он выбирает сам
-//  и говорит об этом в конце хода. Через два дня об этом не помнит никто.
+//  WHY THIS EXISTS
+//  While working, the agent keeps hitting forks: a radius in the mockup that the tokens do
+//  not have, a contract offering two options you never chose between, data that does not
+//  exist yet. Stopping at every one means never moving, so it picks and tells you afterwards.
+//  Two days later nobody remembers.
 //
-//  Поэтому такие места помечаются прямо в коде: `// долг: взял табы, OQ-7 не закрыт`.
-//  Этот скрипт собирает пометки в один список — перед показом работы команде видно,
-//  где решали за вас.
+//  So such places are marked in the code itself: `// debt: took tabs, OQ-7 still open`.
+//  This script collects the marks into one list — before showing work to the team you can
+//  see where decisions were made for you.
 //
-//  ГЛАВНОЕ СВОЙСТВО
-//  Пометка живёт в том файле, где принято решение. Переписали этот кусок — пометка
-//  ушла вместе с ним, и список почистился сам. Ничего не нужно вычёркивать вручную:
-//  список не может устареть, потому что он не хранится отдельно от кода.
+//  THE POINT
+//  The mark lives in the file where the decision was made. Rewrite that part and the mark
+//  goes with it, and the list cleans itself. Nothing to cross out by hand: the list cannot
+//  go stale, because it is not stored anywhere apart from the code.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  По вашей просьбе — «что там за мной осталось» — и перед сдачей:
+//  WHEN IT RUNS
+//  When you ask — "what did you decide for me" — and before a handoff:
 //    node scripts/debt.mjs
 //
-//  ЧТО ВЫ УВИДИТЕ
-//  Список пометок с файлом и строкой. Пусто — значит агент ничего не решал за вас
-//  или всё уже переписано.
+//  WHAT YOU SEE
+//  A list of marks with file and line. Empty means the agent decided nothing for you, or
+//  everything it decided has since been rewritten.
 //
 import fs from 'node:fs'
 import path from 'node:path'
@@ -32,10 +32,10 @@ import path from 'node:path'
 const root = process.cwd()
 const NL = String.fromCharCode(10)
 
-// Где ищем. Служебное и чужое не трогаем.
+// Where to look. Service and third-party folders stay out.
 const LOOK_IN = ['src', 'docs']
 const SKIP = new Set(['node_modules', 'vendor', 'dist', '.git', '.claude', 'public'])
-const MARK = /(?:\/\/|\/\*|<!--|#)\s*(?:долг|debt)\s*:\s*(.+?)\s*(?:\*\/|-->)?$/i
+const MARK = /(?:\/\/|\/\*|<!--|#)\s*debt\s*:\s*(.+?)\s*(?:\*\/|-->)?$/i
 
 const found = []
 
@@ -49,9 +49,9 @@ function walk(dir) {
     if (!/\.(tsx?|jsx?|md|css|json)$/.test(e.name)) continue
     let text
     try { text = fs.readFileSync(p, 'utf8') } catch { continue }
-    if (!/долг|debt/i.test(text)) continue
-    // Пометка часто не влезает в строку и продолжается следующей строкой комментария —
-    // забирать только первую значит показывать дизайнеру половину мысли.
+    if (!/debt/i.test(text)) continue
+    // A mark often does not fit on one line and continues on the next comment line;
+    // taking only the first would show the designer half a thought.
     const lines = text.split(NL)
     lines.forEach((line, i) => {
       const m = MARK.exec(line.trim())
@@ -77,15 +77,15 @@ if (process.argv.includes('--count')) {
 }
 
 if (!found.length) {
-  console.log('за вас ничего не решали — пометок «долг:» в коде и документах нет')
+  console.log('nothing was decided for you: no debt marks in the code or the documents')
   process.exit(0)
 }
 
-console.log('решено за вас, ' + found.length + ' мест:')
+console.log('decided for you, ' + found.length + ' places:')
 let current = null
 for (const f of found) {
   if (f.file !== current) { current = f.file; console.log('  ' + f.file) }
-  console.log('    строка ' + f.line + ': ' + f.what)
+  console.log('    line ' + f.line + ': ' + f.what)
 }
 console.log('')
-console.log('Каждая пометка живёт в своём файле: перепишете это место — она исчезнет сама.')
+console.log('Each mark lives in its own file: rewrite that part and it disappears by itself.')

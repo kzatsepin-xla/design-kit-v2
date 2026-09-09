@@ -1,34 +1,34 @@
 #!/usr/bin/env node
 //
-//  notes-gate — предлагает запомнить то, что выяснилось по ходу работы
-//  ──────────────────────────────────────────────────────────────────
+//  notes-gate — offers to remember what turned up during the work
+//  ─────────────────────────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Пока агент верстает, он натыкается на особенности библиотеки, которых нет ни в какой
-//  документации: этот компонент по умолчанию тёмный, у того текст ведёт себя не так,
-//  как ждёшь. Он разбирается, чинит — и забывает, потому что разговор заканчивается.
-//  В следующий раз потратит на то же самое столько же времени.
+//  WHY THIS EXISTS
+//  While building screens the agent runs into library behaviour no documentation mentions:
+//  this component is dark by default, that one's text does not wrap the way you expect. It
+//  works it out, fixes it, and forgets, because the conversation ends. Next time it spends
+//  the same hour again.
 //
-//  Записывать такое молча мы пробовали — получалась память, которую никто не выбирал.
-//  Теперь решаете вы: агент показывает находку обычными словами и спрашивает, стоит ли
-//  её запомнить. Записывается только то, на что вы согласились.
+//  Writing that down silently was tried — the result was memory nobody chose. Now you decide:
+//  the agent shows the finding in plain words and asks whether it is worth keeping. Only what
+//  you agreed to gets written.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Сам, в момент, когда агент считает работу законченной, и только если он правда
-//  копался внутри библиотеки. Не чаще одного раза за разговор.
+//  WHEN IT RUNS
+//  On its own, when the agent considers the work done, and only if it really dug inside the
+//  library. Never more than once per conversation.
 //
-//  ЧТО ВЫ УВИДИТЕ
-//  Вопрос с кнопками: «запомнить это на будущее?» — с объяснением, что заметили
-//  и чем это поможет в следующий раз. Отказ ничего не ломает.
+//  WHAT YOU SEE
+//  A question with buttons: keep this for the future? — with what was noticed and what it
+//  saves next time. Declining breaks nothing.
 //
-//  ГДЕ КОПЯТСЯ ЗАМЕТКИ
-//  .claude/ds/findings.md — их можно читать и править руками.
+//  WHERE THE NOTES PILE UP
+//  .claude/ds/findings.md — plain text, yours to read and edit.
 //
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 
-const raw = fs.readFileSync(0, 'utf8')          // хук получает данные на вход
+const raw = fs.readFileSync(0, 'utf8')          // the hook receives its input on stdin
 let input = {}
 try { input = JSON.parse(raw) } catch { process.exit(0) }
 
@@ -36,25 +36,25 @@ const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
 const transcript = input.transcript_path
 if (!transcript || !fs.existsSync(transcript)) process.exit(0)
 
-// Срабатываем один раз за сессию: повторное требование превращается в зацикливание.
+// Fire once per session: repeating the demand turns into a loop.
 const flag = path.join(os.tmpdir(), `notes-gate-${input.session_id || 'x'}`)
 if (fs.existsSync(flag)) process.exit(0)
 
-// Заметки живут рядом со справочником по дизайн-системе; нет справочника — нечего требовать.
+// Findings live next to the design-system catalogue; no catalogue, nothing to ask for.
 const notes = path.join(root, '.claude', 'ds', 'findings.md')
 if (!notes) process.exit(0)
 
 const log = fs.readFileSync(transcript, 'utf8')
 
-// Признак разведки — заход внутрь пакетов дизайн-системы В ЭТОМ ходе. Раньше проверка
-// искала «.d.ts» по всему разговору целиком и цеплялась к сессиям, где библиотеку вообще
-// не открывали: хватало упоминания пути в чужом выводе. Тогда агенту приходилось
-// оправдываться, что он ничего не нашёл, — шум вместо пользы.
+// The signal is going inside the design-system packages IN THIS turn. The check used to
+// grep the whole conversation for '.d.ts' and caught sessions where the library was never
+// opened: a path mentioned in someone else's output was enough. The agent then had to
+// explain that it had found nothing — noise instead of use.
 const NL = String.fromCharCode(10)
 const BS = String.fromCharCode(92)
 const lines = log.split(NL).filter(Boolean)
 
-// Где начался текущий ход: последнее сообщение дизайнера, а не ответ инструмента.
+// Where the current turn began: the designer's last message, not a tool result.
 let turnStart = 0
 lines.forEach((line, i) => {
   try {
@@ -81,8 +81,8 @@ for (const line of lines.slice(turnStart)) {
 }
 if (!dug) process.exit(0)
 
-// Сколько находок было на старте сессии — снимок сделал session-start.
-// Снимка нет (хук не отработал) — не мешаем: лучше пропустить, чем блокировать вслепую.
+// How many findings existed at session start — session-start took the snapshot.
+// No snapshot (the hook did not run) — stay out of the way: better skip than block blindly.
 let baseline = null
 try {
   baseline = parseInt(fs.readFileSync(path.join(os.tmpdir(), "notes-baseline-" + input.session_id), "utf8"), 10)
@@ -92,9 +92,9 @@ if (baseline === null || Number.isNaN(baseline)) process.exit(0)
 const current = fs.readFileSync(notes, "utf8").split(String.fromCharCode(10))
   .filter((line) => line.startsWith("- ")).length
 
-if (current > baseline) process.exit(0)          // что-то дописал — всё в порядке
+if (current > baseline) process.exit(0)          // something was added — all good
 
-// Спросил и получил «не надо» — это тоже закрытый вопрос: молчим.
+// Asked and heard no — that closes the question too: stay silent.
 const asked = lines.slice(turnStart).some((line) => {
   try {
     const e = JSON.parse(line)
@@ -123,4 +123,4 @@ console.error(
 ` +
   `The question tool is unavailable (headless) — say so in one line and finish.`
 )
-process.exit(2)                                  // ход не завершается, агент дописывает
+process.exit(2)                                  // the turn does not end; the agent asks first

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * component-guard.mjs — не давать подменять компонент дизайн-системы своим.
+ * component-guard.mjs — stop a design-system component being replaced by a homemade one.
  *
- * ЗАЧЕМ ЭТО ДИЗАЙНЕРУ
+ * WHY THIS MATTERS TO THE DESIGNER
  *
- * Самая частая жалоба на прошлую версию: агент видит, что в макете кнопка чуть-чуть не
- * такая, как в дизайн-системе, и рисует свою. Правило «сначала ищи в системе» в шаблоне
- * было — но лежало текстом, который агент читает не всегда.
+ * The most common complaint about the previous version: the agent sees a button in the mockup
+ * that differs slightly from the design system and draws its own. The rule to search the
+ * system first was in the kit — as prose, which the agent reads only sometimes.
  *
- * Проверка ловит создание файла-компонента, чьё имя занято дизайн-системой, — где бы в
- * проекте он ни лежал. Такой файл опаснее всего: импорт выглядит как системный, а ведёт
- * себя иначе. Имя, системой не занятое, проверка пропускает в скрипт, который заводит
- * папку сразу в законченном виде.
+ * The check catches a component file whose name is already taken by the design system,
+ * wherever in the project it sits. That file is the dangerous one: the import looks systemic
+ * and behaves otherwise. A free name is passed through to the script that creates the
+ * folder in a finished shape.
  *
- * Проверка — не стена: агент видит её код и умеет находить щели (за три прогона нашёл
- * три). Она задаёт трение и направление, а не гарантию.
+ * This is friction, not a wall: the agent reads its code and finds gaps (three in three
+ * runs). It sets direction and cost, not a guarantee.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -43,9 +43,9 @@ const deny = (reason) => {
   process.exit(0)
 }
 
-// Установка пакета, у которого нет релизов. В живом прогоне так приехал xui-b2c-game-card
-// (все версии — сборки из ветки pr298) и притащил свою копию xui-core: тема до компонента
-// не дошла. `npm i` про это молчит, поэтому смотрим сами.
+// Installing a package that has no releases. In a live run xui-b2c-game-card arrived this way
+// (every version a build off branch pr298) and brought its own copy of the core package: the
+// theme never reached the component. `npm i` stays quiet about it, so we look ourselves.
 if (input.tool_name === 'Bash') {
   const cmd0 = String(input.tool_input?.command || '')
   const inst = cmd0.match(/npm\s+(?:i|install|add)\s+([^&|;]+)/)
@@ -55,29 +55,29 @@ if (input.tool_name === 'Bash') {
     const risky = branchOnly.filter((p) => inst[1].includes(p))
     if (risky.length) {
       deny(
-        'У этих пакетов нет релизов, только сборки из веток разработки:\n' +
+        'These packages have no releases, only builds off development branches:\n' +
         risky.map((p) => '  ' + p).join('\n') + '\n\n' +
-        'Такая сборка может принести свою копию @xsolla/xui-core — тогда тема до компонента\n' +
-        'не дойдёт, и это заметно не сразу. Скажите дизайнеру, что компонент неготов, и спросите:\n' +
-        'берём как есть, собираем из готовых частей или обходимся без него.',
+        'Such a build can carry its own copy of the core package, and then the theme never reaches\n' +
+        'the component. Tell the designer the component is not ready and ask:\n' +
+        'take it as is, assemble it from released parts, or do without it.',
       )
     }
   }
 }
 
-// Через оболочку файл создаётся так же легко, как через Write, — и это обходило проверку.
+// A shell command creates a file as easily as Write — and that used to bypass this check.
 if (input.tool_name === 'Bash') {
   const cmd = String(input.tool_input?.command || '')
   const writes = /(?:touch|cp|mv|install)\s+[^|;&]*src\//.test(cmd) ||
                  />\s*[^|;&]*src\//.test(cmd)
   if (!writes || !/[A-Z][A-Za-z0-9]*\.tsx/.test(cmd)) process.exit(0)
-  deny('Файлы компонентов не создаются через оболочку — это обход проверки, а не решение.')
+  deny('Component files are not created through the shell. That is bypassing the check.')
 }
 
-// Самодельный элемент вместо системного. Живой случай: агент упёрся в предел системного
-// ProgressBar (высота 10px, нет штриховки), собрал свой `const Track = styled.div` прямо
-// в секции экрана и оставил в комментарии обоснование — вместо того чтобы спросить.
-// Ловим по роли в имени: Track/Fill — это про прогресс, Chip — про тег, Tile — про карточку.
+// A homemade element instead of the system one. Real case: the agent hit the limit of the
+// system ProgressBar (10px tall, no hatching), built its own Track element right inside
+// the screen section and left a justification in a comment instead of asking.
+// Caught by the role in the name: Track/Fill mean progress, Chip a tag, Tile a card.
 const ROLES = {
   track: 'progress', fill: 'progress', bar: 'progress', meter: 'progress',
   chip: 'tag', pill: 'tag', tile: 'card', card: 'card', toggle: 'switch',
@@ -95,56 +95,56 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
     if (!role) continue
     if (!pubs.some((p) => p.includes(role))) continue
     deny(
-      'Похоже, вы собираете свой «' + m[1] + '» — а в дизайн-системе есть готовое про «' + role + '».\n' +
-      'Сначала посмотрите: `node scripts/ds.mjs ' + role + '`.\n\n' +
-      'Если системный не подходит по виду или размеру — это не повод собрать своё молча.\n' +
-      'Скажите дизайнеру, что именно не сходится, и предложите выбор: взять системный как есть\n' +
-      'или завести отдельный компонент. Решает он.',
+      'Looks like you are building your own ' + m[1] + ' while the system already covers ' + role + '.\n' +
+      'Look there first: `node scripts/ds.mjs ' + role + '`.\n\n' +
+      'If the system one does not fit in look or size, that is no licence to build your own quietly.\n' +
+      'Tell the designer exactly what does not match and offer the choice: take the system component\n' +
+      'as is, or create a separate one. Their call.',
     )
   }
 }
 
-// Иконка, выгруженная из макета. В прогоне агент вытащил логотипы Steam, Xsolla и монету
-// картинками, хотя всё это есть пакетами — потом сам нашёл и переделал.
+// An icon exported from the mockup. In one run the agent pulled the Steam and Xsolla logos
+// out as images, though they all ship as packages — then found them itself and redid it.
 if (input.tool_name === 'Write' && /[\\\/]assets[\\\/][^\\\/]+\.svg$/i.test(String(input.tool_input?.file_path || ''))) {
   deny(
-    'Похоже, это иконка или логотип из макета. В системе они есть пакетами:\n' +
-    '  xui-icons-base — интерфейсные · xui-icons-brand — Steam, Epic, GOG\n' +
-    '  xui-icons-currency — валюты · xui-logos-xsolla — логотипы Xsolla\n\n' +
-    'Поищите: `node scripts/ds.mjs <что за иконка>`. Картинками из макета тащат только\n' +
-    'контент — обложки, арты, скриншоты.',
+    'This looks like an icon or a logo from the mockup. The system ships them as packages:\n' +
+    '  xui-icons-base — interface · xui-icons-brand — Steam, Epic, GOG\n' +
+    '  xui-icons-currency — currencies · xui-logos-xsolla — Xsolla logos\n\n' +
+    'Search: `node scripts/ds.mjs <what the icon is>`. Only content leaves a mockup as an\n' +
+    'image: covers, art, screenshots.',
   )
 }
 
-// Подгонка системного компонента под макет — тоже решение «сделаю сам». Ловим её до того,
-// как она попадёт в файл: styled(Кнопка) или !important рядом с импортом дизайн-системы.
+// Bending a system component to the mockup is the same do-it-myself decision. Caught before
+// it lands in the file, next to a design-system import.
 if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
   const body = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
     if (body) {
     const known = dsNames()
     const st = body.match(/styled\(\s*([A-Z][A-Za-z0-9]*)\s*\)/)
     const target = st && known.has(st[1]) ? st[1] : null
-    // Правка приходит куском: импорта дизайн-системы в нём нет, даже когда он есть в файле.
-    // Поэтому смотрим и на файл целиком — иначе !important проносят отдельной правкой.
+    // An edit arrives as a fragment: the design-system import is missing even when the file
+    // has one. So we look at the whole file too, or an override slips in as a separate edit.
     let whole = body
-    try { whole += fs.readFileSync(input.tool_input.file_path, 'utf8') } catch { /* новый файл */ }
+    try { whole += fs.readFileSync(input.tool_input.file_path, 'utf8') } catch { /* a new file */ }
     const usesDS = /@xsolla\/xui-/.test(whole)
-    // `& > button` — прицел во внутренности системного компонента в обход его настроек.
+    // `& > button` aims at the internals of a system component around its own props.
     const reachIn = /[>&]\s*(?:button|input|a)\s*[,{]/.test(body)
     const forcing = usesDS && (/!important/.test(body) || reachIn)
     if (target || forcing) {
-      const what = target || 'компонент дизайн-системы'
+      const what = target || 'a design-system component'
       deny(
-        'Похоже, вы подгоняете ' + what + ' под макет: ' +
-        (target ? 'styled(' + target + ')' : '!important поверх стилей системы') + '.\n' +
-        'Так делать нельзя — это тихий форк системного компонента.\n\n' +
-        'Остановитесь и спросите дизайнера. Ваше сообщение ему:\n' +
-        '  «В макете ' + what + ' отличается от системного, настройками это не покрывается.\n' +
-        '   Варианты: (1) поставить системный в ближайшей конфигурации — перечислите, какие\n' +
-        '   варианты, тона и размеры есть и какой ближе к макету; (2) рисовать новый компонент\n' +
-        '   под своим именем. Что выбираем?»\n\n' +
-        'Решение принимает дизайнер, не вы. Дождитесь ответа — и не пишите «согласовано»,\n' +
-        'если согласования не было: описание макета в задаче согласованием не является.',
+        'Looks like you are bending ' + what + ' to the mockup: ' +
+        (target ? 'styled(' + target + ')' : 'an override on top of the system styles') + '.\n' +
+        'That is not allowed: it is a silent fork of a system component.\n\n' +
+        'Stop and ask the designer. Your message to them:\n' +
+        '  In the mockup ' + what + ' differs from the system one and props do not cover it.\n' +
+        '  Options: (1) use the system component in its closest configuration, listing which\n' +
+        '  variants, tones and sizes exist and which is nearest to the mockup; (2) draw a new\n' +
+        '  component under its own name. Which do we take?\n\n' +
+        'The designer decides, not you. Wait for the answer, and never write that something was agreed\n' +
+        'when it was not: a mockup description in the task is not an agreement.',
       )
     }
   }
@@ -164,21 +164,21 @@ const inDS = dsNames().has(Name)
 
 if (inDS) {
   deny(
-    '«' + Name + '» — компонент дизайн-системы. Свой файл с этим именем подменяет его: импорт\n' +
-    'выглядит как системный, а ведёт себя иначе, и через полгода никто не поймёт, почему.\n' +
-    'Берите системный, отличия решайте его настройками и темой.\n' +
-    'Настройки не дают нужного вида — не переопределяйте стили и не прячьте обёртку в другую\n' +
-    'папку: вернитесь к дизайнеру, назовите доступные варианты и спросите. Отступать от системы —\n' +
-    'его решение. Если он подтвердил — заводите под именем, системой не занятым.',
+    '' + Name + ' is a design-system component. Your own file under that name replaces it: the import\n' +
+    'looks systemic and behaves otherwise, and in six months nobody will know why.\n' +
+    'Use the system component and solve the differences with its props and the theme.\n' +
+    'Props do not give the look you need: do not override styles and do not hide a wrapper in\n' +
+    'another folder. Go back to the designer, list the options and ask. Departing from the system\n' +
+    'is their decision. Once they confirm, create it under a name the system does not use.',
   )
 }
 
-// Имя свободно: пусть заводит скриптом — сразу папкой с витриной и описанием.
+// The name is free: let the script create it, folder with a story and a readme in one go.
 if (!file.includes('/src/components/')) process.exit(0)
 if (!fs.existsSync(path.join(root, 'scripts', 'new-component.mjs'))) process.exit(0)
 
 deny(
-  'Новый компонент заводится скриптом: `node scripts/new-component.mjs ' + Name + '`.\n' +
-  'Он ещё раз сверится с реестром дизайн-системы и создаст папку с компонентом, витриной\n' +
-  'и описанием — сразу в том виде, в каком компонент можно отдать в общую галерею.',
+  'A new component is created by a script: `node scripts/new-component.mjs ' + Name + '`.\n' +
+  'It checks the design-system registry once more and creates the folder with the component,\n' +
+  'a story and a readme, in the shape the team gallery expects.',
 )

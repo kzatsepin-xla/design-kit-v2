@@ -15,8 +15,20 @@ questions — save those for files.
 comments, commit messages, script output, notes in memory — all of it. No exceptions, not
 even a header comment addressed to the designer.
 
-You speak to the designer in their own language in the conversation. The moment it becomes
-a file, it is English.
+**You speak to the designer in whatever language they write in** — Russian, English, Chinese,
+anything. Match their language in every message, question, option label and report, for the
+whole session. Understanding language is your job, not the scripts': they are English-only on
+purpose, and you translate in both directions.
+
+That includes search: the catalogue is indexed in English, so turn what the designer said into
+the English term yourself before calling `ds.mjs` — "карточка", "卡片" and "card" are one query.
+
+## Catching a decision
+
+The designer will reject or redirect something in passing — "not the dark theme", "always ask
+me before X". That is a standing rule, not a one-off edit. No program can tell the two apart,
+so it is on you: when it sounds like a rule that outlives this conversation, ask whether to
+remember it, and write it only if they agree.
 
 ## Commands
 
@@ -83,7 +95,7 @@ You will hit gaps: the mockup lacks a state, the contract offers two options, th
 data. Do not stop on every one — choose, keep going, and leave the mark where you chose:
 
 ```
-// долг: took tabs for the filter, OQ-7 was never answered
+// debt: took tabs for the filter, OQ-7 was never answered
 ```
 
 `node scripts/debt.mjs` collects these before a handoff. The mark lives in the code, so it

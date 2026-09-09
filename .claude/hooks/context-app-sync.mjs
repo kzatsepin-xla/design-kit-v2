@@ -1,28 +1,26 @@
 #!/usr/bin/env node
 //
-//  context-app-sync — держит карту экранов в согласии с документами
-//  ───────────────────────────────────────────────────────────────
+//  context-app-sync — keeps the screen map in step with the documents
+//  ─────────────────────────────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Каталог фич, документы и карта состояний, которые видит команда в кнопке Context,
-//  собираются из ваших же файлов — но собираются не сами. Поработали над экраном,
-//  дописали состояние в матрицу, поправили бриф — а команда всё ещё смотрит вчерашнее
-//  и не знает об этом. Устаревшая карта хуже отсутствующей: по ней принимают решения.
+//  WHY THIS EXISTS
+//  The feature catalogue, the documents and the state map the team sees behind the Context
+//  button are built from your own files — but not by themselves. You work on a screen, add a
+//  state to the matrix, fix the brief, and the team is still looking at yesterday without
+//  knowing it. A stale map is worse than none: people make decisions from it.
 //
-//  Полагаться на то, что агент вспомнит про пересборку, мы не стали — проверено, не
-//  вспоминает. Теперь пересборку делает программа, в конце каждого хода.
+//  Hoping the agent remembers to rebuild did not work — measured, it does not. So a program
+//  does it now, at the end of every turn.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Сам, когда агент заканчивает работу. Только если кнопка Context уже подключена
-//  и только если документы или экраны за этот ход менялись. В остальных случаях молчит
-//  и ничего не делает.
+//  WHEN IT RUNS
+//  On its own, when the agent finishes. Only if the Context button is connected, and only if
+//  documents or screens changed during the turn. Otherwise it stays silent.
 //
-//  ЧТО ВЫ УВИДИТЕ
-//  Строчку о том, что данные пересобраны. Ничего подтверждать не нужно.
+//  WHAT YOU SEE
+//  One line saying the data was rebuilt. Nothing to confirm.
 //
-//  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  Пересборка не удалась — ход всё равно завершится, работу это не блокирует.
-//  Посмотреть причину: node scripts/context-app.mjs export
+//  IF SOMETHING GOES WRONG
+//  A failed rebuild never blocks the turn. To see why: node scripts/context-app.mjs export
 //
 import fs from 'node:fs'
 import path from 'node:path'
@@ -33,11 +31,11 @@ try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
 
 const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
 
-// Кнопка не подключена — нечего пересобирать.
+// Button not connected — nothing to rebuild.
 const manifest = path.join(root, 'public', 'context-app-data', 'manifest.json')
 if (!fs.existsSync(manifest)) process.exit(0)
 
-// Самая свежая правка в источниках карты: документы фич и экраны прототипа.
+// The most recent edit among the map's sources: feature documents and prototype screens.
 function newest(dir, best = 0) {
   let entries
   try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return best }
@@ -51,11 +49,11 @@ function newest(dir, best = 0) {
   return best
 }
 
-// И сразу — сошлись ли документы с кодом. Быстрая проверка, без браузера: иначе агент
-// заканчивает ход с отчётом, который перестал быть правдой в этом же ходу.
+// And right away: do the documents still match the code. A fast check, no browser — otherwise
+// the agent ends the turn with a report that stopped being true during that same turn.
 const quick = spawnSync(process.execPath, ['scripts/screens.mjs', '--quick'], { cwd: root, encoding: 'utf8' })
 if (quick.status === 1 && quick.stdout.trim()) {
-  console.log('[screens] документы и экраны разошлись — скажи об этом дизайнеру, не отчитывайся зелёным:')
+  console.log('[screens] documents and screens have drifted apart — tell the designer, do not report green:')
   for (const line of quick.stdout.trim().split(String.fromCharCode(10)).slice(0, 5)) console.log('  ' + line)
 }
 
@@ -71,12 +69,12 @@ const run = spawnSync(process.execPath, ['scripts/context-app.mjs', 'export'], {
   encoding: 'utf8',
 })
 if (run.status !== 0) {
-  console.log('[context-app] пересобрать данные не вышло — посмотрите: node scripts/context-app.mjs export')
+  console.log('[context-app] could not rebuild the data — take a look: node scripts/context-app.mjs export')
   process.exit(0)
 }
 
-// Из отчёта экспортёра берём строку про узлы — она и есть полезная новость.
-const nodes = /узлов на карте: (\d+)/.exec(run.stdout || '')
-console.log('[context-app] данные пересобраны' + (nodes ? ', узлов на карте: ' + nodes[1] : ''))
+// Take the node count out of the exporter's report — that is the useful part.
+const nodes = /nodes on the map: (\d+)/.exec(run.stdout || '')
+console.log('[context-app] data rebuilt' + (nodes ? ', nodes on the map: ' + nodes[1] : ''))
 
 process.exit(0)
