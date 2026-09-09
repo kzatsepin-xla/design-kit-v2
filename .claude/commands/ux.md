@@ -1,22 +1,22 @@
 ---
-description: Написать или проверить тексты интерфейса по своду правил Xsolla.
+description: Write or check interface copy against the Xsolla rulebook.
 ---
 
-Запрос дизайнера: "$ARGUMENTS". Пусто — проверить тексты экрана, над которым работали.
+The designer's request: "$ARGUMENTS". Empty — check the copy of the screen last worked on.
 
-Свод правил лежит в `vendor/uxw/`. Прочитай нужную часть **целиком** и следуй ей:
+The rulebook lives in `vendor/uxw/`. Read the relevant part **in full** and follow it:
 
-- написать текст (кнопка, заголовок, пустое состояние, ошибка) → `vendor/uxw/ux-write/SKILL.md`
-- проверить готовый текст → `vendor/uxw/ux-check/SKILL.md`
+- writing copy (a button, a heading, an empty state, an error) → `vendor/uxw/ux-write/SKILL.md`
+- checking existing copy → `vendor/uxw/ux-check/SKILL.md`
 
-Папки нет — `node scripts/uxw.mjs install`. Не вышло принести (закрытый репозиторий) — скажи
-об этом прямо и не сочиняй правила из головы.
+No such folder — `node scripts/uxw.mjs install`. Fetching failed (a private repository) — say
+so plainly and do not invent rules from memory.
 
-Исключения этого продукта — `.ux-project-context`: слова, которые здесь верны, даже если свод
-с ними спорит. Читай его вместе со сводом.
+This product's exceptions live in `.ux-project-context`: words that are correct here even if
+the rulebook disagrees. Read it together with the rulebook.
 
-**Отчёт:** что переписал и почему, одной строкой на правку. Сомнительное — покажи оба варианта
-и спроси, не решай за дизайнера.
+**Report:** what you rewrote and why, one line per change. Anything debatable — show both
+options and ask, do not decide for the designer.
 
-За пределами этой команды тексты по своей инициативе не переписывай: свод открывается только
-когда дизайнер попросил или когда работа уходит наружу и он согласился на проверку.
+Outside this command, never rewrite copy on your own initiative: the rulebook opens when the
+designer asks, or when work is about to leave the machine and they agreed to a check.

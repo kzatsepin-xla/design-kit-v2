@@ -32,7 +32,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"
             ],
             "timeout": 10,
-            "statusMessage": "Проверяю, ваш ли это файл…"
+            "statusMessage": "Checking whether this file is yours…"
           }
         ]
       },
@@ -46,7 +46,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/component-guard.mjs"
             ],
             "timeout": 10,
-            "statusMessage": "Смотрю, нет ли такого в дизайн-системе…"
+            "statusMessage": "Looking for this in the design system…"
           }
         ]
       },
@@ -60,7 +60,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/ux-gate.mjs"
             ],
             "timeout": 10,
-            "statusMessage": "Смотрю, проверены ли тексты…"
+            "statusMessage": "Checking whether the copy was reviewed…"
           }
         ]
       }
@@ -75,7 +75,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/notes-gate.mjs"
             ],
             "timeout": 10,
-            "statusMessage": "Смотрю, есть ли что записать…"
+            "statusMessage": "Looking for anything worth remembering…"
           },
           {
             "type": "command",
@@ -84,7 +84,7 @@
               "${CLAUDE_PROJECT_DIR}/.claude/hooks/context-app-sync.mjs"
             ],
             "timeout": 20,
-            "statusMessage": "Обновляю карту экранов…"
+            "statusMessage": "Refreshing the screen map…"
           }
         ]
       }

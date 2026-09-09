@@ -3,30 +3,30 @@ paths:
   - "src/**/*.tsx"
   - "src/**/*.ts"
 ---
-# Дизайн-система: подробности
+# Design system: the details
 
-Порядок выбора компонента и запреты — в `AGENTS.md`, он читается всегда. Здесь то, что
-нужно только когда руки уже в коде экрана.
+The order for picking a component and the hard boundaries live in `.claude/rules/kit.md`,
+which is always loaded. This file is only needed once your hands are in screen code.
 
-## Не пиши так
+## Do not write this
 
-| Не пиши | Пиши |
+| Not this | This |
 |---|---|
-| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | их не существует: `theme.colors.*`, `theme.spacing.*` |
-| `theme.radius.*` | тоже не существует: скругления в `theme.shape` — `shape.button.<size>.borderRadius`, `shape.cell.borderRadius` |
-| `import "./Component.css"`, CSS Modules, Tailwind | styled-components + токены темы |
-| `background: "#0F0F0F"`, `padding: 16px` | только токен, никогда своё значение |
-| `onClick` на компоненте системы | `onPress`; `onValueChange` у переключателей; `onChange`/`onChangeText` у полей |
-| `<Button><Icon/></Button>` | иконки — props: `iconLeft` / `iconRight` (не `leftIcon`) |
-| `useDesignSystem()` ради токенов | `useResolvedTheme({ themeMode, themeProductContext })` |
-| `<ThemeProvider>` / `<ThemeScope>` | таких нет: `themeMode` на самом компоненте |
+| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | they do not exist: `theme.colors.*`, `theme.spacing.*` |
+| `theme.radius.*` | does not exist either: radii live in `theme.shape` — `shape.button.<size>.borderRadius`, `shape.cell.borderRadius`. The 12px card radius is the separate `radius` export from `@xsolla/xui-core` |
+| `import "./Component.css"`, CSS Modules, Tailwind | styled-components plus theme tokens |
+| `background: "#0F0F0F"`, `padding: 16px` | a token, never a value of your own |
+| `onClick` on a system component | `onPress`; `onValueChange` on switches; `onChange` / `onChangeText` on fields |
+| `<Button><Icon/></Button>` | icons are props: `iconLeft` / `iconRight` (not `leftIcon`) |
+| `useDesignSystem()` for tokens | `useResolvedTheme({ themeMode, themeProductContext })` |
+| `<ThemeProvider>` / `<ThemeScope>` | no such thing: `themeMode` goes on the component itself |
 
-**Исключение.** Адаптивная типографика **живёт** в CSS-переменных: `var(--xui-font-size-{шаг})`,
-`var(--xui-lh-{display|compact|text}-{шаг})`, 13 шагов 75–750, переключаются на 768px. Есть
-`cssVar.fontSize("350")` в `@xsolla/xui-core`. Лучше просто `Typography`. Любая **другая**
-`--xui-*` переменная — выдумка.
+**One exception.** Responsive typography really does live in CSS variables:
+`var(--xui-font-size-{step})`, `var(--xui-lh-{display|compact|text}-{step})`, 13 steps from
+75 to 750, switching at 768px. There is `cssVar.fontSize("350")` in `@xsolla/xui-core`.
+Plain `Typography` is better. Any **other** `--xui-*` variable is invented.
 
-**Словарь.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.
-`variant`: primary | secondary | tertiary | ghost. Цвета: `theme.colors.control[tone][variant]`.
+**Vocabulary.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.
+`variant`: primary | secondary | tertiary | ghost. Colours: `theme.colors.control[tone][variant]`.
 `ThemeMode`: dark | light | pentagram-dark | pentagram-light | ltg-dark. `ProductContext`:
-b2c | b2b | paystation | presentation — меняет только шрифт и типошкалу, не цвета.
+b2c | b2b | paystation | presentation — changes the font and type scale only, never the colours.

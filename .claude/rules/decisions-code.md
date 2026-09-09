@@ -4,19 +4,18 @@ paths:
   - "index.html"
   - "vite.config.ts"
 ---
-# О чём договорились: прототип и экраны
+# Agreed: prototype and screens
 
-Решения дизайнера, которые действуют при работе с кодом прототипа. Грузятся только
-тогда, когда вы этот код и трогаете, — в разговоре про документы они не нужны и место
-не занимают.
+Designer decisions that apply while working on prototype code. They load only when that
+code is touched — in a conversation about documents they are neither needed nor paid for.
 
-Одна строка на решение, новые снизу, в словах дизайнера. Решение, которое уже исполняется
-проверкой, сюда не переписывают: правило живёт в проверке, а не в напоминании.
+One line per decision, newest at the bottom, in the designer's own words. A decision already
+enforced by a check is not copied here: the rule lives in the check, not in a reminder.
 
 ---
 
-- Абстрактный критик красоты не нужен. `/review` — это сверка с макетом, в этом вся суть: нет ссылки на макет, нет прогона.
-- Свод правил о текстах ставится вместе с прототипом, но сам не запускается: агент трогает тексты только по моей просьбе, а перед пушем или PR один раз спрашивает, проверять ли.
-- Проверка текстов ничего не блокирует. Перед отправкой наружу агент просто предлагает её сделать — один раз за разговор и только если в этом разговоре тексты ещё не смотрели.
-- Локальную копию Context App оставляем — карту нужно проверять до выкладки, — но в сборку она не едет: на стенде приложение грузится со стенда.
-- Ничего скачивать руками для Context App не нужно: кит сам забирает копию приложения при подключении. Инструкций с curl дизайнеру не давать.
+- No abstract taste critic. `/review` means comparing against the mockup, that is the whole point: no mockup link, no run.
+- The copy rulebook ships with the prototype but never runs on its own: the agent touches copy only when I ask, and before a push or PR it asks once whether to check it.
+- The copy check blocks nothing. Before work goes out the agent simply offers it — once per conversation, and only if the copy has not been looked at yet.
+- Keep the local copy of the Context App — the map has to be checked before deploy — but it stays out of the build: on the stand the app loads from the stand.
+- Nothing is downloaded by hand for the Context App: the kit fetches the app copy itself when connecting. Never hand the designer a curl command.

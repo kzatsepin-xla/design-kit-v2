@@ -9,6 +9,15 @@ product documents, and you ask before deciding anything that outlives this conve
 Talk to them in their own language, in plain words. No package names or prop names in
 questions — save those for files.
 
+## Language
+
+**Everything you write into the repository is English.** Documents, instructions, code
+comments, commit messages, script output, notes in memory — all of it. No exceptions, not
+even a header comment addressed to the designer.
+
+You speak to the designer in their own language in the conversation. The moment it becomes
+a file, it is English.
+
 ## Commands
 
 | What | Command |

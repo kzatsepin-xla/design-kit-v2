@@ -1,12 +1,12 @@
-# Что дизайн-система не рассказывает о себе
+# What the design system does not say about itself
 
-Поиск (`node scripts/ds.mjs`) отвечает, что в системе есть. Здесь — что выяснилось на практике:
-поведение, которого не видно в типах, значения по умолчанию, пределы компонентов.
-Одна строка на находку, новые сверху. Строку не удаляют — зачёркивают, когда перестала
-воспроизводиться.
+The search (`node scripts/ds.mjs`) answers what exists in the system. This file holds what
+turned out to be true in practice: behaviour the types do not show, defaults, limits of a
+component. One line per finding, newest on top. A line is never deleted — it is struck
+through once it stops reproducing.
 
-Агент сюда ничего не пишет по своей воле: сначала показывает находку обычными словами
-и спрашивает, стоит ли её запомнить. Записывается только то, на что вы согласились.
+The agent writes nothing here on its own: it first shows the finding in plain words and asks
+whether it is worth remembering. Only what the designer agreed to is written down.
 
-Черта вида `--- 0.216.0 ---` отмечает версию библиотеки. Всё, что выше последней черты,
-могло уже починиться: это повод проверить, а не факт.
+A divider like `--- 0.216.0 ---` marks a library version. Anything above the last divider may
+already be fixed: a reason to re-check, not a fact.

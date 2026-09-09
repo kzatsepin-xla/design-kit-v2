@@ -1,6 +1,6 @@
-# Проект
+# Project
 
-<!-- Что это за продукт: для кого, зачем, что важно визуально, какие решения уже приняты.
-     То, чего нельзя прочесть по коду. Агент дописывает сюда по ходу работы, когда узнаёт
-     новое от вас — из разговора, PRD или макета. Правила самого кита живут отдельно
-     и в этот файл не лезут. -->
+<!-- What this product is: who it is for, what it does, what matters visually, which
+     decisions are already made. Only what cannot be read off the code. The agent fills
+     this in as it learns from you — from the conversation, a PRD or a mockup. The kit's
+     own rules live elsewhere and stay out of this file. -->

@@ -2,13 +2,13 @@
 paths:
   - "docs/**"
 ---
-# О чём договорились: документы
+# Agreed: documents
 
-Решения дизайнера про продуктовую документацию. Грузятся только при работе с `docs/` —
-когда речь про вёрстку, они молчат.
+Designer decisions about product documentation. They load only when `docs/` is touched —
+during screen work they stay silent.
 
-Одна строка на решение, новые снизу, в словах дизайнера.
+One line per decision, newest at the bottom, in the designer's own words.
 
 ---
 
-- Какие стадии продуктовой документации вести — спрашиваем у дизайнера в анкете, списком с галочками. Контекст, сценарии, состояния экранов и прототип отмечены заранее, галочку можно снять; остальное — по желанию.
+- Which documentation stages to run is a question for the designer in the entry questionnaire, as a checklist. Context, scenarios, screen states and screen contracts are ticked in advance and can be unticked; the rest is optional.
