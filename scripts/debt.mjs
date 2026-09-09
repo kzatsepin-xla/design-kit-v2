@@ -50,9 +50,21 @@ function walk(dir) {
     let text
     try { text = fs.readFileSync(p, 'utf8') } catch { continue }
     if (!/долг|debt/i.test(text)) continue
-    text.split(NL).forEach((line, i) => {
+    // Пометка часто не влезает в строку и продолжается следующей строкой комментария —
+    // забирать только первую значит показывать дизайнеру половину мысли.
+    const lines = text.split(NL)
+    lines.forEach((line, i) => {
       const m = MARK.exec(line.trim())
-      if (m) found.push({ file: path.relative(root, p).split(path.sep).join('/'), line: i + 1, what: m[1] })
+      if (!m) return
+      let what = m[1]
+      for (let j = i + 1; j < lines.length; j++) {
+        const next = lines[j].trim()
+        if (!/^(\/\/|\*|#)/.test(next) || MARK.test(next)) break
+        const tail = next.replace(/^(\/\/|\*|#)\s?/, '').replace(/\s*(\*\/|-->)\s*$/, '').trim()
+        if (!tail) break
+        what += ' ' + tail
+      }
+      found.push({ file: path.relative(root, p).split(path.sep).join('/'), line: i + 1, what })
     })
   }
 }
