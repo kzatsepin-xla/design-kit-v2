@@ -14,8 +14,7 @@ even a header comment addressed to the designer.
 
 **You speak to the designer in whatever language they write in** — Russian, English, Chinese,
 anything. Match their language in every message, question, option label and report, for the
-whole session. Understanding language is your job, not the scripts': they are English-only on
-purpose, and you translate in both directions.
+whole session.
 
 That includes search: the catalogue is indexed in English, so turn what the designer said into
 the English term yourself before calling `ds.mjs` — "карточка", "卡片" and "card" are one query.
@@ -50,7 +49,6 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
 
 - **Never bend a system component into shape**, and never hide a wrapper for it in another
   folder.
-- **Values come from theme tokens.** Never a literal colour, spacing or radius from a mockup.
 - **Icons and logos come from the icon packages**, never exported from Figma. Only content —
   covers, art, screenshots — comes as images.
 - Hit the limit of a system component — that is a question for the designer, not permission
