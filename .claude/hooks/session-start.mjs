@@ -33,7 +33,7 @@ function countFindings(root) {
   // Находки давно переехали в .claude/rules/, а счётчик всё ещё искал notes.md
   // внутри скиллов: снимок всегда выходил нулевым, и в проекте, где находки уже
   // есть, проверка на завершении хода не срабатывала никогда.
-  const notes = path.join(root, ".claude", "rules", "design-system-findings.md")
+  const notes = path.join(root, ".claude", "ds", "findings.md")
   try {
     return fs.readFileSync(notes, "utf8").split(String.fromCharCode(10))
       .filter((line) => line.startsWith("- ")).length

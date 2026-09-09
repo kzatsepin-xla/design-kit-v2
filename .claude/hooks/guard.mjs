@@ -42,7 +42,7 @@ const protectedRoot = parts[0] === '.claude' || parts[0] === 'scripts'
 // завершении хода. Пока здесь стояла одна notes.md, агент упирался в собственный
 // кит: писать велено, а запись запрещена. Живой прогон это и показал.
 const name = path.basename(file)
-const isNotes = name === 'notes.md' || name === 'design-system-findings.md' || /^decisions.*\.md$/.test(name)
+const isNotes = name === 'notes.md' || name === 'findings.md' || /^decisions.*\.md$/.test(name)
 
 if (!protectedRoot || isNotes) process.exit(0)
 

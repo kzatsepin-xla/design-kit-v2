@@ -22,7 +22,7 @@
 //  и чем это поможет в следующий раз. Отказ ничего не ломает.
 //
 //  ГДЕ КОПЯТСЯ ЗАМЕТКИ
-//  .claude/rules/design-system-findings.md — их можно читать и править руками.
+//  .claude/ds/findings.md — их можно читать и править руками.
 //
 import fs from 'node:fs'
 import path from 'node:path'
@@ -41,7 +41,7 @@ const flag = path.join(os.tmpdir(), `notes-gate-${input.session_id || 'x'}`)
 if (fs.existsSync(flag)) process.exit(0)
 
 // Заметки живут рядом со справочником по дизайн-системе; нет справочника — нечего требовать.
-const notes = path.join(root, '.claude', 'rules', 'design-system-findings.md')
+const notes = path.join(root, '.claude', 'ds', 'findings.md')
 if (!notes) process.exit(0)
 
 const log = fs.readFileSync(transcript, 'utf8')

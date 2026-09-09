@@ -134,7 +134,7 @@ if (text !== before) fs.writeFileSync(file, text)
 
 // Находки живут в knowledge/ — рядом с договорённостями, а не среди служебных файлов агента:
 // это документ проекта, дизайнер в него заглядывает и правит.
-const notes = path.join(root, '.claude', 'rules', 'design-system-findings.md')
+const notes = path.join(root, '.claude', 'ds', 'findings.md')
 const version = installed.find((p) => p.version)?.version
 if (fs.existsSync(notes) && version) {
   const text = fs.readFileSync(notes, 'utf8')

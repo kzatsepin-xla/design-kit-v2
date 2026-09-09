@@ -121,7 +121,7 @@ if (avail.some((f) => branchOnly.has(f.pkg))) {
 }
 
 // Заметки о поведении — показываем только те, что про найденное.
-const notes = path.join(root, '.claude', 'rules', 'design-system-findings.md')
+const notes = path.join(root, '.claude', 'ds', 'findings.md')
 if (fs.existsSync(notes)) {
   const lines = fs.readFileSync(notes, 'utf8').split('\n')
     .filter((l) => l.startsWith('- ') && found.some((f) => hit(f.short) && (hit(l) || f.names.some((n) => l.includes(n)))))
