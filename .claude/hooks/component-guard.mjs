@@ -153,10 +153,24 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
 if (input.tool_name !== 'Write') process.exit(0)
 
 const file = String(input.tool_input?.file_path || '').split(path.sep).join('/')
-const m = file.match(/\/src\/.*?([A-Z][A-Za-z0-9]*)\.tsx$/)
-if (!m) process.exit(0)
+if (!/\/src\/.*\.tsx$/.test(file)) process.exit(0)
 
-const Name = m[1]
+// The name used to come from the file name alone, and an index file walked straight past: it
+// carries no name to recognise, while the component declared inside it is exactly the
+// substitution this check exists to stop. Naming a component file index is ordinary practice,
+// so the hole opened by itself rather than by anyone trying to get around anything. The
+// declared export now counts too, whatever the file is called.
+const declared = []
+const m = file.match(/\/src\/.*?([A-Z][A-Za-z0-9]*)\.tsx$/)
+if (m) declared.push(m[1])
+for (const d of String(input.tool_input?.content || '')
+  .matchAll(/export\s+(?:default\s+)?(?:const|function|class)\s+([A-Z][A-Za-z0-9]*)/g)) {
+  declared.push(d[1])
+}
+if (!declared.length) process.exit(0)
+
+const known = dsNames()
+const Name = declared.find((n) => known.has(n)) || declared[0]
 const real = (p) => { try { return fs.statSync(p).size > 0 } catch { return false } }
 if (real(input.tool_input.file_path)) process.exit(0)
 
