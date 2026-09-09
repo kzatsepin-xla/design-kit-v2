@@ -1,42 +1,42 @@
 #!/usr/bin/env node
 //
-//  context-app — кнопка «Context» в прототипе: карта экранов, доки, комментарии
+//  context-app — the Context button in the prototype: screen map, docs, comments
 //  ───────────────────────────────────────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Context App — вика дизайн-прототипов: каталог фич, карта состояний экранов,
-//  документация и общие комментарии команды. Подключается одним тегом, своей
-//  сборки не требует. Карту и каталог он не хранит — читает их из папки рядом
-//  с прототипом, а эту папку собирает вот этот скрипт: из ваших же документов.
+//  WHY THIS EXISTS
+//  The Context App is the wiki of design prototypes: a feature catalogue, a map of screen
+//  states, documentation and the team's shared comments. It connects with a single tag and
+//  needs no build of its own. It stores neither the map nor the catalogue — it reads them
+//  from a folder next to the prototype, and this script builds that folder from your documents.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Агент вызывает его сам, когда прототип готов показывать. Руками:
-//    node scripts/context-app.mjs connect    подключить кнопку к прототипу
-//    node scripts/context-app.mjs export     пересобрать каталог, доки и карту
-//    node scripts/context-app.mjs check      проверить перед выкладкой
+//  WHEN IT RUNS
+//  The agent calls it once the prototype is worth showing. By hand:
+//    node scripts/context-app.mjs connect    connect the button to the prototype
+//    node scripts/context-app.mjs export     rebuild the catalogue, docs and map
+//    node scripts/context-app.mjs check      verify before a deploy
 //
-//  ЧТО ПОЯВИТСЯ ПОСЛЕ ЗАПУСКА
-//    index.html                       тег подключения (на стенде — со стенда,
-//                                     локально — из своей копии)
-//    public/context-app-data/         каталог фич, доки и карта экранов
+//  WHAT APPEARS
+//    index.html                       the connecting tag (from the stand when deployed,
+//                                     from a local copy on localhost)
+//    public/context-app-data/         the feature catalogue, docs and screen map
 //
-//  ОТКУДА БЕРЁТСЯ КАРТА
-//  Узел карты — это состояние экрана, а состояния уже описаны в документах
-//  стадии 06: docs/features/<фича>/06_state-design/state-matrix-<экран>.md.
-//  Состояние с пометкой «Применимо: да» становится узлом, узел открывает
-//  прототип по адресу #<экран>?state=<состояние>. Поэтому карта не может
-//  отстать от документов — она из них и растёт.
+//  WHERE THE MAP COMES FROM
+//  A map node is a screen state, and the states are already described in the stage 06
+//  documents: docs/features/<feature>/06_state-design/state-matrix-<screen>.md.
+//  A state marked 'Applies: yes' becomes a node, and the node opens the prototype at
+//  #<screen>?state=<state>. That is why the map cannot fall behind the documents — it grows
+//  out of them.
 //
-//  ЧЕГО ОН НЕ ДЕЛАЕТ
-//  Не придумывает переходы между узлами: стрелки на карте пишет агент, когда
-//  знает сценарий. Не качает ничего из сети без вашего слова.
+//  WHAT IT DOES NOT DO
+//  It does not invent transitions between nodes: the arrows come from the screen contracts.
+//  It downloads nothing from the network without your word.
 //
-//  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  Кнопка есть, а каталог пуст — не собраны данные: `export`.
-//  Локально кнопка не появляется — нужна своя копия приложения, скрипт скажет,
-//  какой командой её скачать: со стенда на localhost её не подключить, там OKTA.
-//  Узел открывает не тот экран — проверьте, что имя экрана в документах совпадает
-//  с папкой в src/screens.
+//  IF SOMETHING GOES WRONG
+//  The button is there but the catalogue is empty — the data was not built: `export`.
+//  The button does not appear locally — a local copy of the app is needed, and the script
+//  fetches it: from the stand it cannot be loaded onto localhost, OKTA blocks it.
+//  A node opens the wrong screen — check that the screen name in the documents matches the
+//  folder in src/screens.
 //
 import fs from 'node:fs'
 import os from 'node:os'
@@ -47,15 +47,15 @@ import { exportContextData } from './context-app/export-context-data.mjs'
 import { validateManifest } from './context-app/context-data-schema.mjs'
 
 const root = process.cwd()
-const here = path.dirname(fileURLToPath(import.meta.url))   // папка scripts/ этого кита
+const here = path.dirname(fileURLToPath(import.meta.url))   // the kit's scripts/ folder
 const NL = String.fromCharCode(10)
 const OUT = 'public/context-app-data'
 const STAND = 'https://prototype.xsolla.dev/context-app/embed.js'
 
 const statePath = path.join(root, 'state.json')
 const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {}
-// Меняем и снимок в памяти: без этого вторая запись за прогон затирает первую —
-// prototypeId сохранялся, а папка деплоя следом исчезала.
+// The in-memory snapshot changes too: without that the second write of a run overwrote the
+// first — prototypeId was saved and the deploy folder disappeared right after.
 const saveState = (patch) => {
   Object.assign(state, patch)
   fs.writeFileSync(statePath, JSON.stringify(state, null, 2) + NL)
@@ -65,7 +65,7 @@ const read = (p) => fs.readFileSync(p, 'utf8')
 const exists = (p) => fs.existsSync(path.join(root, p))
 const dirs = (p) => (exists(p) ? fs.readdirSync(path.join(root, p), { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name) : [])
 
-// prototypeId держит на себе историю комментариев — однажды выбранный, он не меняется.
+// prototypeId carries the comment history — once chosen, it never changes.
 function prototypeId() {
   if (state.prototypeId) return state.prototypeId
   const id = path.basename(root).toLowerCase().replace(/[^a-z0-9-]+/g, '-')
@@ -73,9 +73,9 @@ function prototypeId() {
   return id
 }
 
-// ——— карта экранов из документов ———
+// ——— the screen map, built from the documents ———
 
-// «**Применимо:** да» — состояние есть. Нетронутая заготовка «да / N/A — почему» не считается.
+// '**Applies:** yes' means the state exists. The untouched 'yes / N/A — why' placeholder does not.
 function statesOfMatrix(file) {
   const out = []
   let current = null
@@ -83,10 +83,10 @@ function statesOfMatrix(file) {
     const head = /^##\s*\d+\.\s*([A-Za-z]+)/.exec(line)
     if (head) { current = head[1]; continue }
     if (!current) continue
-    const mark = /^\*\*(Применимо|Applicable):\*\*\s*(.+)$/.exec(line.trim())
+    const mark = /^\*\*Applies:\*\*\s*(.+)$/.exec(line.trim())
     if (!mark) continue
     const value = mark[2].trim()
-    if (value.indexOf('N/A') === -1 && /^(да|yes)([ ,.:;\u2014-]|$)/i.test(value)) out.push(current)
+    if (value.indexOf('N/A') === -1 && /^yes([ ,.:;-]|$)/i.test(value)) out.push(current)
     current = null
   }
   return out
@@ -124,7 +124,7 @@ function flowMapOf(featureId) {
     }
   }
 
-  // Документов по состояниям нет — кладём на карту сами экраны, чтобы по ней уже можно было ходить.
+  // No state documents — put the screens themselves on the map so it can be walked at all.
   if (!nodes.length) {
     for (const screen of dirs('src/screens')) {
       flows.push({ id: screen, label: screen })
@@ -133,7 +133,7 @@ function flowMapOf(featureId) {
   }
   if (!nodes.length) return null
 
-  // Стрелка ведёт в точку входа экрана — состояние Normal, если оно есть.
+  // An arrow leads to a screen's entry point — the Normal state, when there is one.
   const entry = (screen) => {
     const own = nodes.filter((n) => n.target.sectionId === screen)
     return (own.find((n) => n.isEntryPoint) || own[0])?.id
@@ -148,23 +148,23 @@ function flowMapOf(featureId) {
     const key = from + '>' + to
     if (seen.has(key)) continue
     seen.add(key)
-    // Возврат помечаем возвратом — иначе автораскладка карты ломается. Определяем
-    // по подписи действия, а не по порядку обхода: файлы читаются по алфавиту, и
-    // «Возврат» из achievements попадался раньше, чем «See all» из home.
-    const back = /возврат|вернут|назад|back|отмена|cancel|закрыть|close/i.test(t.label) || /^к\s+/i.test(t.label)
+    // A return is marked as a return, or the map auto-layout breaks. Decided by the action
+    // label rather than by the order files are read: contracts are read alphabetically, and
+    // the return from achievements came before See all from home.
+    const back = /back|return|cancel|close|dismiss/i.test(t.label)
     edges.push({ from, to, label: t.label, kind: back ? 'back' : 'primary' })
   }
   return { featureId, title: featureId, flows, nodes, edges }
 }
 
-// ——— переходы между экранами ———
+// ——— transitions between screens ———
 
-// Стрелки на карте — это ответ на вопрос «что откуда открывается», и он уже записан
-// в контракте экрана: таблица Actions, колонка «куда ведёт». Придумывать переходы
-// программой нельзя, а руками их писать некуда — карта пересобирается каждый ход.
-// Поэтому берём только то, что названо однозначно: ровно один известный экран в ячейке
-// и не тот же самый. Всё остальное — «home или портал», внешние разделы, «остаётся тут» —
-// пропускаем молча: три верные стрелки лучше десяти выдуманных.
+// Arrows on the map answer what opens what, and that is already written in the screen
+// contract: the Actions table, the 'where it leads' column. A program must not invent
+// transitions, and there is nowhere to write them by hand — the map is rebuilt every turn.
+// So we take only what is named unambiguously: exactly one known screen in the cell, and not
+// the same one. Everything else — 'home or the portal', external sections, 'stays here' — is
+// skipped silently: three correct arrows beat ten invented ones.
 function transitionsOf(featureId, screens) {
   const dir = path.join(root, 'docs', 'features', featureId, '07_screen-specs', 'screen-contracts')
   if (!fs.existsSync(dir)) return []
@@ -182,7 +182,7 @@ function transitionsOf(featureId, screens) {
 
       const cells = line.split('|').slice(1, -1).map((c) => c.trim())
       if (cells.length < 3) continue
-      if (/^-+$/.test(cells[0]) || /^Action$/i.test(cells[0])) continue      // шапка и разделитель
+      if (/^-+$/.test(cells[0]) || /^Action$/i.test(cells[0])) continue      // header and separator
 
       const target = cells[cells.length - 1]
       const named = screens.filter((s) => s !== from && new RegExp('(^|[^a-z0-9-])' + s + '([^a-z0-9-]|$)', 'i').test(target))
@@ -209,7 +209,7 @@ function summaryOf(featureId) {
       }
     }
   }
-  return 'Бриф ещё не заполнен.'
+  return 'The brief is not filled in yet.'
 }
 
 function buildRegistry() {
@@ -221,70 +221,70 @@ function buildRegistry() {
     return feature
   })
 
-  // Продуктовых документов ещё нет — показываем хотя бы экраны прототипа.
+  // No product documents yet — show at least the prototype's screens.
   if (!features.length && dirs('src/screens').length) {
     const map = flowMapOf('prototype')
-    features.push({ id: 'prototype', title: 'Прототип', summary: 'Экраны прототипа.', ...(map ? { flowMap: map } : {}) })
+    features.push({ id: 'prototype', title: 'Prototype', summary: 'Prototype screens.', ...(map ? { flowMap: map } : {}) })
   }
   return { prototypeId: prototypeId(), title: state.feature || path.basename(root), areas: [], features }
 }
 
-// ——— проверки, которых нет в штатном валидаторе ———
+// ——— checks the vendored validator does not make ———
 
 function extraProblems(manifest) {
   const problems = []
   const screens = dirs('src/screens')
   for (const f of manifest.features ?? []) {
     if (f.area && !(manifest.areas ?? []).includes(f.area)) {
-      problems.push('фича «' + f.id + '»: область «' + f.area + '» не перечислена в areas — в каталоге она потеряется')
+      problems.push('feature ' + f.id + ': area ' + f.area + ' is not listed in areas — it will be lost in the catalogue')
     }
     for (const n of f.flowMap?.nodes ?? []) {
       if (screens.length && !screens.includes(n.target.sectionId)) {
-        problems.push('узел «' + n.id + '» ведёт на экран «' + n.target.sectionId + '», а такого в src/screens нет')
+        problems.push('node ' + n.id + ' points at screen ' + n.target.sectionId + ', which is not in src/screens')
       }
     }
   }
   return problems
 }
 
-// ——— команды ———
+// ——— commands ———
 
-// Копия приложения для localhost. Со стенда его на localhost не подключить: OKTA
-// отдаёт 401 на межсайтовый запрос, а Chrome блокирует запросы к localhost. Прямое
-// зеркало по IP — единственный адрес, который скрипт может забрать сам. Не вышло —
-// не беда: на стенде кнопка работает и без копии.
+// A local copy of the app for localhost. It cannot be loaded from the stand onto localhost:
+// OKTA answers 401 to a cross-site script request and Chrome blocks requests to localhost.
+// The direct IP mirror is the only address a script can fetch itself. If it fails, no harm:
+// on the stand the button works without a local copy.
 const APP_URL = 'http://34.102.7.243/context-app-open/context-app-dist.tgz'
 
 function fetchApp() {
   const dest = path.join(root, 'public', 'context-app')
-  if (fs.existsSync(path.join(dest, 'embed.js'))) return 'уже была'
+  if (fs.existsSync(path.join(dest, 'embed.js'))) return 'already there'
   const tmp = path.join(os.tmpdir(), 'context-app-' + process.pid)
   const tgz = path.join(tmp, 'app.tgz')
   try {
     fs.mkdirSync(tmp, { recursive: true })
     const dl = spawnSync('curl', ['-fsSL', '--max-time', '30', '-o', tgz, APP_URL], { stdio: 'ignore' })
-    if (dl.status !== 0 || !fs.existsSync(tgz)) return 'не вышло скачать'
-    // tar запускаем ИЗ временной папки: путь с буквой диска (C:\…) GNU tar
-    // принимает за адрес удалённого сервера и падает с «Cannot connect to C:».
-    if (spawnSync('tar', ['-xzf', 'app.tgz'], { cwd: tmp, stdio: 'ignore' }).status !== 0) return 'не вышло распаковать'
+    if (dl.status !== 0 || !fs.existsSync(tgz)) return 'download failed'
+    // tar runs FROM the temp folder: a path with a drive letter is read by GNU tar as a remote
+    // host and it fails with 'Cannot connect to C:'.
+    if (spawnSync('tar', ['-xzf', 'app.tgz'], { cwd: tmp, stdio: 'ignore' }).status !== 0) return 'unpacking failed'
     const from = fs.existsSync(path.join(tmp, 'context-app')) ? path.join(tmp, 'context-app') : tmp
     fs.rmSync(dest, { recursive: true, force: true })
     fs.mkdirSync(path.dirname(dest), { recursive: true })
     fs.cpSync(from, dest, { recursive: true })
-    return 'скачана'
+    return 'downloaded'
   } catch {
-    return 'не вышло'
+    return 'failed'
   } finally {
     fs.rmSync(tgz, { force: true })
     fs.rmSync(tmp, { recursive: true, force: true })
   }
 }
 
-// На dev-сервере Vite перехватывает запрос попапа (/context-app/?embed=1&…) своим
-// SPA-fallback и отдаёт в iframe index.html прототипа — попап показывает прототип
-// второй раз вместо себя. На стенде и в сборке этого нет.
-// Плагины вписываются в конфиг сборки не по точному тексту, а вставкой: конфиг мог
-// уже поменять кто-то другой (например, псевдоним витрины дописывает vibe.mjs).
+// On the dev server Vite intercepts the popup request (/context-app/?embed=1&…) with its own
+// SPA fallback and serves the prototype's index.html into the iframe — the popup then shows
+// the prototype a second time. Neither the stand nor a build has this problem.
+// Plugins are inserted rather than matched by exact text: the config may already have been
+// changed by someone else (vibe.mjs adds the gallery alias, for instance).
 const VITE_FUNCS = `function contextAppDevFallback() {
   return {
     name: 'context-app-dev-fallback',
@@ -296,18 +296,18 @@ const VITE_FUNCS = `function contextAppDevFallback() {
         next()
       })
     },
-    // Копия приложения нужна только на dev-сервере: на стенде тег грузится со
-    // стенда, и лишние 650 КБ в сборке — мёртвый груз. После сборки выкидываем.
+    // The app copy is only needed on the dev server: on the stand the tag loads from the
+    // stand, and 650 KB in the build is dead weight. Dropped after the build.
     closeBundle() {
       fs.rmSync('dist/context-app', { recursive: true, force: true })
     },
   }
 }
 
-// Метки для инспектора компонентов: на каждом вызове компонента дизайн-системы
-// остаётся след — имя, откуда он, пропсы, файл и строка. Без этого инспектор
-// показывает не «Button», а внутренний Box, из которого тот собран. Отдельным
-// шагом, а не опцией React-плагина: в шестой версии опции babel нет.
+// Marks for the component inspector: every call of a design-system component leaves a trace —
+// name, origin, props, file and line. Without them the inspector shows the internal Box the
+// component is built from instead of Button. A separate build step rather than an option of
+// the React plugin: version six has no babel option.
 function xuiSourceTagPlugin() {
   return {
     name: 'xui-source-tag',
@@ -337,7 +337,7 @@ function ensureViteFix() {
 
   const at = text.indexOf('export default')
   if (at === -1 || !/plugins:\s*\[/.test(text)) {
-    return 'vite.config.ts непривычного вида — впишите в него плагины context-app-dev-fallback и xui-source-tag руками, иначе попап покажет сам прототип, а инспектор — Box вместо компонентов'
+    return 'vite.config.ts has an unfamiliar shape — add the context-app-dev-fallback and xui-source-tag plugins by hand, or the popup will show the prototype itself and the inspector will show Box'
   }
 
   const head = (text.indexOf("import path") === -1 ? "import path from 'node:path'" + NL : '')
@@ -345,8 +345,8 @@ function ensureViteFix() {
     + "import * as babel from '@babel/core'" + NL
     + "import xuiSourceTag from './scripts/xui-source-tag.ts'" + NL
 
-  // Порядок важен: сначала правим массив плагинов в самом конфиге, и только потом
-  // дописываем функции. Наоборот — и замена попадёт в первый plugins: [ внутри них.
+  // Order matters: first fix the plugins array in the config itself, and only then append the
+  // functions. The other way round, the replacement lands in the first plugins: [ inside them.
   let out = text.replace(/plugins:\s*\[/, 'plugins: [xuiSourceTagPlugin(), contextAppDevFallback(), ')
   const exportAt = out.indexOf('export default')
   out = out.slice(0, exportAt) + VITE_FUNCS + NL + NL + out.slice(exportAt)
@@ -355,14 +355,14 @@ function ensureViteFix() {
 }
 
 
-// Плагин меток работает через @babel/core. Ставим его здесь, когда инспектор
-// действительно включают, а не заранее «на будущее».
+// The marking plugin runs through @babel/core. It is installed here, when the inspector is
+// actually switched on, rather than in advance.
 function ensureBabel() {
-  if (fs.existsSync(path.join(root, 'node_modules', '@babel', 'core'))) return 'уже стоит'
-  if (!fs.existsSync(path.join(root, 'package.json'))) return 'нет package.json — пропускаю'
+  if (fs.existsSync(path.join(root, 'node_modules', '@babel', 'core'))) return 'already installed'
+  if (!fs.existsSync(path.join(root, 'package.json'))) return 'no package.json — skipping'
   const r = spawnSync('npm', ['install', '-D', '@babel/core', '--no-audit', '--no-fund'],
     { cwd: root, stdio: 'ignore', shell: true })
-  return r.status === 0 ? 'поставлен' : 'не удалось поставить'
+  return r.status === 0 ? 'installed' : 'could not install'
 }
 
 function ensureSourceMeta() {
@@ -383,18 +383,18 @@ async function cmdExport({ quiet } = {}) {
   }
   const nodes = registry.features.reduce((n, f) => n + (f.flowMap?.nodes.length ?? 0), 0)
   if (!quiet) {
-    console.log('Собрано в ' + OUT + ':')
-    console.log('  фич в каталоге: ' + registry.features.length)
-    console.log('  узлов на карте: ' + nodes)
-    for (const p of extraProblems(registry)) console.log('  внимание: ' + p)
-    if (!nodes) console.log('  карта пуста: состояния экранов ещё не описаны (стадия 06) и экранов в src/screens нет')
+    console.log('Built into ' + OUT + ':')
+    console.log('  features in the catalogue: ' + registry.features.length)
+    console.log('  nodes on the map: ' + nodes)
+    for (const p of extraProblems(registry)) console.log('  note: ' + p)
+    if (!nodes) console.log('  the map is empty: no screen states described (stage 06) and no screens in src/screens')
   }
   return registry
 }
 
 function cmdConnect(proto) {
   if (!exists('index.html')) {
-    console.error('Нет index.html — сначала заведите прототип: node scripts/init.mjs <экран>')
+    console.error('No index.html — create the prototype first: node scripts/init.mjs <screen>')
     process.exit(1)
   }
   const file = path.join(root, 'index.html')
@@ -403,8 +403,8 @@ function cmdConnect(proto) {
 
   if (html.indexOf('context-app/embed.js') === -1) {
     const snippet = [
-      '    <!-- Кнопка Context: каталог фич, карта экранов, доки и комментарии команды.',
-      '         На стенде подключается со стенда, локально — из своей копии в public/context-app/. -->',
+      '    <!-- The Context button: feature catalogue, screen map, docs and team comments.',
+      '         On the stand it loads from the stand, locally from the copy in public/context-app/. -->',
       '    <script>',
       '      (function () {',
       "        var local = ['localhost', '127.0.0.1'].includes(location.hostname)",
@@ -418,9 +418,9 @@ function cmdConnect(proto) {
     ].join(NL)
     html = html.replace('  </body>', snippet)
     fs.writeFileSync(file, html)
-    console.log('Кнопка подключена в index.html, папка деплоя: ' + deploy)
+    console.log('Button connected in index.html, deploy folder: ' + deploy)
   } else {
-    console.log('Кнопка уже подключена в index.html — не трогаю.')
+    console.log('The button is already connected in index.html — leaving it alone.')
   }
 
   const gi = path.join(root, '.gitignore')
@@ -429,23 +429,23 @@ function cmdConnect(proto) {
   }
   saveState({ contextApp: { proto: deploy } })
   return cmdExport({ quiet: true }).then(() => {
-    console.log('Данные собраны: ' + OUT)
+    console.log('Data built: ' + OUT)
     const app = fetchApp()
-    console.log('Копия приложения для localhost: ' + app)
+    console.log('Local copy of the app: ' + app)
     ensureSourceMeta()
-    console.log('Метки для инспектора компонентов: ' + ensureBabel())
+    console.log('Marks for the component inspector: ' + ensureBabel())
     const warning = ensureViteFix()
-    if (warning) console.log('Внимание: ' + warning)
+    if (warning) console.log('Note: ' + warning)
     console.log('')
-    console.log('Откройте npm run dev — кнопка Context появится внизу справа.')
-    console.log('Комментарии работают только на стенде: их привязывает к деплою сам сервер.')
+    console.log('Run npm run dev — the Context button appears in the bottom right.')
+    console.log('Comments only work on the stand: the server scopes them to the deploy.')
   })
 }
 
 async function cmdCheck() {
   const dir = path.join(root, OUT)
   if (!fs.existsSync(path.join(dir, 'manifest.json'))) {
-    console.error('Данных нет: node scripts/context-app.mjs export')
+    console.error('No data yet: node scripts/context-app.mjs export')
     process.exit(1)
   }
   const manifest = JSON.parse(read(path.join(dir, 'manifest.json')))
@@ -453,15 +453,15 @@ async function cmdCheck() {
   for (const [featureId, files] of Object.entries(manifest.docs ?? {})) {
     for (const rel of files) {
       if (!fs.existsSync(path.join(dir, 'docs', featureId, rel))) {
-        problems.push('заявлен документ, которого нет на диске: docs/' + featureId + '/' + rel)
+        problems.push('a document is declared but missing on disk: docs/' + featureId + '/' + rel)
       }
     }
   }
   problems.push(...extraProblems(manifest))
 
   const nodes = (manifest.features ?? []).reduce((n, f) => n + (f.flowMap?.nodes.length ?? 0), 0)
-  console.log('Context App: фич ' + (manifest.features ?? []).length + ', узлов на карте ' + nodes)
-  if (!problems.length) { console.log('  данные валидны'); return }
+  console.log('Context App: features ' + (manifest.features ?? []).length + ', nodes on the map ' + nodes)
+  if (!problems.length) { console.log('  the data is valid'); return }
   for (const p of problems) console.log('  ✗ ' + p)
   process.exit(1)
 }
@@ -471,7 +471,7 @@ if (cmd === 'connect') cmdConnect(arg && !arg.startsWith('--') ? arg : undefined
 else if (cmd === 'export') cmdExport()
 else if (cmd === 'check') cmdCheck()
 else {
-  console.log('node scripts/context-app.mjs connect   подключить кнопку Context к прототипу')
-  console.log('node scripts/context-app.mjs export    пересобрать каталог, доки и карту')
-  console.log('node scripts/context-app.mjs check     проверить перед выкладкой')
+  console.log('node scripts/context-app.mjs connect   connect the Context button to the prototype')
+  console.log('node scripts/context-app.mjs export    rebuild the catalogue, docs and map')
+  console.log('node scripts/context-app.mjs check     verify before a deploy')
 }

@@ -1,38 +1,38 @@
 #!/usr/bin/env node
 //
-//  init — создаёт файлы приложения под вашу задачу
+//  init — creates the application files for your task
 //  ────────────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Пока вы не сказали, что хотите сделать, в шаблоне нет никакого приложения:
-//  ни React, ни конфигов, ни папок с экранами. Так задумано — чтобы вам не
-//  доставался чужой стек и гора файлов, которые вам сегодня не нужны.
-//  Этот скрипт добирает ровно то, без чего нельзя показать экран, и ни файла сверх.
+//  WHY THIS EXISTS
+//  Until you say what you want to build, the kit contains no application at all: no React,
+//  no configs, no screen folders. That is deliberate — you should not inherit someone else's
+//  stack and a pile of files you do not need today.
+//  This script adds exactly what is required to show a screen, and not one file more.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Агент вызывает его сам — после того, как вы ответили на два вопроса в начале
-//  работы: как ведём работу и на какой дизайн-системе строим. Руками запускать
-//  не нужно, но если захотите:  node scripts/init.mjs profile
-//  (где profile — имя экрана строчными буквами, можно с дефисами).
+//  WHEN IT RUNS
+//  The agent calls it after you answer the two questions at the start: how we work and which
+//  design system we build on. You never need to run it yourself, but if you want to:
+//    node scripts/init.mjs profile
+//  (where profile is a screen name in lowercase, dashes allowed).
 //
-//  ЧТО ПОЯВИТСЯ ПОСЛЕ ЗАПУСКА
-//    src/screens/<экран>/screen.tsx   сам экран — его агент дальше и верстает
-//    src/main.tsx                     подключает экран к странице
-//    index.html                       страница, которую откроет браузер
-//    package.json                     команды: npm run dev — открыть прототип
-//    vite.config.ts                   чтобы правки подхватывались на лету
-//    .gitignore                       чтобы служебные папки не попали в историю
+//  WHAT APPEARS
+//    src/screens/<screen>/screen.tsx   the screen itself, which the agent then builds
+//    src/main.tsx                      connects the screen to the page
+//    index.html                        the page the browser opens
+//    package.json                      commands: npm run dev opens the prototype
+//    vite.config.ts                    so edits appear live
+//    .gitignore                        so service folders stay out of history
 //
-//  ЧТО ОН НЕ ДЕЛАЕТ
-//  Не трогает то, что уже создано — ваши правки в безопасности, запускать его
-//  можно сколько угодно раз. Не придумывает содержимое экрана: рисует агент,
-//  скрипт лишь готовит место. Не ставит ничего, чего вы не выбирали.
+//  WHAT IT DOES NOT DO
+//  It never touches what already exists — your edits are safe and it can run any number of
+//  times. It does not invent the content of a screen: the agent draws, the script only
+//  prepares the place. It installs nothing you did not choose.
 //
-//  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  «не вышло» при установке — чаще всего нет интернета или корпоративная сеть режет
-//  доступ к хранилищу пакетов. Файлы при этом уже созданы, ничего не потеряно:
-//  скажите агенту, он повторит установку. Прототип не открывается — попросите
-//  агента запустить npm run dev.
+//  IF SOMETHING GOES WRONG
+//  'failed' during install usually means no internet, or a corporate network blocking the
+//  package registry. The files are already created and nothing is lost: tell the agent and it
+//  will retry. The prototype does not open — ask the agent to run npm run dev.
+//
 //
 
 import fs from 'node:fs'
@@ -41,7 +41,7 @@ import { execSync } from 'node:child_process'
 
 const screen = process.argv[2]
 if (!screen || !/^[a-z][a-z0-9-]*$/.test(screen)) {
-  console.error('Имя экрана: строчные буквы и дефисы. Например: node scripts/init.mjs profile')
+  console.error('Screen name: lowercase letters and dashes. For example: node scripts/init.mjs profile')
   process.exit(1)
 }
 
@@ -61,15 +61,15 @@ function write(rel, body) {
   created.push(rel)
 }
 
-// ——— зависимости под выбранную дизайн-систему ———
+// ——— dependencies for the chosen design system ———
 
 const deps = { react: '^19', 'react-dom': '^19' }
 if (ds === 'xui') {
-  // базовый набор: покрывает обычный экран без доустановок по одному
+  // a base set: covers an ordinary screen without installing packages one by one
   for (const p of ['core', 'typography', 'layout', 'button', 'input', 'input-phone', 'select',
                    'modal', 'toast', 'avatar', 'badge', 'divider', 'list', 'tooltip',
                    'field-group', 'icons-base']) deps['@xsolla/xui-' + p] = 'latest'
-  deps['styled-components'] = 'latest'   // требуют почти все компоненты XUI
+  deps['styled-components'] = 'latest'   // almost every XUI component needs it
 }
 if (ds === 'custom' && dsUrl && !/^https?:/.test(dsUrl)) deps[dsUrl] = 'latest'
 
@@ -139,8 +139,8 @@ write('src/main.tsx', mount)
 write('src/app.tsx', [
   "import { useEffect, useState } from 'react'",
   '',
-  '// Каждая папка в screens/ — это экран. Ничего регистрировать не нужно:',
-  '// создали src/screens/<имя>/screen.tsx — он появился в списке сам.',
+  '// Every folder in screens/ is a screen. Nothing to register:',
+  '// create src/screens/<name>/screen.tsx and it appears in the list by itself.',
   "const found = import.meta.glob('./screens/*/screen.tsx', { eager: true }) as Record<",
   '  string,',
   '  { Screen: (props: { state: string | null }) => any }',
@@ -150,8 +150,8 @@ write('src/app.tsx', [
   "  Object.entries(found).map(([file, mod]) => [file.split('/')[2], mod.Screen]),",
   ')',
   '',
-  '// Адрес экрана: #<экран>, а если нужно конкретное состояние — #<экран>?state=empty.',
-  '// Так узел карты экранов Context App открывает прототип сразу в нужном состоянии.',
+  '// A screen address is #<screen>, or #<screen>?state=empty for a particular state.',
+  '// That is how a Context App map node opens the prototype in the right state.',
   'function readHash() {',
   "  const [name, query] = location.hash.slice(1).split('?')",
   "  return { name, state: new URLSearchParams(query).get('state') }",
@@ -178,8 +178,8 @@ write('src/app.tsx', [
   '  )',
   '}',
   '',
-  '// Переключатель экранов для работы над прототипом. Виден только на dev-сервере:',
-  '// в собранной версии его нет, демонстрацию он не портит.',
+  '// A screen switcher for working on the prototype. Visible only on the dev server:',
+  '// the built version does not carry it, so it never spoils a demo.',
   'function ScreenSwitch({ names, current }: { names: string[]; current: string }) {',
   '  if (!import.meta.env.DEV) return null',
   '  return (',
@@ -226,62 +226,62 @@ write(`src/screens/${screen}/screen.tsx`, `export function Screen() {
 }
 `)
 
-// ——— зависимости ставим один раз ———
+// ——— dependencies are installed once ———
 
 let installed = false
 if (!fs.existsSync(path.join(root, 'node_modules'))) {
-  process.stdout.write('ставлю зависимости… ')
+  process.stdout.write('installing dependencies… ')
   try {
     execSync('npm install --silent', { stdio: 'pipe' })
     installed = true
-    console.log('готово')
+    console.log('done')
   } catch (e) {
-    console.log('не вышло')
+    console.log('failed')
     const msg = String(e.stderr || e.message)
     if (/E40[13]|ENEEDAUTH|xsolla/i.test(msg) && ds === 'xui') {
-      console.error('\nПакеты @xsolla/xui-* приватные — нужен доступ к внутреннему npm-реестру Xsolla.')
-      console.error('Файлы созданы; поставь зависимости, когда доступ появится: npm install')
+      console.error('\nThe @xsolla/xui-* packages are private — you need access to the internal Xsolla npm registry.')
+      console.error('The files are created; install the dependencies once you have access: npm install')
     } else {
       console.error('\n' + msg.split('\n').slice(0, 3).join('\n'))
     }
   }
 }
 
-// ——— справочник по дизайн-системе ———
-// Без него агент выясняет состав библиотеки чтением служебных файлов: в замере это
-// стоило 100k против 17k на том же экране. Справочник собирается из установленного.
+// ——— the design-system catalogue ———
+// Without it the agent works out the library by reading service files: in one measurement that
+// cost 100k against 17k for the same screen. The catalogue is built from what is installed.
 
 if (ds !== 'none' && fs.existsSync(path.join(root, 'node_modules'))) {
   try {
     execSync('node scripts/ds-index.mjs', { stdio: 'inherit' })
-    execSync('node scripts/fetch-ds-skill.mjs', { stdio: 'inherit' })   // руководство от команды DS
+    execSync('node scripts/fetch-ds-skill.mjs', { stdio: 'inherit' })   // the design-system team's guide
   } catch {
-    console.log('справочник собрать не вышло — не критично, агент разберётся по типам')
+    console.log('could not build the catalogue — not critical, the agent will read the types')
   }
 }
 
-// Свод правил о текстах интерфейса. Лежит в vendor/ и сам собой не запускается:
-// агент открывает его только по просьбе дизайнера — см. .claude/commands/ux.md.
+// The interface copy rulebook. It lives in vendor/ and never starts by itself:
+// the agent opens it only when the designer asks — see .claude/commands/ux.md.
 try {
   execSync('node scripts/uxw.mjs install', { stdio: 'inherit' })
 } catch {}
 
-// Кнопка Context — сразу. Раньше здесь была подсказка агенту «подключи сам», и в живом
-// прогоне он её пропустил: дизайнер открыл прототип, а кнопки нет. Подключение
-// идемпотентно и ничего не стоит, поэтому делаем его, а не советуем.
+// The Context button, straight away. There used to be a hint here telling the agent to connect
+// it, and in a live run the agent skipped it: the designer opened the prototype and found no
+// button. Connecting is idempotent and costs nothing, so we do it instead of advising it.
 if (created.includes('index.html')) {
   try {
     execSync('node scripts/context-app.mjs connect', { stdio: 'inherit' })
   } catch {}
 }
 
-// ——— отчёт ———
+// ——— report ———
 
 console.log()
-if (created.length) console.log('создано:\n' + created.map((f) => '  ' + f).join('\n'))
-if (skipped.length) console.log('уже было:\n' + skipped.map((f) => '  ' + f).join('\n'))
+if (created.length) console.log('created:\n' + created.map((f) => '  ' + f).join('\n'))
+if (skipped.length) console.log('already there:\n' + skipped.map((f) => '  ' + f).join('\n'))
 
 if (created.length) {
   console.log()
-  console.log('открыть: npm run dev — кнопка Context внизу справа уже на месте')
+  console.log('open it: npm run dev — the Context button is already in the bottom right')
 }

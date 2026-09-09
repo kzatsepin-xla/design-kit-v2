@@ -1,32 +1,32 @@
 #!/usr/bin/env node
 //
-//  ctx — сколько на самом деле стоила сессия
+//  ctx — what a session actually cost
 //  ─────────────────────────────────────────
 //
-//  ЭТО ИНСТРУМЕНТ ДЛЯ СБОРКИ ШАБЛОНА, А НЕ ДЛЯ РАБОТЫ НАД ПРОТОТИПОМ.
-//  Дизайнеру он не нужен и в его копию шаблона не поедет — лежит в tools/ отдельно.
+//  THIS IS A TOOL FOR BUILDING THE KIT, NOT FOR WORKING ON A PROTOTYPE.
+//  A designer does not need it and it does not travel into their copy — it lives in tools/.
 //
-//  ЗАЧЕМ
-//  У агента есть окно памяти. Всё, что в него загружено — инструкции, описания
-//  инструментов, прочитанные файлы — занимает место и тратится на каждом ходу.
-//  Этот скрипт показывает, чем оно занято на самом деле: не по ощущениям и не по
-//  размеру файлов, а по записи разговора, которую Claude Code ведёт сам.
+//  WHY
+//  The agent has a memory window. Everything loaded into it — instructions, tool schemas,
+//  files that were read — takes space and is paid for on every turn. This script shows what
+//  actually fills it: not by feel and not by file size, but from the transcript Claude Code
+//  keeps itself.
 //
-//  КАК ПОЛЬЗОВАТЬСЯ
-//    node tools/ctx.mjs                  последняя сессия в этой папке
-//    node tools/ctx.mjs --list           какие сессии вообще были
-//    node tools/ctx.mjs --session <id>   разобрать конкретную
-//    node tools/ctx.mjs --log "К5"       дописать строку в docs/ctx-log.md
+//  HOW TO USE IT
+//    node tools/ctx.mjs                  the last session in this folder
+//    node tools/ctx.mjs --list           which sessions exist
+//    node tools/ctx.mjs --session <id>   analyse a specific one
+//    node tools/ctx.mjs --log "K5"       append a line to _dev/ctx-log.md
 //
-//  ЧТО ОЗНАЧАЮТ ЧИСЛА
-//    BASE   сколько занято к первому ответу — цена «просто открыть проект»
-//    PEAK   самый большой объём за сессию
-//    задачи что добавил каждый ваш запрос
-//    топ    какие вызовы инструментов съели больше всего
+//  WHAT THE NUMBERS MEAN
+//    BASE   what is occupied by the first answer — the price of opening the project
+//    PEAK   the largest window during the session
+//    tasks  what each of your requests added
+//    top    which tool calls ate the most
 //
-//  ВАЖНО ПРО ЗАМЕРЫ
-//  Мерить надо повторами: одиночный запуск иногда врёт, если внешний сервис не успел
-//  подключиться. Два одинаковых прогона подряд — уже надёжно.
+//  ABOUT MEASURING
+//  Measure in repeats: a single run sometimes lies when an external service was slow to
+//  connect. Two identical runs back to back are already reliable.
 //
 
 import fs from 'node:fs'
@@ -44,8 +44,8 @@ const approxTokens = (chars) => Math.round(chars / 4)
 function sessionDir(cwd) {
   const dir = path.join(os.homedir(), '.claude', 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'))
   if (!fs.existsSync(dir)) {
-    console.error(`Транскриптов для этого репо ещё нет: ${dir}`)
-    console.error('Сессия записывается по мере работы — задай агенту хоть один вопрос и повтори.')
+    console.error(`No transcripts for this repo yet: ${dir}`)
+    console.error('A session is written as work happens — ask the agent something and retry.')
     process.exit(1)
   }
   return dir
@@ -62,7 +62,7 @@ function read(file) {
   return fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map((l) => { try { return JSON.parse(l) } catch { return null } }).filter(Boolean)
 }
 
-// Текст пользовательского промпта — или null, если это не промпт (tool_result, мета, сабагент).
+// The user prompt text, or null when this is not a prompt (tool_result, meta, subagent).
 function promptText(e) {
   if (e.type !== 'user' || e.isSidechain || e.isMeta) return null
   const c = e.message?.content
@@ -80,14 +80,14 @@ const short = (s, n = 46) => {
 function analyse(entries) {
   const tasks = []
   const tools = new Map()   // tool_use_id → {name, arg}
-  const cost = new Map()    // "name arg" → ≈токенов в tool_result
+  const cost = new Map()    // "name arg" -> approx tokens in the tool_result
   let base = 0, peak = 0, answers = 0, side = 0
   let current = null
 
   for (const e of entries) {
     const p = promptText(e)
     if (p !== null) {
-      const label = short(p) || '(пусто)'
+      const label = short(p) || '(empty)'
       current = { label, from: null, to: null, peak: 0 }
       tasks.push(current)
       continue
@@ -129,7 +129,7 @@ function analyse(entries) {
   return { base, peak, answers, side, tasks: tasks.filter((t) => t.from !== null), top }
 }
 
-// ——— вывод ———
+// ——— output ———
 
 const dir = sessionDir(process.cwd())
 const all = sessions(dir)
@@ -141,26 +141,26 @@ if (has('--list')) {
 
 const wanted = flag('--session')
 const picked = wanted ? all.find((s) => s.id.startsWith(wanted)) : all[0]
-if (!picked) { console.error('Сессия не найдена.'); process.exit(1) }
+if (!picked) { console.error('Session not found.'); process.exit(1) }
 
 const r = analyse(read(picked.file))
 const grow = r.peak - r.base
 
-console.log(`\nctx · ${path.basename(process.cwd())} · сессия ${picked.id.slice(0, 8)} · ответов: ${r.answers}\n`)
-console.log(`  BASE  ${num(r.base).padStart(9)}   первый ответ — цена «просто открыть проект»`)
-console.log(`  PEAK  ${num(r.peak).padStart(9)}   максимум окна за сессию${grow > 0 ? `  (+${num(grow)} к BASE)` : ''}`)
-if (r.side) console.log(`  SIDE  ${num(r.side).padStart(9)}   сабагенты, вне главного окна`)
+console.log(`\nctx · ${path.basename(process.cwd())} · session ${picked.id.slice(0, 8)} · answers: ${r.answers}\n`)
+console.log(`  BASE  ${num(r.base).padStart(9)}   first answer — the price of opening the project`)
+console.log(`  PEAK  ${num(r.peak).padStart(9)}   largest window in the session${grow > 0 ? `  (+${num(grow)} over BASE)` : ''}`)
+if (r.side) console.log(`  SIDE  ${num(r.side).padStart(9)}   subagents, outside the main window`)
 
 if (r.tasks.length) {
-  console.log('\n  задачи')
+  console.log('\n  tasks')
   for (const t of r.tasks) {
     const delta = t.to - t.from
-    console.log(`    ${(delta >= 0 ? '+' : '') + num(delta)}`.padEnd(14) + `пик ${num(t.peak).padEnd(9)} ${t.label}`)
+    console.log(`    ${(delta >= 0 ? '+' : '') + num(delta)}`.padEnd(14) + `peak ${num(t.peak).padEnd(9)} ${t.label}`)
   }
 }
 
 if (r.top.length) {
-  console.log('\n  топ-потребители окна (≈ токенов из инструментов)')
+  console.log('\n  top window consumers (approx tokens from tools)')
   for (const [key, t] of r.top) console.log(`    ${num(t).padStart(7)}  ${key}`)
 }
 console.log()
@@ -168,10 +168,10 @@ console.log()
 const label = flag('--log')
 if (label !== null && label !== '') {
   const file = path.join(process.cwd(), 'docs', 'ctx-log.md')
-  const head = `# Журнал замеров\n\nФакт из транскриптов, снимается \`node scripts/ctx.mjs --log "<кирпич>"\`.\nBASE — цена открыть проект, PEAK — максимум окна, ЗАДАЧА — что добавил последний запрос.\n\n| Кирпич | Сценарий | BASE | PEAK | ЗАДАЧА |\n|---|---|---|---|---|\n`
+  const head = `# Measurement log\n\nFacts from transcripts, appended by \`node tools/ctx.mjs --log "<brick>"\`.\nBASE is the price of opening the project, PEAK the largest window, TASK the delta for one request.\n`
   if (!fs.existsSync(file)) fs.writeFileSync(file, head)
   const last = r.tasks[r.tasks.length - 1]
   const delta = last ? last.to - last.from : 0
   fs.appendFileSync(file, `| ${label} | ${last ? last.label : '—'} | ${num(r.base)} | ${num(r.peak)} | +${num(delta)} |\n`)
-  console.log(`  записано в docs/ctx-log.md: ${label}\n`)
+  console.log(`  written to _dev/ctx-log.md: ${label}\n`)
 }
