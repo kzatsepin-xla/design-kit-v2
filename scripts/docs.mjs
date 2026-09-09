@@ -265,6 +265,9 @@ function cmdCheck() {
 
   console.log('Проверка документов фичи «' + feature + '», файлов: ' + files.length)
   if (!problems.length) console.log('  всё связно, пустых разделов нет')
+  if (fs.existsSync(path.join(root, 'src', 'screens'))) {
+    console.log('  документы проверены сами по себе; сходятся ли они с экранами: node scripts/screens.mjs')
+  }
   for (const [rel, what] of problems) console.log('  ' + rel + ' — ' + what)
   if (open.length) {
     console.log(NL + 'Открытые вопросы к дизайнеру: ' + open.length)
