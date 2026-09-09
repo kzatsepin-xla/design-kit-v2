@@ -67,8 +67,18 @@ if (state.feature) bits.push(`feature: ${state.feature}`)
 if (state.designSystem?.kind && state.designSystem.kind !== 'none') {
   bits.push(`design system: ${state.designSystem.kind}`)
 }
-if (state.next) bits.push(`next: ${state.next}`)
-if (state.debt?.length) bits.push(`debt: ${state.debt.join(', ')}`)
+// Эта строка грузится в каждую сессию, поэтому она — указатель, а не отчёт.
+// Агент однажды набил в debt три абзаца, и они стали ценой каждого «привет».
+const short = (t, n) => (t.length > n ? t.slice(0, n).trimEnd() + '…' : t)
+if (state.next) bits.push(`next: ${short(String(state.next), 120)}`)
+if (state.debt?.length) bits.push(`debt: ${state.debt.length} — in state.json`)
+// Долги живут пометками в коде, а не списком: считаем их на месте, чтобы строка
+// состояния не могла разойтись с тем, что в файлах.
+try {
+  const { execFileSync } = await import('node:child_process')
+  const n = execFileSync(process.execPath, ['scripts/debt.mjs', '--count'], { cwd: projectRoot, encoding: 'utf8' }).trim()
+  if (n && n !== '0') bits.push(`decided for the designer: ${n} spots — node scripts/debt.mjs`)
+} catch {}
 if (state.stages?.length) bits.push(`doc stages: ${state.stages.join(' ')} — where they stand: node scripts/docs.mjs`)
 
 console.log('[state] ' + bits.join(' · '))
