@@ -1,36 +1,35 @@
 #!/usr/bin/env node
 //
-//  docs — продуктовая документация по фиче
-//  ──────────────────────────────────────
+//  docs — product documentation for a feature
+//  ──────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Когда работа идёт «полным циклом», экрану предшествуют документы: контекст,
-//  сценарии, состояния экранов, контракты. Каждый следующий опирается на предыдущий,
-//  и в них сквозная нумерация — правило BR-3 видно в сценарии HP-2, сценарий виден
-//  в матрице состояний. Этот скрипт заводит их, показывает, где вы остановились,
-//  и проверяет, что связи не порвались.
+//  WHY THIS EXISTS
+//  When the work runs as a full cycle, documents come before the screen: context, scenarios,
+//  screen states, contracts. Each one leans on the previous, and they share one numbering —
+//  rule BR-3 shows up in scenario HP-2, the scenario shows up in the state matrix. This script
+//  creates them, shows where you stopped, and checks that the links did not break.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Агент вызывает его сам. Руками — если хочется посмотреть, где вы:
-//    node scripts/docs.mjs                     где мы и что дальше
-//    node scripts/docs.mjs start промокоды     завести документы под фичу
-//    node scripts/docs.mjs screen checkout     добавить документы под один экран
-//    node scripts/docs.mjs check               проверить, что ничего не порвалось
+//  WHEN IT RUNS
+//  The agent calls it. By hand, if you want to see where you are:
+//    node scripts/docs.mjs                     where we are and what is next
+//    node scripts/docs.mjs start promo-codes   create the documents for a feature
+//    node scripts/docs.mjs screen checkout     add the documents for one screen
+//    node scripts/docs.mjs check               check that nothing came apart
 //
-//  ЧТО ПОЯВИТСЯ ПОСЛЕ ЗАПУСКА
-//    docs/product/PRD.md              один на весь проект, не на фичу
-//    docs/features/<фича>/00_context/…  и остальные выбранные стадии
-//  Внутри — не пустота, а скелет: заголовки, таблицы и подсказка, что писать.
+//  WHAT APPEARS
+//    docs/product/PRD.md                   one per project, not per feature
+//    docs/features/<feature>/00_context/   and the other chosen stages
+//  Inside is not emptiness but a skeleton: headings, tables and a hint about what to write.
 //
-//  ЧЕГО ОН НЕ ДЕЛАЕТ
-//  Не пишет за вас содержание и не заводит стадии, которые вы не выбрали в анкете:
-//  состав стадий лежит в state.json, поменять его можно в любой момент.
-//  Уже созданный файл не трогает — ваши правки в безопасности.
+//  WHAT IT DOES NOT DO
+//  It does not write the content for you, and it does not create stages you did not choose in
+//  the questionnaire: the set lives in state.json and can change at any time. It never touches
+//  a file that already exists — your edits are safe.
 //
-//  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  «не выбрана фича» — скажите агенту, над какой фичей работаете.
-//  Проверка ругается на висячую ссылку — значит, в тексте упомянут HP-4, а самого
-//  HP-4 нигде нет: либо описать, либо убрать упоминание.
+//  IF SOMETHING GOES WRONG
+//  'no feature selected' — tell the agent which feature you are working on.
+//  The check complains about a dangling reference: the text mentions HP-4 and no HP-4 exists.
+//  Either describe it or drop the mention.
 //
 import fs from 'node:fs'
 import path from 'node:path'
@@ -47,7 +46,7 @@ const today = new Date().toISOString().slice(0, 10)
 const created = []
 const skipped = []
 
-// ——— какие стадии вообще ведём ———
+// ——— which stages we run at all ———
 
 function chosenStages() {
   const ids = Array.isArray(state.stages) && state.stages.length
@@ -61,7 +60,7 @@ function saveState(patch) {
   fs.writeFileSync(statePath, JSON.stringify(next, null, 2) + NL)
 }
 
-// ——— скелет артефакта ———
+// ——— the artefact skeleton ———
 
 function tableBlock(cols, rows) {
   const out = ['| ' + cols.join(' | ') + ' |', '|' + cols.map(() => ' --- ').join('|') + '|']
@@ -75,30 +74,30 @@ function tableBlock(cols, rows) {
 function sectionBlock(sec) {
   const out = ['## ' + sec.h, '']
   if (sec.hint) out.push('> ' + sec.hint, '')
-  if (sec.ids) out.push('> Один пункт на строку, идентификатор вида ' + sec.ids + '-1 — на него ссылаются другие стадии.', '')
+  if (sec.ids) out.push('> One item per line, an id like ' + sec.ids + '-1 — other stages refer to it.', '')
   if (sec.table) out.push(tableBlock(sec.table, sec.rows), '')
   return out.join(NL)
 }
 
 function statesBlock() {
-  const out = ['> Экран проектируется во всех девяти состояниях. Неприменимое помечается',
-    '> явно: «N/A — почему», молча пропускать нельзя.', '']
+  const out = ['> A screen is designed in all nine states. Whatever does not apply is marked',
+    '> explicitly: N/A and the reason. Silently skipping one is not allowed.', '']
   catalog.nineStates.forEach(([name, ru], i) => {
     out.push('## ' + (i + 1) + '. ' + name + ' — ' + ru, '',
-      '**Применимо:** да / N/A — почему', '',
-      '**Что видит пользователь:**', '',
-      '**Что доступно:**', '')
+      '**Applies:** yes / N/A — why', '',
+      '**What the user sees:**', '',
+      '**What is available:**', '')
   })
-  out.push('> Недоступное по правам — прячем, а не показываем серым, если бизнес-правило',
-    '> не требует обратного.', '')
+  out.push('> What permissions forbid is hidden, not greyed out, unless a business rule',
+    '> says otherwise.', '')
   return out.join(NL)
 }
 
 function skeleton(stage, artifact, feature, screen) {
   const title = artifact.title + ' — ' + (screen ? screen : feature)
   const head = ['# ' + title, '',
-    '**Стадия:** ' + stage.id + ' · ' + stage.ru,
-    '**Обновлено:** ' + today, '', '---', '', '']
+    '**Stage:** ' + stage.id + ' · ' + stage.title,
+    '**Updated:** ' + today, '', '---', '', '']
   const body = artifact.states
     ? statesBlock()
     : (artifact.sections || []).map(sectionBlock).join(NL)
@@ -113,42 +112,42 @@ function write(rel, body) {
   created.push(rel)
 }
 
-// ——— команда: завести документы под фичу ———
+// ——— command: create the documents for a feature ———
 
 function cmdStart(feature) {
-  if (!feature || !/^[a-zа-я0-9][a-zа-я0-9-]*$/i.test(feature)) {
-    console.error('Имя фичи: буквы, цифры и дефисы. Например: node scripts/docs.mjs start promo-codes')
+  if (!feature || !/^[a-z0-9][a-z0-9-]*$/i.test(feature)) {
+    console.error('Feature name: letters, digits and dashes. For example: node scripts/docs.mjs start promo-codes')
     process.exit(1)
   }
   write('docs/product/PRD.md', ['# PRD — ' + path.basename(root), '',
-    '**Обновлено:** ' + today, '', '---', '',
-    '> PRD один на весь проект, а не на фичу. Бриф фичи в 00_context ссылается сюда.', '',
-    '## Задача', '', '## Пользователи', '', '## Требования', '', '## Что за рамками', '',
+    '**Updated:** ' + today, '', '---', '',
+    '> One PRD per project, not per feature. A feature brief in 00_context points here.', '',
+    '## The task', '', '## Users', '', '## Requirements', '', '## Out of scope', '',
   ].join(NL))
 
   const base = 'docs/features/' + feature
   for (const stage of chosenStages()) {
-    if (stage.perScreen) continue          // такие заводятся под конкретный экран
+    if (stage.perScreen) continue          // those are created per screen
     for (const art of stage.artifacts) {
       write(base + '/' + stage.dir + '/' + art.file, skeleton(stage, art, feature))
     }
   }
   saveState({ feature, stages: chosenStages().map((s) => s.id) })
   report()
-  const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.ru)
+  const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
   if (perScreen.length) {
-    console.log(NL + 'Документы под экран (' + perScreen.join(', ') + ') заводятся отдельно,')
-    console.log('когда станет ясен список экранов: node scripts/docs.mjs screen <имя-экрана>')
+  const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
+    console.log(NL + 'Per-screen documents (' + perScreen.join(', ') + ') are created separately,')
   }
 }
 
-// ——— команда: документы под один экран ———
+// ——— command: documents for one screen ———
 
 function cmdScreen(screen) {
   const feature = state.feature
-  if (!feature) { console.error('Сначала заведите фичу: node scripts/docs.mjs start <фича>'); process.exit(1) }
+  if (!feature) { console.error('Create the feature first: node scripts/docs.mjs start <feature>'); process.exit(1) }
   if (!screen || !/^[a-z][a-z0-9-]*$/.test(screen)) {
-    console.error('Имя экрана: строчные латинские буквы и дефисы. Например: node scripts/docs.mjs screen checkout')
+    console.error('Screen name: lowercase letters and dashes. For example: node scripts/docs.mjs screen checkout')
     process.exit(1)
   }
   const base = 'docs/features/' + feature
@@ -160,11 +159,11 @@ function cmdScreen(screen) {
       write(base + '/' + stage.dir + '/' + art.file.replace('<screen>', screen), skeleton(stage, art, feature, screen))
     }
   }
-  if (!any) { console.log('Ни одна из выбранных стадий не ведёт документы по экранам — заводить нечего.'); return }
+  if (!any) { console.log('None of the chosen stages keeps per-screen documents — nothing to create.'); return }
   report()
 }
 
-// ——— чтение того, что уже написано ———
+// ——— reading what has been written ———
 
 function mdFiles(dir) {
   const out = []
@@ -177,8 +176,8 @@ function mdFiles(dir) {
   return out
 }
 
-// Раздел считается пустым, если между его заголовком и следующим нет ничего,
-// кроме подсказки, шапки таблицы и пустых строк таблицы.
+// A section counts as empty when between its heading and the next there is nothing but the
+// hint, a table header and empty table rows.
 function emptySections(text) {
   const lines = text.split(NL)
   const empty = []
@@ -190,11 +189,11 @@ function emptySections(text) {
     if (!current) continue
     const t = line.trim()
     if (!t) continue
-    if (t.startsWith('>')) continue                       // подсказка
-    if (/^\|[\s|:-]*\|$/.test(t)) continue                // разделитель или пустая строка таблицы
+    if (t.startsWith('>')) continue                       // a hint
+    if (/^\|[\s|:-]*\|$/.test(t)) continue                // a separator or an empty table row
     if (t.startsWith('|') && t.split('|').slice(1, -1).every((c) => !c.trim())) continue
-    if (/^\*\*[^*]+:\*\*$/.test(t)) continue              // «**Что видит пользователь:**» без ответа
-    if (t.indexOf('да / N/A — почему') !== -1) continue    // «**Применимо:**» с нетронутой заготовкой
+    if (/^\*\*[^*]+:\*\*$/.test(t)) continue              // a bold label with no answer
+    if (t.indexOf('yes / N/A — why') !== -1) continue      // the untouched Applies placeholder
     if (t === '---') continue
     if (t.startsWith('<!--')) continue
     filled = true
@@ -210,29 +209,29 @@ function collectIds(text) {
   const used = new Set()
   for (const line of text.split(NL)) {
     const t = line.trim()
-    if (t.startsWith('>') || t.startsWith('<!--')) continue   // подсказка, а не текст
+    if (t.startsWith('>') || t.startsWith('<!--')) continue   // a hint, not content
     let m
     ID_RE.lastIndex = 0
     while ((m = ID_RE.exec(line))) {
       const id = m[0]
       const isDefinition =
-        new RegExp('^#{1,6}\\s*' + id + '\\b').test(t) ||          // заголовок «## HP-1 — …»
-        new RegExp('^\\|\\s*(\\*\\*)?' + id + '\\b').test(t) ||    // первая ячейка строки таблицы
-        new RegExp('^[-*]\\s*(\\*\\*)?' + id + '\\b').test(t)      // пункт списка
+        new RegExp('^#{1,6}\\s*' + id + '\\b').test(t) ||          // a heading like ## HP-1
+        new RegExp('^\\|\\s*(\\*\\*)?' + id + '\\b').test(t) ||    // the first cell of a table row
+        new RegExp('^[-*]\\s*(\\*\\*)?' + id + '\\b').test(t)      // a bullet item
       if (isDefinition) defined.add(id); else used.add(id)
     }
   }
   return { defined, used }
 }
 
-// ——— команда: проверка ———
+// ——— command: the check ———
 
 function cmdCheck() {
   const feature = state.feature
-  if (!feature) { console.error('Фича не выбрана — проверять нечего.'); process.exit(1) }
+  if (!feature) { console.error('No feature selected — nothing to check.'); process.exit(1) }
   const base = path.join(root, 'docs', 'features', feature)
   const files = mdFiles(base)
-  if (!files.length) { console.error('Документов нет: node scripts/docs.mjs start ' + feature); process.exit(1) }
+  if (!files.length) { console.error('No documents yet: node scripts/docs.mjs start ' + feature); process.exit(1) }
 
   const problems = []
   const allDefined = new Set()
@@ -242,17 +241,17 @@ function cmdCheck() {
   for (const file of files) {
     const rel = path.relative(root, file).split(path.sep).join('/')
     const text = fs.readFileSync(file, 'utf8')
-    for (const sec of emptySections(text)) problems.push([rel, 'раздел «' + sec + '» пуст'])
+    for (const sec of emptySections(text)) problems.push([rel, 'section "' + sec + '" is empty'])
     const { defined, used } = collectIds(text)
     for (const id of defined) {
-      if (seen.has(id) && seen.get(id) !== rel) problems.push([rel, id + ' описан дважды — ещё и в ' + seen.get(id)])
+      if (seen.has(id) && seen.get(id) !== rel) problems.push([rel, id + ' is described twice — also in ' + seen.get(id)])
       seen.set(id, rel)
       allDefined.add(id)
     }
     for (const id of used) { if (!allUsed.has(id)) allUsed.set(id, rel) }
   }
   for (const [id, rel] of allUsed) {
-    if (!allDefined.has(id)) problems.push([rel, 'ссылка на ' + id + ', а самого ' + id + ' нигде нет'])
+    if (!allDefined.has(id)) problems.push([rel, 'a reference to ' + id + ', but ' + id + ' is nowhere described'])
   }
 
   const open = []
@@ -263,30 +262,30 @@ function cmdCheck() {
     }
   }
 
-  console.log('Проверка документов фичи «' + feature + '», файлов: ' + files.length)
-  if (!problems.length) console.log('  всё связно, пустых разделов нет')
+  console.log('Checking the documents of feature "' + feature + '", files: ' + files.length)
+  if (!problems.length) console.log('  all linked up, no empty sections')
   if (fs.existsSync(path.join(root, 'src', 'screens'))) {
-    console.log('  документы проверены сами по себе; сходятся ли они с экранами: node scripts/screens.mjs')
+    console.log('  the documents were checked on their own; whether they match the screens: node scripts/screens.mjs')
   }
   for (const [rel, what] of problems) console.log('  ' + rel + ' — ' + what)
   if (open.length) {
-    console.log(NL + 'Открытые вопросы к дизайнеру: ' + open.length)
+    console.log(NL + 'Open questions for the designer: ' + open.length)
     for (const q of open.slice(0, 10)) console.log('  ' + q)
   }
   process.exit(problems.length ? 1 : 0)
 }
 
-// ——— команда по умолчанию: где мы ———
+// ——— the default command: where are we ———
 
 function cmdWhere() {
   const stages = chosenStages()
   if (!state.feature) {
-    console.log('Фича ещё не заведена. Выбранные стадии: ' + stages.map((s) => s.id + ' ' + s.ru).join(', '))
-    console.log('Завести: node scripts/docs.mjs start <имя-фичи>')
+    console.log('No feature yet. Chosen stages: ' + stages.map((s) => s.id + ' ' + s.title).join(', '))
+    console.log('Create one: node scripts/docs.mjs start <feature-name>')
     return
   }
   const base = path.join(root, 'docs', 'features', state.feature)
-  console.log('Фича: ' + state.feature)
+  console.log('Feature: ' + state.feature)
   let next = null
   for (const stage of stages) {
     const dir = path.join(base, stage.dir)
@@ -294,23 +293,23 @@ function cmdWhere() {
     let doneFiles = 0
     for (const f of files) if (!emptySections(fs.readFileSync(f, 'utf8')).length) doneFiles++
     let mark
-    if (!files.length) mark = stage.perScreen ? 'нет экранов' : 'не заведена'
-    else if (doneFiles === files.length) mark = 'готово'
-    else mark = doneFiles + ' из ' + files.length
-    if (!next && mark !== 'готово' && mark !== 'нет экранов') next = stage
-    console.log('  ' + stage.id + ' ' + stage.ru + ' — ' + mark)
+    if (!files.length) mark = stage.perScreen ? 'no screens yet' : 'not created'
+    else if (doneFiles === files.length) mark = 'done'
+    else mark = doneFiles + ' of ' + files.length
+    if (!next && mark !== 'done' && mark !== 'no screens yet') next = stage
+    console.log('  ' + stage.id + ' ' + stage.title + ' — ' + mark)
   }
   if (next) {
-    console.log(NL + 'Дальше: ' + next.id + ' ' + next.ru + ' (' + next.why + ')')
-    console.log('Файлы стадии: docs/features/' + state.feature + '/' + next.dir + '/')
+    console.log(NL + 'Next: ' + next.id + ' ' + next.title + ' (' + next.why + ')')
+    console.log('Stage files: docs/features/' + state.feature + '/' + next.dir + '/')
   } else {
-    console.log(NL + 'Все выбранные стадии заполнены. Проверить связность: node scripts/docs.mjs check')
+    console.log(NL + 'Every chosen stage is filled in. Check the links: node scripts/docs.mjs check')
   }
 }
 
 function report() {
-  if (created.length) { console.log('Создано:'); for (const f of created) console.log('  ' + f) }
-  if (skipped.length) console.log('Уже было и не тронуто: ' + skipped.length + ' файлов')
+  if (created.length) { console.log('Created:'); for (const f of created) console.log('  ' + f) }
+  if (skipped.length) console.log('Already there, untouched: ' + skipped.length + ' files')
 }
 
 const [cmd, arg] = process.argv.slice(2)

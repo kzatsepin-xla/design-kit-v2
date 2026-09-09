@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * ds-index.mjs — собрать базу знаний о дизайн-системе.
+ * ds-index.mjs — build the knowledge base about the design system.
  *
- * ЗАЧЕМ ЭТО ДИЗАЙНЕРУ
+ * WHY THIS MATTERS TO THE DESIGNER
  *
- * Агент постоянно ошибался одинаково: искал компонент по имени слоя из макета, не находил
- * и рисовал свой. «Прогресс» он искал как progress — а в системе progress-bar. Карточку
- * игры искал как GameCard — а пакет называется b2c-game-card. Боковое меню объявил
- * неопубликованным — оно есть под префиксом b2c.
+ * The agent kept making the same mistake: searching for a component by the layer name from
+ * the mockup, not finding it, and drawing its own. It looked for progress — the system calls
+ * it progress-bar. It looked for GameCard — the package is b2c-game-card. It declared the side
+ * navigation unpublished — it exists under the b2c prefix.
  *
- * Причина была в том, что справочник лежал текстом: агент читал его глазами и промахивался.
- * Теперь это база: список всех пакетов системы из реестра плюс подробности по установленным.
- * Искать по ней агент будет не чтением, а поиском — `node scripts/ds.mjs карточка`, — и поиск
- * прощает неточные имена.
+ * The cause was that the catalogue was prose: the agent read it by eye and missed. Now it is a
+ * database: every package in the registry plus details for the installed ones. The agent finds
+ * things by searching rather than reading — `node scripts/ds.mjs card` — and the search
+ * forgives inexact names.
  *
- * Запускается сам при установке и при обновлении библиотеки. Вручную не нужен.
+ * Runs on its own on install and on library updates. Never needed by hand.
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -23,7 +23,7 @@ const root = process.cwd()
 const out = path.join(root, '.claude', 'ds')
 fs.mkdirSync(out, { recursive: true })
 
-// ——— что опубликовано ———
+// ——— what is published ———
 
 let published = []
 try {
@@ -35,14 +35,14 @@ try {
     .map((o) => ({ pkg: o.package.name, version: o.package.version }))
     .filter((p) => p.pkg.startsWith('@xsolla/xui-'))
     .sort((a, b) => a.pkg.localeCompare(b.pkg))
-    // Версия с дефисом — сборка из ветки, а не релиз. Такие пакеты `latest` отдаёт молча:
-    // в живом прогоне xui-b2c-game-card приехал как 0.157.0-pr298 и притащил свою копию core.
+    // A version with a dash is a branch build, not a release. `latest` serves those silently:
+    // in a live run xui-b2c-game-card arrived as 0.157.0-pr298 and brought its own copy of core.
     .map((p) => (/-/.test(p.version) ? { ...p, branchOnly: true } : p))
 } catch {
-  console.error('реестр недоступен — беру только установленное')
+  console.error('registry unavailable — taking only what is installed')
 }
 
-// ——— что установлено, с деталями ———
+// ——— what is installed, with details ———
 
 const nm = path.join(root, 'node_modules', '@xsolla')
 const installed = []
@@ -76,18 +76,18 @@ if (fs.existsSync(nm)) {
       for (const m of src.matchAll(/export \{[^}]*?\b([A-Z][A-Za-z0-9]*)\b[^}]*?\}/g)) names.add(m[1])
       for (const name of [...names].sort()) components.push({ name, props: propsOf(src, name) })
     }
-    // Пакет, собранный со своей копией styled-components, поднимает второй экземпляр
-    // библиотеки: на одном экране с соседями его стили молча слетают.
+    // A package built with its own copy of styled-components raises a second instance of the
+    // library: on one screen with its neighbours, its styles silently fall off.
     let ownStyled = false
     try { ownStyled = /styled-components(\.esm)?\.js/.test(fs.readFileSync(path.join(base, 'web', 'index.js'), 'utf8')) } catch {}
     installed.push({ pkg: '@xsolla/' + dir, version, components, ownStyled })
   }
 }
 
-// ——— витрина xui-vibe ———
-// Общая галерея команды: компоненты, которых в дизайн-системе нет, но которые уже
-// написал кто-то из дизайнеров. Ищутся наравне с системными — чтобы не рисовать
-// в третий раз то, что дважды написано.
+// ——— the xui-vibe gallery ———
+// The team's shared shelf: components the design system does not have but another designer
+// already wrote. Searched alongside the system ones, so nobody draws a third copy of
+// something written twice.
 
 const gallery = []
 const vibeSrc = path.join(root, 'vendor', 'xui-vibe', 'src')
@@ -110,17 +110,17 @@ if (fs.existsSync(vibeSrc)) {
           props,
         })
       } else if (!group) {
-        scan(inner, entry.name)                 // папка-раздел витрины
+        scan(inner, entry.name)                 // a gallery section folder
       }
     }
   }
   try { scan(path.join(vibeSrc, 'components'), null) } catch {}
 }
 
-// ——— пишем ———
+// ——— write it out ———
 
 const index = {
-  builtAt: null,                     // ставит вызывающий, чтобы файл не менялся впустую
+  builtAt: null,                     // set by the caller, so the file does not churn
   published: published.map((p) => p.pkg),
   branchOnly: published.filter((p) => p.branchOnly).map((p) => p.pkg),
   installed,
@@ -132,8 +132,8 @@ const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''
 const text = JSON.stringify(index, null, 1)
 if (text !== before) fs.writeFileSync(file, text)
 
-// Находки живут в knowledge/ — рядом с договорённостями, а не среди служебных файлов агента:
-// это документ проекта, дизайнер в него заглядывает и правит.
+// Findings live next to the catalogue, not among the agent's service files: it is a project
+// document the designer reads and edits.
 const notes = path.join(root, '.claude', 'ds', 'findings.md')
 const version = installed.find((p) => p.version)?.version
 if (fs.existsSync(notes) && version) {
@@ -142,11 +142,11 @@ if (fs.existsSync(notes) && version) {
   const seen = marks.length ? marks[marks.length - 1][1] : null
   if (seen !== version) {
     fs.appendFileSync(notes, '\n--- ' + version + ' ---\n')
-    console.log('  библиотека обновилась ' + (seen || '?') + ' -> ' + version + ': находки выше черты стоит перепроверить')
+    console.log('  the library moved ' + (seen || '?') + ' -> ' + version + ': findings above the divider are worth re-checking')
   }
 }
 
 const comps = installed.reduce((n, p) => n + p.components.length, 0)
-if (gallery.length) console.log('витрина xui-vibe: ' + gallery.length + ' компонентов')
-console.log(`база дизайн-системы: ${published.length} пакетов опубликовано · ${installed.length} установлено · ${comps} компонентов`)
-console.log(`  ${path.relative(root, file)} — ${(fs.statSync(file).size / 1024).toFixed(0)} КБ`)
+if (gallery.length) console.log('xui-vibe gallery: ' + gallery.length + ' components')
+console.log(`design-system catalogue: ${published.length} packages published · ${installed.length} installed · ${comps} components`)
+console.log(`  ${path.relative(root, file)} — ${(fs.statSync(file).size / 1024).toFixed(0)} KB`)

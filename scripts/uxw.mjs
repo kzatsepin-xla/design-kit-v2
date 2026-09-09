@@ -1,34 +1,34 @@
 #!/usr/bin/env node
 //
-//  uxw — правила Xsolla для текстов интерфейса
+//  uxw — the Xsolla rules for interface copy
 //  ──────────────────────────────────────────
 //
-//  ЗАЧЕМ ЭТО НУЖНО
-//  Тексты в интерфейсе — половина дизайна, и у Xsolla на них есть свой свод правил:
-//  тон, словарь, что как называется, чего не пишем никогда. Свод живёт в отдельном
-//  репозитории команды UX-письма и обновляется без нас. Этот скрипт приносит его
-//  свежую версию в проект.
+//  WHY THIS EXISTS
+//  Copy is half the design, and Xsolla has its own rulebook for it: tone, vocabulary, what
+//  things are called, what is never written. The rulebook lives in the UX-writing team's own
+//  repository and changes without us. This script brings a fresh copy into the project.
 //
-//  КОГДА ОН ЗАПУСКАЕТСЯ
-//  Сам, один раз, когда создаётся прототип. Обновить вручную:
-//    node scripts/uxw.mjs install     принести или обновить свод правил
-//    node scripts/uxw.mjs status      посмотреть, что стоит и какой свежести
 //
-//  ПОЧЕМУ ЭТО НЕ ЛЕЖИТ СРЕДИ НАВЫКОВ АГЕНТА
-//  Специально. Свод весит около 160 КБ, и если положить его туда, где агент видит
-//  его всегда, он начнёт править ваши тексты сам, без спроса. Поэтому файлы лежат
-//  в vendor/uxw/ — агент открывает их, только когда вы просите: «проверь тексты»,
-//  «напиши текст кнопки», команда /ux. Перед отправкой изменений он предложит
-//  проверку сам, но решение всегда за вами.
+//  WHEN IT RUNS
+//  Once, on its own, when the prototype is created. To refresh it by hand:
+//    node scripts/uxw.mjs install     fetch or update the rulebook
+//    node scripts/uxw.mjs status      see what is installed and how fresh it is
 //
-//  ЧТО ПОЯВИТСЯ ПОСЛЕ ЗАПУСКА
-//    vendor/uxw/ux-write/   как писать: тон, приёмы, примеры
-//    vendor/uxw/ux-check/   как проверять готовый текст
-//    .ux-project-context    ваши исключения: слова, которые в этом продукте верны
+//  WHY IT IS NOT AMONG THE AGENT'S SKILLS
+//  On purpose. The rulebook is about 160 KB, and placed where the agent always sees it, it
+//  starts editing your wording unasked. So the files sit in vendor/uxw/ — the agent opens
+//  them only when you ask: check the copy, write a button label, the /ux command. Before work
+//  leaves the machine it offers a check itself, but the decision is always yours.
 //
-//  ЕСЛИ ЧТО-ТО ПОШЛО НЕ ТАК
-//  «нет доступа» — репозиторий закрытый, нужен доступ к xsolla/ux-writing-analyst.
-//  Без свода прототип работает как обычно, просто тексты проверить нечем.
+//
+//  WHAT APPEARS
+//    vendor/uxw/ux-write/   how to write: tone, techniques, examples
+//    vendor/uxw/ux-check/   how to check finished copy
+//    .ux-project-context    your exceptions: words that are right in this product
+//
+//  IF SOMETHING GOES WRONG
+//  'no access' means a private repository: you need access to xsolla/ux-writing-analyst.
+//  Without the rulebook the prototype works as usual, there is just nothing to check copy against.
 //
 import fs from 'node:fs'
 import os from 'node:os'
@@ -48,12 +48,12 @@ function cmdInstall() {
   const tmp = path.join(os.tmpdir(), 'uxw-' + process.pid)
   fs.rmSync(tmp, { recursive: true, force: true })
 
-  // Сначала по SSH — так работают закрытые репозитории команды, потом по HTTPS.
+  // SSH first — that is how the team's private repositories work — then HTTPS.
   let ok = git(['clone', '--depth', '1', REPO_SSH, tmp]).status === 0
   if (!ok) ok = git(['clone', '--depth', '1', REPO_HTTPS, tmp]).status === 0
   if (!ok) {
-    console.log('свод правил о текстах взять не вышло — нет доступа к ux-writing-analyst')
-    console.log('  (не критично: прототип работает, тексты просто не с чем сверить)')
+    console.log('could not fetch the copy rulebook — no access to ux-writing-analyst')
+    console.log('  (not critical: the prototype works, there is just nothing to check copy against)')
     return false
   }
 
@@ -73,9 +73,9 @@ function cmdInstall() {
   const ctx = path.join(root, '.ux-project-context')
   if (!fs.existsSync(ctx)) {
     fs.writeFileSync(ctx, [
-      '# Слова, которые в этом продукте верны, даже если свод правил с ними спорит.',
-      '# Одна строка на исключение, обычным языком. Проверка их не трогает.',
-      '# Например: «XP» заглавными — принятое сокращение, аудитория его ждёт.',
+      '# Words that are correct in this product even if the rulebook disagrees.',
+      '# One line per exception, in plain language. The check leaves them alone.',
+      '# For example: XP in capitals is an established shorthand the audience expects.',
       '',
     ].join(NL))
   }
@@ -85,22 +85,22 @@ function cmdInstall() {
     fs.appendFileSync(gi, 'vendor/uxw/' + NL)
   }
 
-  console.log('свод правил о текстах: ' + copied + ' части, версия ' + head + ' → vendor/uxw/')
-  console.log('  запускается только по вашей просьбе: «проверь тексты» или /ux')
+  console.log('copy rulebook: ' + copied + ' parts, version ' + head + ' -> vendor/uxw/')
+  console.log('  runs only when you ask: check the copy, or /ux')
   return true
 }
 
 function cmdStatus() {
   const file = path.join(DEST, 'version.txt')
   if (!fs.existsSync(file)) {
-    console.log('свод правил о текстах не установлен: node scripts/uxw.mjs install')
+    console.log('the copy rulebook is not installed: node scripts/uxw.mjs install')
     return
   }
   const [head, when] = fs.readFileSync(file, 'utf8').split(NL)
-  console.log('свод правил о текстах: версия ' + head + ', принесён ' + when)
+  console.log('copy rulebook: version ' + head + ', fetched ' + when)
   for (const part of PARTS) {
     const p = path.join(DEST, part, 'SKILL.md')
-    console.log('  ' + part + ': ' + (fs.existsSync(p) ? path.relative(root, p).split(path.sep).join('/') : 'нет'))
+    console.log('  ' + part + ': ' + (fs.existsSync(p) ? path.relative(root, p).split(path.sep).join('/') : 'missing'))
   }
 }
 
@@ -108,6 +108,6 @@ const cmd = process.argv[2]
 if (cmd === 'install') process.exit(cmdInstall() ? 0 : 0)
 else if (cmd === 'status') cmdStatus()
 else {
-  console.log('node scripts/uxw.mjs install   принести или обновить свод правил о текстах')
-  console.log('node scripts/uxw.mjs status    что установлено и какой свежести')
+  console.log('node scripts/uxw.mjs install   fetch or update the copy rulebook')
+  console.log('node scripts/uxw.mjs status    what is installed and how fresh it is')
 }

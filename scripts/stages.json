@@ -1,12 +1,11 @@
 {
-  "note": "Стадии продуктовой работы. Это данные, а не проза: список читают и docs.mjs, и анкета в скилле start. Менять состав стадий — только здесь.",
+  "note": "Stages of product work. Data, not prose: this list is read by docs.mjs and by the questionnaire in the start skill. Changing the set of stages happens only here.",
   "stages": [
     {
       "id": "00",
       "dir": "00_context",
       "title": "Context",
-      "ru": "Контекст",
-      "why": "бриф по PRD, боли пользователей, аналоги, платформа",
+      "why": "brief from the PRD, user pains, competitors, platform",
       "default": true,
       "needs": [],
       "artifacts": [
@@ -115,8 +114,7 @@
       "id": "01",
       "dir": "01_domain",
       "title": "Domain",
-      "ru": "Домен",
-      "why": "сущности, бизнес-правила, роли, жизненные циклы",
+      "why": "entities, business rules, roles, life cycles",
       "default": false,
       "needs": [
         "00"
@@ -182,8 +180,7 @@
       "id": "02",
       "dir": "02_service-blueprints",
       "title": "Service blueprints",
-      "ru": "Блюпринты сервиса",
-      "why": "действие пользователя, что делает фронт, что делает бэк, где рвётся",
+      "why": "user action, what the front end does, what the back end does, where it breaks",
       "default": false,
       "needs": [
         "01"
@@ -211,8 +208,7 @@
       "id": "03",
       "dir": "03_jobs-and-tasks",
       "title": "Jobs and tasks",
-      "ru": "Задачи и JTBD",
-      "why": "топ-задачи, job stories, декомпозиция",
+      "why": "top tasks, job stories, decomposition",
       "default": false,
       "needs": [
         "01"
@@ -266,8 +262,7 @@
       "id": "04",
       "dir": "04_scenarios",
       "title": "Scenarios",
-      "ru": "Сценарии",
-      "why": "счастливые пути, крайние случаи, сбои и восстановление — хребет будущих экранов",
+      "why": "happy paths, edge cases, failure and recovery — the backbone of future screens",
       "default": true,
       "needs": [
         "00"
@@ -338,8 +333,7 @@
       "id": "05",
       "dir": "05_ia",
       "title": "Information architecture",
-      "ru": "Информационная архитектура",
-      "why": "навигация, объекты на экране, матрица прав",
+      "why": "navigation, objects on screen, permission matrix",
       "default": false,
       "needs": [
         "04"
@@ -389,9 +383,8 @@
     {
       "id": "06",
       "dir": "06_state-design",
-      "title": "State design",
-      "ru": "Состояния экранов",
-      "why": "девять состояний на каждый экран, а не только «всё хорошо»",
+      "title": "Screen states",
+      "why": "nine states per screen, not just the happy one",
       "default": true,
       "needs": [
         "04"
@@ -409,8 +402,7 @@
       "id": "07",
       "dir": "07_screen-specs",
       "title": "Screen specs",
-      "ru": "Прототип",
-      "why": "контракт экрана: что на нём, откуда данные, что делает каждое действие",
+      "why": "the screen contract: what is on it, where data comes from, what each action does",
       "default": true,
       "needs": [
         "06"
@@ -465,8 +457,7 @@
       "id": "08",
       "dir": "08_design-system",
       "title": "Validation",
-      "ru": "Валидация",
-      "why": "сверка прототипа с задуманным: сценарии прослежены, состояния покрыты",
+      "why": "checking the prototype against what was designed: scenarios traced, states covered",
       "default": false,
       "needs": [
         "07"
@@ -500,8 +491,7 @@
       "id": "09",
       "dir": "09_progress-reviews",
       "title": "Review",
-      "ru": "Ревью",
-      "why": "обратная связь после показа и что с ней сделали",
+      "why": "feedback after showing the work and what was done with it",
       "default": false,
       "needs": [
         "07"
@@ -528,39 +518,39 @@
   "nineStates": [
     [
       "Empty",
-      "нет данных, первый вход"
+      "no data yet, first visit"
     ],
     [
       "Loading",
-      "данные грузятся"
+      "data is loading"
     ],
     [
       "Partial",
-      "часть данных есть, часть грузится или недоступна"
+      "some data is here, some is loading or unavailable"
     ],
     [
       "Normal",
-      "всё хорошо, данные загружены"
+      "everything is fine, data loaded"
     ],
     [
       "Degraded",
-      "часть функций временно недоступна"
+      "some functions are temporarily unavailable"
     ],
     [
       "Error",
-      "ошибка, требующая действия"
+      "an error that needs action"
     ],
     [
       "Blocked",
-      "нет прав или условия не выполнены"
+      "no permission, or conditions not met"
     ],
     [
       "Conflict",
-      "параллельное редактирование, рассинхрон"
+      "concurrent editing, out of sync"
     ],
     [
       "Recovery",
-      "восстановление после сбоя"
+      "recovering after a failure"
     ]
   ]
 }
