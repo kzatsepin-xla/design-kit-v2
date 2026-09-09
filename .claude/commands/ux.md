@@ -17,6 +17,3 @@ the rulebook disagrees. Read it together with the rulebook.
 
 **Report:** what you rewrote and why, one line per change. Anything debatable — show both
 options and ask, do not decide for the designer.
-
-Outside this command, never rewrite copy on your own initiative: the rulebook opens when the
-designer asks, or when work is about to leave the machine and they agreed to a check.

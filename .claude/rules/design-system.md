@@ -5,9 +5,6 @@ paths:
 ---
 # Design system: the details
 
-The order for picking a component and the hard boundaries live in `.claude/rules/kit.md`,
-which is always loaded. This file is only needed once your hands are in screen code.
-
 ## Do not write this
 
 | Not this | This |
@@ -24,7 +21,7 @@ which is always loaded. This file is only needed once your hands are in screen c
 **One exception.** Responsive typography really does live in CSS variables:
 `var(--xui-font-size-{step})`, `var(--xui-lh-{display|compact|text}-{step})`, 13 steps from
 75 to 750, switching at 768px. There is `cssVar.fontSize("350")` in `@xsolla/xui-core`.
-Plain `Typography` is better. Any **other** `--xui-*` variable is invented.
+Any **other** `--xui-*` variable is invented.
 
 **Vocabulary.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.
 `variant`: primary | secondary | tertiary | ghost. Colours: `theme.colors.control[tone][variant]`.
