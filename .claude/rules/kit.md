@@ -1,10 +1,7 @@
 # How this kit works
 
-Rules of the design kit itself — they travel with it and are not the project's.
-The project describes itself in its own `AGENTS.md` at the root.
-
 Prototype workspace for a designer, not an engineer. They lead; you build screens and
-product documents, and you ask before deciding anything that outlives this conversation.
+product documents.
 
 Talk to them in their own language, in plain words. No package names or prop names in
 questions — save those for files.
@@ -23,13 +20,6 @@ purpose, and you translate in both directions.
 That includes search: the catalogue is indexed in English, so turn what the designer said into
 the English term yourself before calling `ds.mjs` — "карточка", "卡片" and "card" are one query.
 
-## Catching a decision
-
-The designer will reject or redirect something in passing — "not the dark theme", "always ask
-me before X". That is a standing rule, not a one-off edit. No program can tell the two apart,
-so it is on you: when it sounds like a rule that outlives this conversation, ask whether to
-remember it, and write it only if they agree.
-
 ## Commands
 
 | What | Command |
@@ -47,7 +37,7 @@ remember it, and write it only if they agree.
 
 ## Picking a component — in this order, no skipping
 
-1. **Design system.** `node scripts/ds.mjs` — it forgives inexact names and Russian words.
+1. **Design system.** `node scripts/ds.mjs` — it forgives inexact names.
    Found and installed: use it. Found but not installed: install it, do not draw your own.
 2. **Team gallery** `@xui-vibe` — components other designers already wrote. The search shows
    them in the same output. Say plainly that it is a colleague's work, not the design system.
@@ -58,10 +48,8 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
 
 ## Hard boundaries
 
-- **Never take a design-system name for your own file.** The import then looks systemic and
-  behaves otherwise.
-- **Never bend a system component into shape**: no `styled(Component)`, no `!important`, no
-  selectors into its internals, no wrapper hidden in another folder.
+- **Never bend a system component into shape**, and never hide a wrapper for it in another
+  folder.
 - **Values come from theme tokens.** Never a literal colour, spacing or radius from a mockup.
 - **Icons and logos come from the icon packages**, never exported from Figma. Only content —
   covers, art, screenshots — comes as images.
@@ -75,16 +63,17 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
 Fill it as you learn what the product is — from the conversation, a PRD or a mockup: who
 uses it, what it is for, what matters visually, which decisions are already made. Only what
 cannot be read off the code; commands and folder layout are not worth a line there. A few
-sentences, extended as you learn more. Nobody else will write it.
+sentences, extended as you learn more.
 
 ## Memory — ask first, write after
 
 You do not fill the project memory on your own. Found something about the library that the
-documentation does not say? Show it in plain words — what behaved unexpectedly, what it saves
-next time — and ask whether to keep it. Only then write the line.
+documentation does not say — ask whether it is worth keeping, and write the line only then.
 
-Same for standing rules the designer states in passing: ask, then write into the decision file
-that matches the scope. A rule already enforced by a check needs no line anywhere.
+The designer will also reject or redirect something in passing — "not the dark theme",
+"always ask me before X". That is a standing rule, not a one-off edit: ask whether to remember
+it, and write it into the decision file that matches the scope. A rule already enforced by a
+check needs no line anywhere.
 
 Details, findings and the component catalogue live in `.claude/ds/` — the search reaches
 them; do not read them wholesale.
@@ -98,8 +87,7 @@ data. Do not stop on every one — choose, keep going, and leave the mark where 
 // debt: took tabs for the filter, OQ-7 was never answered
 ```
 
-`node scripts/debt.mjs` collects these before a handoff. The mark lives in the code, so it
-disappears with the code — nothing to clean up by hand.
+`node scripts/debt.mjs` collects these before a handoff.
 
 ## Documents
 
