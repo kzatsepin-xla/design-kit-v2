@@ -41,8 +41,8 @@ const protectedRoot = parts[0] === '.claude' || parts[0] === 'scripts'
 // Память проекта пополняется агентом — этого требуют и правила, и проверка на
 // завершении хода. Пока здесь стояла одна notes.md, агент упирался в собственный
 // кит: писать велено, а запись запрещена. Живой прогон это и показал.
-const memory = ['notes.md', 'design-system-findings.md', 'decisions.md']
-const isNotes = memory.includes(path.basename(file))
+const name = path.basename(file)
+const isNotes = name === 'notes.md' || name === 'design-system-findings.md' || /^decisions.*\.md$/.test(name)
 
 if (!protectedRoot || isNotes) process.exit(0)
 

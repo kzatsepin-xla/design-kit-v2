@@ -29,14 +29,14 @@ import os from 'node:os'
 
 // Снимок: сколько находок о дизайн-системе записано на начало сессии. Проверка при
 // завершении работы сравнит с этим числом и поймёт, добавил агент что-нибудь или нет.
-function countFindings(dir) {
+function countFindings(root) {
+  // Находки давно переехали в .claude/rules/, а счётчик всё ещё искал notes.md
+  // внутри скиллов: снимок всегда выходил нулевым, и в проекте, где находки уже
+  // есть, проверка на завершении хода не срабатывала никогда.
+  const notes = path.join(root, ".claude", "rules", "design-system-findings.md")
   try {
-    for (const name of fs.readdirSync(dir)) {
-      const notes = path.join(dir, name, "notes.md")
-      if (!fs.existsSync(notes)) continue
-      return fs.readFileSync(notes, "utf8").split(String.fromCharCode(10))
-        .filter((line) => line.startsWith("- ")).length
-    }
+    return fs.readFileSync(notes, "utf8").split(String.fromCharCode(10))
+      .filter((line) => line.startsWith("- ")).length
   } catch {}
   return null
 }
@@ -46,7 +46,7 @@ try { hookInput = JSON.parse(fs.readFileSync(0, "utf8")) } catch {}
 
 const projectRoot = hookInput.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
 if (hookInput.session_id) {
-  const found = countFindings(path.join(projectRoot, ".claude", "skills"))
+  const found = countFindings(projectRoot)
   fs.writeFileSync(path.join(os.tmpdir(), "notes-baseline-" + hookInput.session_id), String(found ?? 0))
 }
 
