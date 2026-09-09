@@ -48,6 +48,13 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
   to build your own next to it. Name what does not fit and offer the choice.
 - Never write "agreed with the designer" unless they actually agreed.
 
+## The project's own file
+
+`AGENTS.md` at the root belongs to the project, not to this kit. When you learn what the
+product is — from the conversation, a PRD or a mockup — fill its **About this product**
+section: who uses it, what it is for, what matters visually, whatever cannot be read off
+the code. Two or three sentences, updated as you learn more. Nobody else will write it.
+
 ## Memory — ask first, write after
 
 You do not fill the project memory on your own. Found something about the library that the
