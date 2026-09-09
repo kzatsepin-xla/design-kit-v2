@@ -82,6 +82,36 @@ write('package.json', JSON.stringify({
   devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest' },
 }, null, 2) + '\n')
 
+// Файл проекта, а не кита: по стандарту AGENTS.md описывает конкретный прототип —
+// что это, как запускать, где что лежит. Правила самого кита живут отдельно,
+// в .claude/rules/kit.md. Заготовку дальше наполняет агент вместе с дизайнером.
+write('AGENTS.md', `# ${path.basename(root)}
+
+Design prototype. Not production code: no real API, no auth, no analytics.
+
+## Commands
+
+| What | Command |
+|---|---|
+| Run | \`npm run dev\` |
+| Build | \`npm run build\` |
+
+## Layout
+
+- \`src/screens/<name>/screen.tsx\` — one folder per screen, discovered automatically
+- \`src/components/<Name>/\` — components written for this prototype
+- \`docs/features/<feature>/\` — product documents, if this project keeps them
+
+A screen opens at \`#<name>\`; a specific state at \`#<name>?state=empty\`.
+
+## About this product
+
+<!-- Fill this in: what the product is, who uses it, what matters visually.
+     Whatever an agent should know about THIS project and cannot read off the code. -->
+`)
+
+write('CLAUDE.md', '@AGENTS.md' + newline)
+
 write('.gitignore', `node_modules/
 dist/
 `)

@@ -1,4 +1,7 @@
-# Xsolla design kit
+# How this kit works
+
+Rules of the design kit itself — they travel with it and are not the project's.
+The project describes itself in its own `AGENTS.md` at the root.
 
 Prototype workspace for a designer, not an engineer. They lead; you build screens and
 product documents, and you ask before deciding anything that outlives this conversation.
