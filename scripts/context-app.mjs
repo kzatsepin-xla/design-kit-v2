@@ -83,14 +83,30 @@ function statesOfMatrix(file) {
     const head = /^##\s*\d+\.\s*([A-Za-z]+)/.exec(line)
     if (head) { current = head[1]; continue }
     if (!current) continue
-    const mark = /^\*\*Applies:\*\*\s*(.+)$/.exec(line.trim())
+    // The Russian marker is what projects made before the kit went English still carry, and
+    // their documents are not going to be rewritten to suit a parser.
+    const mark = /^\*\*(?:Applies|Применимо):\*\*\s*(.+)$/.exec(line.trim())
     if (!mark) continue
     const value = mark[1].trim()
-    if (value.indexOf('N/A') === -1 && /^yes([ ,.:;-]|$)/i.test(value)) out.push(current)
+    if (value.indexOf('N/A') === -1 && /^(?:yes|да)([ ,.:;-]|$)/i.test(value)) out.push(current)
     current = null
   }
   return out
 }
+
+// Where each node sits on the map. Without a position the app lays nodes out by the graph:
+// states of one screen have no arrows between them, so all of them land in a single column
+// and the map opens showing its first two cards. A designer then clicks what is visible —
+// "Normal" — and concludes every node opens the same screen. Which is what happened.
+//
+// So the placement is ours: a screen is a column, its states run down that column, the
+// ordinary state first. The numbers are the app's own card size and gaps.
+const NODE_W = 208
+const NODE_H = 150
+const GAP_X = 96
+const GAP_Y = 40
+const PAD = 80
+const at = (col, row) => ({ x: PAD + col * (NODE_W + GAP_X), y: PAD + row * (NODE_H + GAP_Y) })
 
 function flowMapOf(featureId) {
   const matrixDir = path.join(root, 'docs', 'features', featureId, '06_state-design')
@@ -107,10 +123,12 @@ function flowMapOf(featureId) {
       const states = statesOfMatrix(path.join(matrixDir, name))
       flows.push({ id: screen, label: screen })
       if (!states.length) {
-        nodes.push({ id: screen, label: screen, flowId: screen, isEntryPoint: true, target: { sectionId: screen } })
+        nodes.push({ id: screen, label: screen, flowId: screen, isEntryPoint: true, position: at(screens.length - 1, 0), target: { sectionId: screen } })
         continue
       }
-      for (const st of states) {
+      // The ordinary state first: it is the one the map should open on.
+      const ordered = [...states].sort((a, b) => (a === 'Normal' ? -1 : b === 'Normal' ? 1 : 0))
+      ordered.forEach((st, row) => {
         const tag = st.toLowerCase()
         nodes.push({
           id: screen + '-' + tag,
@@ -118,18 +136,19 @@ function flowMapOf(featureId) {
           flowId: screen,
           stateTag: tag,
           isEntryPoint: st === 'Normal',
+          position: at(screens.length - 1, row),
           target: { sectionId: screen, query: { state: tag } },
         })
-      }
+      })
     }
   }
 
   // No state documents — put the screens themselves on the map so it can be walked at all.
   if (!nodes.length) {
-    for (const screen of dirs('src/screens')) {
+    dirs('src/screens').forEach((screen, col) => {
       flows.push({ id: screen, label: screen })
-      nodes.push({ id: screen, label: screen, flowId: screen, isEntryPoint: true, target: { sectionId: screen } })
-    }
+      nodes.push({ id: screen, label: screen, flowId: screen, isEntryPoint: true, position: at(col, 0), target: { sectionId: screen } })
+    })
   }
   if (!nodes.length) return null
 
