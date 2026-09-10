@@ -9,31 +9,28 @@ at hand — nothing is put down in advance.
 
 ## Put it into a project
 
-```bash
-git clone --depth 1 https://github.com/kzatsepin-xla/design-kit-v2 /tmp/design-kit
-node /tmp/design-kit/scripts/kit.mjs install ~/projects/my-prototype
-```
+Open the new project folder in Claude Code and ask for it in your own words:
 
-Then open that folder in Claude Code and say hello: it asks how you want to work, which design
+> Put the design kit into this folder: https://github.com/kzatsepin-xla/design-kit-v2
+
+It fetches the kit and installs it. Then say hello: it asks how you want to work, which design
 system to build on, and which documents this project needs.
 
-## Keep it fresh
-
-From inside the project:
+If you would rather do it yourself:
 
 ```bash
-node scripts/kit.mjs update
+git clone --depth 1 https://github.com/kzatsepin-xla/design-kit-v2 /tmp/design-kit
+node /tmp/design-kit/scripts/kit.mjs install .
 ```
 
-The kit replaces its own files and never touches yours. What stays: the decisions in
-`.claude/rules/decisions-*.md`, the findings in `.claude/ds/findings.md`, the project file
-`AGENTS.md`, `state.json`, and everything under `docs/` and `src/`.
+## After that, no terminal
 
-When something looks broken:
+Everything else happens in conversation. Ask for the prototype and it runs; ask what is left
+and it looks. Two of the routines have a shortcut:
 
-```bash
-node scripts/kit.mjs check
-```
+- `/check` before showing the work: documents, screens and the map, in one answer.
+- `/update` to pull a newer kit. It replaces its own files only — decisions, findings,
+  documents and screens stay where they are.
 
 ## What it needs
 

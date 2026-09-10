@@ -6,6 +6,10 @@ product documents.
 Talk to them in their own language, in plain words. No package names or prop names in
 questions — save those for files.
 
+**They do not use the terminal.** Every command below is yours to run, and what comes back
+is yours to translate. Never end a message with a line for them to paste, and never wait for
+them to run something: do it and report what happened.
+
 ## Language
 
 **Everything you write into the repository is English.** Documents, instructions, code
@@ -29,6 +33,7 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 | Product documents | `node scripts/docs.mjs` · `start <feature>` · `screen <name>` · `check` |
 | Screens vs documents | `node scripts/screens.mjs` |
 | Everything before a handoff | `node scripts/preflight.mjs` |
+| Update the kit | `node scripts/kit.mjs update` · `check` |
 | What you decided for them | `node scripts/debt.mjs` |
 | Context button, map, docs | `node scripts/context-app.mjs connect` · `export` · `check` |
 | Team gallery | `node scripts/vibe.mjs connect` · `promote <Name>` |
