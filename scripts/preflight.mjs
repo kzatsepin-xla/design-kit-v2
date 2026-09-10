@@ -69,10 +69,23 @@ if (debt.text && !debt.text.startsWith('nothing was decided')) {
   console.log(debt.text)
 }
 
+// The states are compared to each other by opening them; without a browser that half of the
+// check does not happen, and the step passes on the weaker half alone. Said out loud, because
+// a designer reading "ready to show" has no way to know which half ran.
+let shallow = false
+if (has('src', 'screens') && !has('node_modules', 'playwright')) {
+  shallow = true
+  console.log('')
+  console.log('The states were compared by reading the code, not by opening them: no browser')
+  console.log('is installed here. A state that is described but draws the ordinary screen looks')
+  console.log('the same as a state that works.')
+}
+
 // Without a map there is nothing that lists the states a screen promises, so the screen step
 // only manages to say the screen exists. A green line that quiet is worth a sentence: a live
 // run ended with "ready to show" while five of the nine states were never looked at.
 if (!has('public', 'context-app-data')) {
+  shallow = true
   console.log('')
   console.log('The screens were only checked for existing: there is no map, so nothing lists')
   console.log('the states they promise. Connecting the Context button builds one, and then the')
@@ -81,6 +94,12 @@ if (!has('public', 'context-app-data')) {
 
 const failed = steps.filter((s) => !s.ok)
 console.log('')
-console.log(failed.length ? 'Not ready to show: ' + failed.map((s) => s.title).join(', ') : 'Ready to show.')
+console.log(
+  failed.length
+    ? 'Not ready to show: ' + failed.map((s) => s.title).join(', ')
+    : shallow
+      ? 'Nothing wrong in what could be checked — read the notes above before calling it ready.'
+      : 'Ready to show.',
+)
 if (!failed.length) console.log('The interface copy is not checked here — that is /ux, when you ask for it.')
 process.exit(failed.length ? 1 : 0)

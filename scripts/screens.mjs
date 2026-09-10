@@ -168,6 +168,14 @@ function handRolled() {
   return problems
 }
 
+// A short stand-in for a long string, so two renderings can be compared without keeping
+// either of them around.
+function fold(text) {
+  let h = 0
+  for (let i = 0; i < text.length; i++) h = (Math.imul(h, 31) + text.charCodeAt(i)) | 0
+  return text.length + ':' + h
+}
+
 // ——— layer two: in a browser ———
 
 async function browser() {
@@ -240,7 +248,10 @@ async function runtimeCheck(list) {
       const real = errors.filter((e) => !noise(e))
       if (real.length) problems.push([p.id, 'console error: ' + real[0]])
 
-      const key = shot.text.slice(0, 400) + '|' + shot.nodes
+      // The whole text, not the first few hundred characters of it: two states often share a
+      // header and a filter row and differ only further down the page. Truncating the
+      // comparison calls those two states identical when they are not.
+      const key = fold(shot.text) + '|' + shot.nodes
       const same = signatures.get(p.screen)
       if (p.state && same) {
         const twin = same.find((s) => s.key === key)
