@@ -120,11 +120,10 @@ export function say(line) {
 export function flush(event = 'SessionStart') {
   if (!lines.length) return
   const text = lines.join('\n')
-  // Claude Code reads plain text off a session hook; Cursor wants JSON. Printing the JSON
-  // alone would lose the Claude Code side, so both go out: the object on its own line, the
-  // text after it.
+  // One object and nothing else. Printing the JSON and then the same text as a second line
+  // made Cursor fail on the whole output — it parses stdout as JSON, and a trailing line is
+  // not JSON. Both wordings live inside the object instead.
   console.log(JSON.stringify(event === 'Stop'
-    ? { followup_message: text }
+    ? { followup_message: text, systemMessage: text }
     : { additional_context: text, hookSpecificOutput: { hookEventName: event, additionalContext: text } }))
-  if (event !== 'Stop') console.log(text)
 }
