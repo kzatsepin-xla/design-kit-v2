@@ -85,11 +85,20 @@ Neither is yours to fix on your own. Find out which apply, then ask.
 **Where the screens live.** The new kit expects `src/screens/<name>/`. A project on `src/pages`
 still runs, but the screen check and the Context map will not find it.
 
-**How a state is addressed.** The previous kit opened a state as `#screen/state`; this one uses
-`#screen?state=state`. The prototype's own router decides, usually one file under `src/kit/`.
-Until it understands the new form, every state on the map opens the plain screen instead, and
-the screen check reports states that look identical — while the states themselves are built and
-work. Verify in the browser with both forms before you claim either way.
+**How a state is addressed.** The Context App hands the prototype structured data, not a URL:
+a section id and a query. What the prototype does with it is the prototype's business, and the
+two kits chose differently. The previous one installed a bridge in `src/kit/context-app/` that
+intercepts the app's click and navigates to `#screen/state`. This one uses the form the app
+itself writes when nobody intercepts, `#screen?state=state`, and needs no bridge for it.
+
+So after a move the map still works — the bridge is the project's own code and stays. What
+breaks is the address on its own: the screen check opens states directly, and so does anyone
+you send a link to. Until the prototype's router accepts the new form, those open the plain
+screen, and the check reports states that look identical while the states themselves are built
+and work.
+
+Teaching the router the new form is a few lines and additive: the old `#screen/state` keeps
+working. Verify in the browser with both forms before you claim anything either way.
 
 **Do not move files or rewrite the router silently.** Say plainly what stops working until it
 is done, offer it as a separate piece of work, and let them choose.
