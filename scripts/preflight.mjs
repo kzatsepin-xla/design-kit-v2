@@ -69,6 +69,16 @@ if (debt.text && !debt.text.startsWith('nothing was decided')) {
   console.log(debt.text)
 }
 
+// Without a map there is nothing that lists the states a screen promises, so the screen step
+// only manages to say the screen exists. A green line that quiet is worth a sentence: a live
+// run ended with "ready to show" while five of the nine states were never looked at.
+if (!has('public', 'context-app-data')) {
+  console.log('')
+  console.log('The screens were only checked for existing: there is no map, so nothing lists')
+  console.log('the states they promise. Connecting the Context button builds one, and then the')
+  console.log('states get checked too.')
+}
+
 const failed = steps.filter((s) => !s.ok)
 console.log('')
 console.log(failed.length ? 'Not ready to show: ' + failed.map((s) => s.title).join(', ') : 'Ready to show.')
