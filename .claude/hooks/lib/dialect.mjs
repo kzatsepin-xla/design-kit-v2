@@ -18,10 +18,17 @@ const raw = (() => {
 })()
 
 let input = {}
-try { input = JSON.parse(raw) } catch {}
+// Cursor on Windows hands the payload over with a byte-order mark in front of it, and
+// JSON.parse refuses to read that. Every check then saw an empty object and stood down
+// without a word — the first live run in Cursor edited a kit file straight through.
+try { input = JSON.parse(raw.replace(/^﻿/, '').trim()) } catch {}
 
-// Cursor names the event in the payload; Claude Code does not.
-const cursor = typeof input.hook_event_name === 'string'
+// Who is asking. The event name is no good for telling them apart — both put it in the
+// payload, and betting on it made every check answer Claude Code in Cursor's words, which
+// Claude Code does not understand: the checks stopped stopping anything, and hand-built test
+// payloads did not show it because they lacked the field.
+// These two are Cursor's alone.
+const cursor = typeof input.cursor_version === 'string' || Array.isArray(input.workspace_roots)
 
 export { raw, input, cursor }
 

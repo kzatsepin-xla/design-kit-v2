@@ -12,10 +12,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.mjs"
-            ],
+            "command": "node .claude/hooks/session-start.mjs",
             "timeout": 10
           }
         ]
@@ -27,12 +24,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"
-            ],
+            "command": "node .claude/hooks/guard.mjs",
             "timeout": 10,
-            "statusMessage": "Checking whether this file is yours…"
+            "statusMessage": "Checking whether this file is yours\u2026"
           }
         ]
       },
@@ -41,12 +35,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/component-guard.mjs"
-            ],
+            "command": "node .claude/hooks/component-guard.mjs",
             "timeout": 10,
-            "statusMessage": "Looking for this in the design system…"
+            "statusMessage": "Looking for this in the design system\u2026"
           }
         ]
       },
@@ -55,12 +46,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/ux-gate.mjs"
-            ],
+            "command": "node .claude/hooks/ux-gate.mjs",
             "timeout": 10,
-            "statusMessage": "Checking whether the copy was reviewed…"
+            "statusMessage": "Checking whether the copy was reviewed\u2026"
           }
         ]
       }
@@ -70,21 +58,15 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/notes-gate.mjs"
-            ],
+            "command": "node .claude/hooks/notes-gate.mjs",
             "timeout": 10,
-            "statusMessage": "Looking for anything worth remembering…"
+            "statusMessage": "Looking for anything worth remembering\u2026"
           },
           {
             "type": "command",
-            "command": "node",
-            "args": [
-              "${CLAUDE_PROJECT_DIR}/.claude/hooks/context-app-sync.mjs"
-            ],
+            "command": "node .claude/hooks/context-app-sync.mjs",
             "timeout": 20,
-            "statusMessage": "Refreshing the screen map…"
+            "statusMessage": "Refreshing the screen map\u2026"
           }
         ]
       }
