@@ -60,15 +60,28 @@ if (typeof command === 'string') {
   process.exit(0)
 }
 
-// Only a write is worth stopping. Claude Code filters the tools before the check runs;
-// Cursor calls it for every tool it has, so a plain read of a kit file was being refused too
-// and the agent reported that it could not even look at the file.
-const WRITING = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Delete', 'Bash', 'Shell'])
+// Only a write is worth stopping — Claude Code filters the tools before the check runs, while
+// Cursor calls it for every tool it has, and refusing a plain read left the agent unable to
+// even look at the file. Naming the harmless ones rather than the dangerous ones is deliberate:
+// the two agents disagree on names (Write, WriteFile, ApplyPatch), and an unknown name should
+// be treated as a write and checked, not waved through.
+const LOOKING = new Set([
+  'Read', 'ReadFile', 'Grep', 'Glob', 'LS', 'List', 'ListDir', 'Search', 'SearchFiles',
+  'Codebase', 'WebFetch', 'WebSearch', 'Fetch', 'TodoWrite', 'Task',
+])
 const tool = input.tool_name
-if (tool && !WRITING.has(tool)) process.exit(0)
+if (tool && LOOKING.has(tool)) process.exit(0)
 
+// Some tools do not hand over a path at all: Cursor's ApplyPatch passes the whole patch as
+// one string, with the file named inside it. Rather than learn every shape, the payload is
+// searched for a kit path the same way a shell command is.
 const file = fileOf()
-if (!file) process.exit(0)
+if (!file) {
+  const whole = JSON.stringify(input.tool_input ?? '')
+  const hit = new RegExp(KIT).exec(whole.replace(/\\+/g, '/'))
+  if (hit && !MEMORY.test(hit[0])) denyKit(hit[0])
+  process.exit(0)
+}
 
 const parts = path.relative(home, file).split(path.sep)
 
