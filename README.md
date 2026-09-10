@@ -43,6 +43,18 @@ and it looks. Two of the routines have a shortcut:
 - `/update` to pull a newer kit. It replaces its own files only — decisions, findings,
   documents and screens stay where they are.
 
+## Claude Code or Cursor
+
+Both. The checks are one set of files that answer to whichever asked, and the kit writes the
+Cursor-shaped wrapping itself: `.cursor/hooks.json`, the rules as `.mdc`, the commands and the
+entry questionnaire. `AGENTS.md` is read by both and stays where it is.
+
+Everything under `.cursor/` is generated on install and update. Change the originals under
+`.claude/`, never the copy.
+
+One thing does not carry across: Cursor hands no transcript to a check, so the question about
+what is worth remembering only fires in Claude Code. Nothing else differs.
+
 ## What it needs
 
 - Node 20 or newer, and git.

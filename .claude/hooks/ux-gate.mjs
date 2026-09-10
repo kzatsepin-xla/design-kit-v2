@@ -24,15 +24,13 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { commandOf, context, input, rootOf } from './lib/dialect.mjs'
 
-let input = {}
-try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
-
-const cmd = input.tool_input?.command || ''
+const cmd = commandOf() || ''
 const outward = /\bgit\s+push\b/.test(cmd) || /\bgh\s+pr\s+create\b/.test(cmd)
 if (!outward) process.exit(0)
 
-const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
+const root = rootOf(process.cwd())
 
 // No rulebook — nothing to check against, stay silent.
 if (!fs.existsSync(path.join(root, 'vendor', 'uxw', 'ux-check', 'SKILL.md'))) process.exit(0)
@@ -50,13 +48,10 @@ if (fs.existsSync(flag)) process.exit(0)
 fs.writeFileSync(flag, '1')
 
 // No permission decision at all: the note reaches the agent, the command runs its course.
-console.log(JSON.stringify({
-  hookSpecificOutput: {
-    hookEventName: 'PreToolUse',
-    additionalContext:
-      'Work is going out and the interface copy has not been checked against the Xsolla ' +
-      'rulebook in this conversation. Once the command is done, offer the designer one question: ' +
-      'review the copy (`/ux`) or send it as is. Do not decide for them and do not rewrite wording ' +
-      'on your own initiative. If they decline, drop the subject for the rest of the conversation.',
-  },
-}))
+context(
+  'Work is going out and the interface copy has not been checked against the Xsolla ' +
+  'rulebook in this conversation. Once the command is done, offer the designer one question: ' +
+  'review the copy (`/ux`) or send it as is. Do not decide for them and do not rewrite wording ' +
+  'on your own initiative. If they decline, drop the subject for the rest of the conversation.',
+  'PreToolUse',
+)

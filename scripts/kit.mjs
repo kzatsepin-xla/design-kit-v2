@@ -45,6 +45,7 @@ const OWNED = [
   '.claude/skills',
   '.claude/rules/kit.md',
   '.claude/rules/design-system.md',
+  '.cursor',
   'scripts',
   'tools',
 ]
@@ -122,6 +123,15 @@ function writeMarker(target, source, repo) {
   return marker
 }
 
+// Cursor reads its own folders, so the kit writes them too — from the same files, never by
+// hand. A designer who opens the project in Cursor gets the same checks and the same rules.
+function projectCursor(target) {
+  const r = spawnSync(process.execPath, [path.join(target, 'scripts', 'cursor.mjs')], {
+    cwd: target, encoding: 'utf8',
+  })
+  if (r.status !== 0) console.log('The Cursor side was not written — Claude Code side is fine.')
+}
+
 function report(res, marker, before) {
   const lines = []
   lines.push('Kit files refreshed: ' + res.replaced.length)
@@ -164,6 +174,7 @@ function install(argv) {
   }
   fs.mkdirSync(target, { recursive: true })
   const res = applyFrom(kitRoot, target)
+  projectCursor(target)
   const marker = writeMarker(target, kitRoot, null)
   report(res, marker, before && before.version)
   if (!before) {
@@ -194,6 +205,7 @@ function update() {
     return
   }
   const res = applyFrom(tmp, target)
+  projectCursor(target)
   const marker = writeMarker(target, tmp, before.repo)
   fs.rmSync(tmp, { recursive: true, force: true })
   report(res, marker, before.version)

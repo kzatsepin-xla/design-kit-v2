@@ -40,10 +40,8 @@ function countFindings(root) {
   return null
 }
 
-let hookInput = {}
-try { hookInput = JSON.parse(fs.readFileSync(0, "utf8")) } catch {}
-
-const projectRoot = hookInput.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
+const hookInput = input
+const projectRoot = rootOf(process.cwd())
 if (hookInput.session_id) {
   const found = countFindings(projectRoot)
   fs.writeFileSync(path.join(os.tmpdir(), "notes-baseline-" + hookInput.session_id), String(found ?? 0))
@@ -80,21 +78,22 @@ try {
 } catch {}
 if (state.stages?.length) bits.push(`doc stages: ${state.stages.join(' ')} — where they stand: node scripts/docs.mjs`)
 
-console.log('[state] ' + bits.join(' · '))
+say('[state] ' + bits.join(' · '))
 
-console.log('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')
+say('[state] This is where the designer left off. Do not ask what was already decided; state.json holds it.')
 
 // Claude Code skips a broken hook silently — the rule simply stops applying
 // and nobody finds out. It happened once: a typo in component-guard cost a whole
 // run without protection. Cheaper to check them all here than to chase the consequences.
 import { execFileSync } from 'node:child_process'
+import { flush, input, rootOf, say } from './lib/dialect.mjs'
 const hooksDir = path.join(projectRoot, '.claude', 'hooks')
 if (fs.existsSync(hooksDir)) {
   const broken = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.mjs')).filter((f) => {
     try { execFileSync(process.execPath, ['--check', path.join(hooksDir, f)], { stdio: 'ignore' }); return false }
     catch { return true }
   })
-  if (broken.length) console.log('[broken] checks are not running: ' + broken.join(', ') + ' — the rules they enforce are silently off. Tell the designer before doing anything else.')
+  if (broken.length) say('[broken] checks are not running: ' + broken.join(', ') + ' — the rules they enforce are silently off. Tell the designer before doing anything else.')
 }
 
 // The design system is no longer a skill but a catalogue plus search. The skill sat in context
@@ -104,7 +103,9 @@ const dsIndex = path.join(projectRoot, '.claude', 'ds', 'index.json')
 if (fs.existsSync(dsIndex)) {
   try {
     const ds = JSON.parse(fs.readFileSync(dsIndex, 'utf8'))
-    console.log('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length +
+    say('[ds] ' + ds.published.length + ' packages published, ' + ds.installed.length +
       ' installed. Search before you build anything: `node scripts/ds.mjs <what you need>`.')
   } catch { /* broken catalogue — stay quiet, the search will complain itself */ }
 }
+
+flush('SessionStart')

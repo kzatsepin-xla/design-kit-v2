@@ -25,11 +25,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { flush, rootOf, say } from './lib/dialect.mjs'
 
-let input = {}
-try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
-
-const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
+const root = rootOf(process.cwd())
 
 // Button not connected — nothing to rebuild.
 const manifest = path.join(root, 'public', 'context-app-data', 'manifest.json')
@@ -53,8 +51,8 @@ function newest(dir, best = 0) {
 // the agent ends the turn with a report that stopped being true during that same turn.
 const quick = spawnSync(process.execPath, ['scripts/screens.mjs', '--quick'], { cwd: root, encoding: 'utf8' })
 if (quick.status === 1 && quick.stdout.trim()) {
-  console.log('[screens] documents and screens have drifted apart — tell the designer, do not report green:')
-  for (const line of quick.stdout.trim().split(String.fromCharCode(10)).slice(0, 5)) console.log('  ' + line)
+  say('[screens] documents and screens have drifted apart — tell the designer, do not report green:')
+  for (const line of quick.stdout.trim().split(String.fromCharCode(10)).slice(0, 5)) say('  ' + line)
 }
 
 const built = fs.statSync(manifest).mtimeMs
@@ -69,12 +67,14 @@ const run = spawnSync(process.execPath, ['scripts/context-app.mjs', 'export'], {
   encoding: 'utf8',
 })
 if (run.status !== 0) {
-  console.log('[context-app] could not rebuild the data — take a look: node scripts/context-app.mjs export')
+  say('[context-app] could not rebuild the data — take a look: node scripts/context-app.mjs export')
   process.exit(0)
 }
 
 // Take the node count out of the exporter's report — that is the useful part.
 const nodes = /nodes on the map: (\d+)/.exec(run.stdout || '')
-console.log('[context-app] data rebuilt' + (nodes ? ', nodes on the map: ' + nodes[1] : ''))
+say('[context-app] data rebuilt' + (nodes ? ', nodes on the map: ' + nodes[1] : ''))
 
 process.exit(0)
+
+flush('Stop')

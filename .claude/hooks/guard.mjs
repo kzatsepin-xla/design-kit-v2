@@ -24,14 +24,21 @@
 //
 import fs from 'node:fs'
 import path from 'node:path'
+import { commandOf, deny, fileOf, rootOf } from './lib/dialect.mjs'
 
-let input = {}
-try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
+// Inside the kit's own workshop these files are the work, not someone else's property. The
+// workshop is recognised by what an installed project never has: the _dev folder, and no
+// installation marker. Without this the kit blocks the person building it, which is how this
+// line came to be written.
+const home = rootOf(process.cwd())
+if (fs.existsSync(path.join(home, '_dev')) && !fs.existsSync(path.join(home, '.claude', 'kit.json'))) {
+  process.exit(0)
+}
 
 // The shell is the way round this check that an agent finds on its own. In a live run one
 // patched a kit script with sed, the map started working on that machine only, and the bug
 // stayed hidden in the kit for everyone else — including from the person who wrote it.
-const KIT = String.raw`(?:\./)?(?:\.claude|scripts|tools)/[^\s'"|;&)]+`
+const KIT = String.raw`(?:\./)?(?:\.claude|\.cursor|scripts|tools)/[^\s'"|;&)]+`
 const MEMORY = /(notes|findings|decisions[a-z-]*)\.md$/
 const WRITES = [
   new RegExp(String.raw`>>?\s*['"]?(` + KIT + `)`),
@@ -41,27 +48,26 @@ const WRITES = [
   new RegExp(String.raw`\b(?:cp|mv)\s+[^|;&]*\s(` + KIT + `)\s*(?:$|[|;&])`),
 ]
 
-const command = input.tool_input?.command
+const command = commandOf()
 if (typeof command === 'string') {
   for (const re of WRITES) {
     const hit = re.exec(command)
     if (!hit) continue
     const target = hit[hit.length - 1]
     if (MEMORY.test(target)) continue
-    deny(target)
+    denyKit(target)
   }
   process.exit(0)
 }
 
-const file = input.tool_input?.file_path || input.tool_input?.path
+const file = fileOf()
 if (!file) process.exit(0)
 
-const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
-const parts = path.relative(root, file).split(path.sep)
+const parts = path.relative(home, file).split(path.sep)
 
 if (parts[0] === '..' || path.isAbsolute(parts[0])) process.exit(0)   // outside the project, none of our business
 
-const protectedRoot = parts[0] === '.claude' || parts[0] === 'scripts'
+const protectedRoot = parts[0] === '.claude' || parts[0] === '.cursor' || parts[0] === 'scripts'
 // Project memory is the agent's to extend — both the rules and the end-of-turn check
 // require it. While only notes.md was listed here, the agent ran into the kit itself:
 // told to write, forbidden to write. A live run is what exposed it.
@@ -70,19 +76,13 @@ const isNotes = name === 'notes.md' || name === 'findings.md' || /^decisions.*\.
 
 if (!protectedRoot || isNotes) process.exit(0)
 
-deny(parts.join('/'))
+denyKit(parts.join('/'))
 
-function deny(rel) {
-  console.log(JSON.stringify({
-    hookSpecificOutput: {
-      hookEventName: 'PreToolUse',
-      permissionDecision: 'deny',
-      permissionDecisionReason:
-        `${rel} belongs to the kit and is not yours to edit while working on the prototype. ` +
-        `It ships to every designer, so a change that looks right on this machine can break theirs. ` +
-        `Screens, styles, state.json and notes.md are all yours. If this file genuinely needs to change, ` +
-        `say so plainly and let the designer decide.`,
-    },
-  }))
-  process.exit(0)
+function denyKit(rel) {
+  deny(
+    `${rel} belongs to the kit and is not yours to edit while working on the prototype. ` +
+    `It ships to every designer, so a change that looks right on this machine can break theirs. ` +
+    `Screens, styles, state.json and notes.md are all yours. If this file genuinely needs to change, ` +
+    `say so plainly and let the designer decide.`,
+  )
 }

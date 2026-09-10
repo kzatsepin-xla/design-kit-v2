@@ -27,12 +27,11 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
+import { cursor, input, keepGoing, rootOf } from './lib/dialect.mjs'
 
-const raw = fs.readFileSync(0, 'utf8')          // the hook receives its input on stdin
-let input = {}
-try { input = JSON.parse(raw) } catch { process.exit(0) }
-
-const root = input.cwd || process.env.CLAUDE_PROJECT_DIR || process.cwd()
+const root = rootOf(process.cwd())
+// Cursor hands no transcript to read, so the digging cannot be spotted there and the check
+// stays quiet rather than guessing.
 const transcript = input.transcript_path
 if (!transcript || !fs.existsSync(transcript)) process.exit(0)
 
@@ -106,7 +105,7 @@ if (asked) process.exit(0)
 fs.writeFileSync(flag, '1')
 
 const rel = path.relative(root, notes).split(path.sep).join("/")
-console.error(
+const message = (
   `You dug inside the design system this turn and nothing was offered to the designer's memory.
 ` +
   `Ask them — do not decide yourself and do not write anything unasked. One AskUserQuestion call, ` +
@@ -123,4 +122,8 @@ console.error(
 ` +
   `The question tool is unavailable (headless) — say so in one line and finish.`
 )
+// Claude Code reads a blocked turn off stderr with exit 2; Cursor wants the same thing as a
+// follow-up message. Same demand, two dialects.
+if (cursor) keepGoing(message)
+console.error(message)
 process.exit(2)                                  // the turn does not end; the agent asks first

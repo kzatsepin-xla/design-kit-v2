@@ -18,17 +18,9 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import { bodyOf, commandOf, deny as sayNo, fileOf, input, rootOf, toolOf } from './lib/dialect.mjs'
 
-const raw = await new Promise((ok) => {
-  let s = ''
-  process.stdin.on('data', (c) => (s += c))
-  process.stdin.on('end', () => ok(s))
-})
-
-let input = {}
-try { input = JSON.parse(raw) } catch { process.exit(0) }
-
-const root = input.cwd || process.cwd()
+const root = rootOf(process.cwd())
 
 const dsNames = () => {
   try {
@@ -36,18 +28,13 @@ const dsNames = () => {
     return new Set(ds.installed.flatMap((p) => p.components.map((c) => c.name)))
   } catch { return new Set() }
 }
-const deny = (reason) => {
-  process.stdout.write(JSON.stringify({
-    hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason },
-  }))
-  process.exit(0)
-}
+const deny = (reason) => sayNo(reason)
 
 // Installing a package that has no releases. In a live run xui-b2c-game-card arrived this way
 // (every version a build off branch pr298) and brought its own copy of the core package: the
 // theme never reached the component. `npm i` stays quiet about it, so we look ourselves.
-if (input.tool_name === 'Bash') {
-  const cmd0 = String(input.tool_input?.command || '')
+if (toolOf() === 'Bash') {
+  const cmd0 = String(commandOf() || '')
   const inst = cmd0.match(/npm\s+(?:i|install|add)\s+([^&|;]+)/)
   if (inst) {
     let branchOnly = []
@@ -66,8 +53,8 @@ if (input.tool_name === 'Bash') {
 }
 
 // A shell command creates a file as easily as Write — and that used to bypass this check.
-if (input.tool_name === 'Bash') {
-  const cmd = String(input.tool_input?.command || '')
+if (toolOf() === 'Bash') {
+  const cmd = String(commandOf() || '')
   const writes = /(?:touch|cp|mv|install)\s+[^|;&]*src\//.test(cmd) ||
                  />\s*[^|;&]*src\//.test(cmd)
   if (!writes || !/[A-Z][A-Za-z0-9]*\.tsx/.test(cmd)) process.exit(0)
@@ -85,8 +72,8 @@ const ROLES = {
   tooltip: 'tooltip', dropdown: 'dropdown', avatar: 'avatar', badge: 'badge',
   slider: 'slider', dialog: 'modal', modal: 'modal', tabs: 'tabs', pager: 'pagination',
 }
-if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
-  const body0 = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
+if (toolOf() === 'Write' || toolOf() === 'Edit') {
+  const body0 = bodyOf()
   let pubs = []
   try { pubs = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ds', 'index.json'), 'utf8')).published } catch {}
   for (const m of body0.matchAll(/const ([A-Z][A-Za-z0-9]*)\s*=\s*styled[.(]/g)) {
@@ -106,7 +93,7 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
 
 // An icon exported from the mockup. In one run the agent pulled the Steam and Xsolla logos
 // out as images, though they all ship as packages — then found them itself and redid it.
-if (input.tool_name === 'Write' && /[\\\/]assets[\\\/][^\\\/]+\.svg$/i.test(String(input.tool_input?.file_path || ''))) {
+if (toolOf() === 'Write' && /[\\\/]assets[\\\/][^\\\/]+\.svg$/i.test(String(fileOf() || ''))) {
   deny(
     'This looks like an icon or a logo from the mockup. The system ships them as packages:\n' +
     '  xui-icons-base — interface · xui-icons-brand — Steam, Epic, GOG\n' +
@@ -118,8 +105,8 @@ if (input.tool_name === 'Write' && /[\\\/]assets[\\\/][^\\\/]+\.svg$/i.test(Stri
 
 // Bending a system component to the mockup is the same do-it-myself decision. Caught before
 // it lands in the file, next to a design-system import.
-if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
-  const body = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '')
+if (toolOf() === 'Write' || toolOf() === 'Edit') {
+  const body = bodyOf()
     if (body) {
     const known = dsNames()
     const st = body.match(/styled\(\s*([A-Z][A-Za-z0-9]*)\s*\)/)
@@ -127,7 +114,7 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
     // An edit arrives as a fragment: the design-system import is missing even when the file
     // has one. So we look at the whole file too, or an override slips in as a separate edit.
     let whole = body
-    try { whole += fs.readFileSync(input.tool_input.file_path, 'utf8') } catch { /* a new file */ }
+    try { whole += fs.readFileSync(fileOf(), 'utf8') } catch { /* a new file */ }
     const usesDS = /@xsolla\/xui-/.test(whole)
     // `& > button` aims at the internals of a system component around its own props.
     const reachIn = /[>&]\s*(?:button|input|a)\s*[,{]/.test(body)
@@ -150,9 +137,9 @@ if (input.tool_name === 'Write' || input.tool_name === 'Edit') {
   }
 }
 
-if (input.tool_name !== 'Write') process.exit(0)
+if (toolOf() !== 'Write') process.exit(0)
 
-const file = String(input.tool_input?.file_path || '').split(path.sep).join('/')
+const file = String(fileOf() || '').split(path.sep).join('/')
 if (!/\/src\/.*\.tsx$/.test(file)) process.exit(0)
 
 // The name used to come from the file name alone, and an index file walked straight past: it
@@ -163,7 +150,7 @@ if (!/\/src\/.*\.tsx$/.test(file)) process.exit(0)
 const declared = []
 const m = file.match(/\/src\/.*?([A-Z][A-Za-z0-9]*)\.tsx$/)
 if (m) declared.push(m[1])
-for (const d of String(input.tool_input?.content || '')
+for (const d of bodyOf()
   .matchAll(/export\s+(?:default\s+)?(?:const|function|class)\s+([A-Z][A-Za-z0-9]*)/g)) {
   declared.push(d[1])
 }
@@ -172,7 +159,7 @@ if (!declared.length) process.exit(0)
 const known = dsNames()
 const Name = declared.find((n) => known.has(n)) || declared[0]
 const real = (p) => { try { return fs.statSync(p).size > 0 } catch { return false } }
-if (real(input.tool_input.file_path)) process.exit(0)
+if (real(fileOf())) process.exit(0)
 
 const inDS = dsNames().has(Name)
 
