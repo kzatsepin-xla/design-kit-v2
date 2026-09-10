@@ -24,7 +24,7 @@
 //
 import fs from 'node:fs'
 import path from 'node:path'
-import { commandOf, deny, fileOf, rootOf } from './lib/dialect.mjs'
+import { commandOf, deny, fileOf, input, rootOf } from './lib/dialect.mjs'
 
 // Inside the kit's own workshop these files are the work, not someone else's property. The
 // workshop is recognised by what an installed project never has: the _dev folder, and no
@@ -59,6 +59,13 @@ if (typeof command === 'string') {
   }
   process.exit(0)
 }
+
+// Only a write is worth stopping. Claude Code filters the tools before the check runs;
+// Cursor calls it for every tool it has, so a plain read of a kit file was being refused too
+// and the agent reported that it could not even look at the file.
+const WRITING = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit', 'Delete', 'Bash', 'Shell'])
+const tool = input.tool_name
+if (tool && !WRITING.has(tool)) process.exit(0)
 
 const file = fileOf()
 if (!file) process.exit(0)
