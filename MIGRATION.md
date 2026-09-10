@@ -10,9 +10,14 @@ holds, and ask when the answer is the designer's.
 
 ## Rules that do not bend
 
-- **Git is the undo.** Anything uncommitted goes into one commit of its own first, named as
-  the designer's work in progress, and reported as such. Then make your own branch and work
-  there. Their branch must end exactly where it started.
+- **Git is the undo.** Make your own branch **first**, before touching a single file. Only then
+  commit anything that was uncommitted, in one commit of its own, named as the designer's work
+  in progress — on your branch, never on theirs. Their branch has to end exactly where it
+  started, and it cannot do that if you commit onto it.
+  Tell them in the report that their unfinished work now lives on your branch, and how to get
+  it back if they leave the branch.
+- **You never push and never merge.** The branch is an experiment on their machine and stays
+  there. Deleting it must cost them nothing. Ask before doing anything that leaves the folder.
 - **Nothing is deleted.** What the old kit owned moves to `.migrated-v1/` and stays in the
   commit. Run `git status` afterwards: the project's own `.gitignore` may still cover a path
   or two, and those live on disk only. Name them in the report — for them, "you can get it
