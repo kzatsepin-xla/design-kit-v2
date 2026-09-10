@@ -234,6 +234,11 @@ function cmdCheck() {
   if (!files.length) { console.error('No documents yet: node scripts/docs.mjs start ' + feature); process.exit(1) }
 
   const problems = []
+  // Documents brought over from the previous kit repeat an id across files on purpose, and
+  // rewriting someone's finished documents to satisfy a check is not on. Those repeats become
+  // a note here, so a migrated project can still reach a green run.
+  const fromOldKit = fs.existsSync(path.join(root, '.migrated-v1'))
+  const repeats = []
   const allDefined = new Set()
   const allUsed = new Map()
   const seen = new Map()
@@ -244,7 +249,11 @@ function cmdCheck() {
     for (const sec of emptySections(text)) problems.push([rel, 'section "' + sec + '" is empty'])
     const { defined, used } = collectIds(text)
     for (const id of defined) {
-      if (seen.has(id) && seen.get(id) !== rel) problems.push([rel, id + ' is described twice — also in ' + seen.get(id)])
+      if (seen.has(id) && seen.get(id) !== rel) {
+        const line = [rel, id + ' is described twice — also in ' + seen.get(id)]
+        if (fromOldKit) repeats.push(line)
+        else problems.push(line)
+      }
       seen.set(id, rel)
       allDefined.add(id)
     }
@@ -268,6 +277,11 @@ function cmdCheck() {
     console.log('  the documents were checked on their own; whether they match the screens: node scripts/screens.mjs')
   }
   for (const [rel, what] of problems) console.log('  ' + rel + ' — ' + what)
+  if (repeats.length) {
+    console.log(NL + 'Repeated ids: ' + repeats.length + ' — documents written under the previous')
+    console.log('methodology, where an id appears in several files on purpose. Not counted, and not')
+    console.log('worth rewriting the documents over.')
+  }
   if (open.length) {
     console.log(NL + 'Open questions for the designer: ' + open.length)
     for (const q of open.slice(0, 10)) console.log('  ' + q)
