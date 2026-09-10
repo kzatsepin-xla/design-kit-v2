@@ -30,7 +30,7 @@ try { input = JSON.parse(raw.replace(/^﻿/, '').trim()) } catch {}
 // So nothing is guessed. Every answer carries both wordings at once: each side reads the keys
 // it knows and ignores the rest. This flag survives only for the few places that have to
 // behave differently, not merely speak differently.
-const cursor = Boolean(input.conversation_id || input.cursor_version || input.workspace_roots) && !input.session_id
+const cursor = Boolean(input.cursor_version || input.workspace_roots || input.conversation_id)
 
 export { raw, input, cursor }
 
@@ -46,9 +46,19 @@ export function commandOf() {
   return input.command || input.tool_input?.command || null
 }
 
-/** The project folder, whichever way it arrives. */
+// Cursor writes a workspace root as `/d:/Git/project` — a leading slash in front of the drive
+// letter, which Windows does not recognise as the same place. Comparing a real path against it
+// makes every file look like it lives outside the project, and the check then stands aside.
+// That is exactly what happened: the guard ran, found the file "outside", and said nothing.
+function samePlace(p) {
+  return typeof p === 'string' ? p.replace(/^\/([A-Za-z]:)/, '$1') : p
+}
+
+/** The project folder, whichever way it arrives. The running folder is trusted first: both
+ *  agents start a check inside the project, and it needs no untangling. */
 export function rootOf(fallback) {
-  return input.cwd || (input.workspace_roots && input.workspace_roots[0]) || process.env.CLAUDE_PROJECT_DIR || fallback
+  const named = input.cwd || fallback || process.env.CLAUDE_PROJECT_DIR
+  return samePlace(named || (input.workspace_roots && input.workspace_roots[0]))
 }
 
 /** Stop the action and say why. The wording reaches the agent either way. */
