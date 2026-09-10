@@ -41,6 +41,8 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 2. **Team gallery** `@xui-vibe` — components other designers already wrote. The search shows
    them in the same output. Say plainly that it is a colleague's work, not the design system.
 3. **Your own** — only when the first two are empty: `node scripts/new-component.mjs <Name>`.
+   Leave `// gap: what the library was missing` in the file — that list goes to the design
+   system team, and `screens.mjs` fails a hand-made interface without it.
 
 A layer name in a mockup is not a package name: `Progress` lives as `progress-bar`, a game
 card as `b2c-game-card`. Search shorter before concluding it does not exist.

@@ -13,6 +13,12 @@
 //  This script collects the marks into one list — before showing work to the team you can
 //  see where decisions were made for you.
 //
+//  THE OTHER MARK
+//  Sometimes the fork is not a decision but a hole: the design system has no such component,
+//  so the agent builds one. That gets its own mark, `// gap: XUI has no range slider`, and its
+//  own list here — the one worth sending to the design system team, because it says what the
+//  library was missing.
+//
 //  THE POINT
 //  The mark lives in the file where the decision was made. Rewrite that part and the mark
 //  goes with it, and the list cleans itself. Nothing to cross out by hand: the list cannot
@@ -35,7 +41,7 @@ const NL = String.fromCharCode(10)
 // Where to look. Service and third-party folders stay out.
 const LOOK_IN = ['src', 'docs']
 const SKIP = new Set(['node_modules', 'vendor', 'dist', '.git', '.claude', 'public'])
-const MARK = /(?:\/\/|\/\*|<!--|#)\s*debt\s*:\s*(.+?)\s*(?:\*\/|-->)?$/i
+const MARK = /(?:\/\/|\/\*|<!--|#)\s*(debt|gap)\s*:\s*(.+?)\s*(?:\*\/|-->)?$/i
 
 const found = []
 
@@ -49,14 +55,15 @@ function walk(dir) {
     if (!/\.(tsx?|jsx?|md|css|json)$/.test(e.name)) continue
     let text
     try { text = fs.readFileSync(p, 'utf8') } catch { continue }
-    if (!/debt/i.test(text)) continue
+    if (!/debt|gap/i.test(text)) continue
     // A mark often does not fit on one line and continues on the next comment line;
     // taking only the first would show the designer half a thought.
     const lines = text.split(NL)
     lines.forEach((line, i) => {
       const m = MARK.exec(line.trim())
       if (!m) return
-      let what = m[1]
+      const kind = m[1].toLowerCase()
+      let what = m[2]
       for (let j = i + 1; j < lines.length; j++) {
         const next = lines[j].trim()
         if (!/^(\/\/|\*|#)/.test(next) || MARK.test(next)) break
@@ -64,7 +71,7 @@ function walk(dir) {
         if (!tail) break
         what += ' ' + tail
       }
-      found.push({ file: path.relative(root, p).split(path.sep).join('/'), line: i + 1, what })
+      found.push({ kind, file: path.relative(root, p).split(path.sep).join('/'), line: i + 1, what })
     })
   }
 }
@@ -72,20 +79,40 @@ function walk(dir) {
 for (const dir of LOOK_IN) walk(path.join(root, dir))
 
 if (process.argv.includes('--count')) {
-  console.log(found.length)
+  console.log(found.filter((f) => f.kind === 'debt').length)
   process.exit(0)
 }
 
-if (!found.length) {
-  console.log('nothing was decided for you: no debt marks in the code or the documents')
+const places = (n) => n + (n === 1 ? ' place' : ' places')
+
+const debts = found.filter((f) => f.kind === 'debt')
+const gaps = found.filter((f) => f.kind === 'gap')
+
+function list(items) {
+  let current = null
+  for (const f of items) {
+    if (f.file !== current) { current = f.file; console.log('  ' + f.file) }
+    console.log('    line ' + f.line + ': ' + f.what)
+  }
+}
+
+if (!debts.length && !gaps.length) {
+  console.log('nothing was decided for you, and nothing was missing from the design system')
   process.exit(0)
 }
 
-console.log('decided for you, ' + found.length + ' places:')
-let current = null
-for (const f of found) {
-  if (f.file !== current) { current = f.file; console.log('  ' + f.file) }
-  console.log('    line ' + f.line + ': ' + f.what)
+if (debts.length) {
+  console.log('decided for you, ' + places(debts.length) + ':')
+  list(debts)
+  console.log('')
 }
-console.log('')
+
+if (gaps.length) {
+  console.log('built by hand because the design system had nothing, ' + places(gaps.length) + ':')
+  list(gaps)
+  console.log('')
+  console.log('This is the list the design system team wants: what the library was missing.')
+  console.log('')
+}
+
 console.log('Each mark lives in its own file: rewrite that part and it disappears by itself.')

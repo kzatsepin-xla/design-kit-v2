@@ -20,6 +20,8 @@
 //  WHAT IT CHECKS
 //  Without a browser, immediately: whether each state from the documents appears in the
 //  screen code at all. That catches the main thing — a state described and never built.
+//  And whether the screens are built from the design system at all, rather than merely
+//  breaking none of its rules.
 //  With a browser: the screen opens, the console is clean, and states differ from each other,
 //  which means the screen really shows them instead of drawing the same thing.
 //
@@ -107,6 +109,62 @@ function staticCheck(list) {
       problems.push([p.id, 'state "' + p.state + '" is described in the documents but never mentioned in the code — the screen may show it by default'])
     }
   }
+  return problems
+}
+
+// ——— built from the design system, or not built at all ———
+
+// Bans stop the wrong thing getting in; they do not make the right thing happen. A screen can
+// break no rule and still hold no design system at all — controls hand-rolled out of styled
+// divs carrying the right token values. Right tokens on a hand-made control is still not the
+// design system, and nothing else here notices: the guard recognises a substitution by name,
+// and a file full of Row and Panel names nothing.
+//
+// A real hole in the library is not drift, and stopping the work over it would be worse than
+// the hole. Mark it — `// gap: XUI has no range slider` — and the file passes; the mark shows
+// up in `node scripts/debt.mjs` as the list the design system team wants.
+const FROM_XUI = /from\s+['"]@xsolla\/xui-/
+const FROM_GALLERY = /from\s+['"]@xui-vibe/
+// A capitalised name imported from a local path: the file composes another project component,
+// and that one is checked on its own.
+const FROM_LOCAL = /import\s+[^;]*\b[A-Z][A-Za-z0-9]*[^;]*from\s+['"](?:\.|@\/|[^'"]*components\/)[^'"]*['"]/
+const RENDERS = /<[A-Z][\w.]*[\s/>]/
+const GAP_MARK = /(?:\/\/|\{\/\*)[ \t]*gap[ \t]*:[ \t]*\S/i
+// Written by the kit, not by the designer: the router and the entry point.
+const PLUMBING = new Set(['app.tsx', 'main.tsx'])
+
+// Only meaningful when the project actually builds on XUI. Another design system by link, or
+// none at all, and there is nothing to compare against.
+function usesXui() {
+  try {
+    const pkg = JSON.parse(read(path.join(root, 'package.json')))
+    const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
+    return deps.some((d) => d.startsWith('@xsolla/xui-'))
+  } catch { return false }
+}
+
+function handRolled() {
+  if (!usesXui()) return []
+  const problems = []
+  const walk = (d) => {
+    let entries
+    try { entries = fs.readdirSync(d, { withFileTypes: true }) } catch { return }
+    for (const e of entries) {
+      const p = path.join(d, e.name)
+      // src/kit is the inspector runtime the kit puts down, not designer surface.
+      if (e.isDirectory()) { if (e.name !== 'kit' && !e.name.startsWith('.')) walk(p); continue }
+      if (!e.name.endsWith('.tsx')) continue
+      if (/\.(stories|test|spec)\.tsx$/.test(e.name) || PLUMBING.has(e.name)) continue
+      const src = read(p)
+      if (!RENDERS.test(src)) continue
+      if (FROM_XUI.test(src) || FROM_GALLERY.test(src) || FROM_LOCAL.test(src)) continue
+      if (GAP_MARK.test(src)) continue
+      const rel = path.relative(root, p).split(path.sep).join('/')
+      problems.push([rel, 'draws an interface with nothing from the design system behind it — '
+        + 'compose it from XUI, or say what the library is missing: // gap: what is missing'])
+    }
+  }
+  walk(path.join(root, 'src'))
   return problems
 }
 
@@ -249,7 +307,7 @@ async function main() {
   // With a browser it is the browser that judges: a screen may handle a state by default,
   // so the word normal never appears in the code while the screen shows it correctly.
   const runtime = await runtimeCheck(list)
-  const problems = [...missingScreens(list), ...(runtime ? runtime : staticCheck(list))]
+  const problems = [...missingScreens(list), ...(runtime ? runtime : staticCheck(list)), ...handRolled()]
 
   const types = typeCheck()
 
