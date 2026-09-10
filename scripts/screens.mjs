@@ -56,7 +56,7 @@ function promises() {
       const m = JSON.parse(read(manifest))
       for (const f of m.features || []) {
         for (const n of f.flowMap?.nodes || []) {
-          out.push({ id: n.id, screen: n.target.sectionId, state: n.target.query?.state || null })
+          out.push({ id: n.id, feature: f.id, screen: n.target.sectionId, state: n.target.query?.state || null })
         }
       }
     } catch {}
@@ -213,6 +213,7 @@ async function runtimeCheck(list) {
   const server = startServer(port)
   const problems = []
   const signatures = new Map()
+  const previews = new Map()
 
   try {
     if (!(await waitFor(url + '/'))) {
@@ -251,6 +252,22 @@ async function runtimeCheck(list) {
       // The whole text, not the first few hundred characters of it: two states often share a
       // header and a filter row and differ only further down the page. Truncating the
       // comparison calls those two states identical when they are not.
+      // The map does not draw a node by its address. It loads the prototype at
+      // ?screenmapPreview=<feature>:<node> with no hash at all, and the prototype has to
+      // resolve the node itself. Miss that and every card on the map shows the default screen
+      // while every address works — three rounds of "the map opens the same thing" came from
+      // exactly this, and nothing here could see it.
+      if (p.feature && p.state) {
+        await page.goto(url + '/?screenmapPreview=' + encodeURIComponent(p.feature + ':' + p.id), { waitUntil: 'load' })
+        await page.waitForTimeout(700)
+        const card = await page.evaluate(() => {
+          const root = document.getElementById('root')
+          return (root?.innerText || '').replace(/\s+/g, ' ').trim()
+        })
+        const seen = previews.get(p.screen) || []
+        previews.set(p.screen, [...seen, { state: p.state, direct: fold(shot.text), card: fold(card) }])
+      }
+
       const key = fold(shot.text) + '|' + shot.nodes
       const same = signatures.get(p.screen)
       if (p.state && same) {
@@ -259,6 +276,17 @@ async function runtimeCheck(list) {
           + 'show it differently, or mark the state N/A in the matrix and the node leaves the map'])
       }
       signatures.set(p.screen, [...(same || []), { state: p.state || 'no state', key }])
+    }
+
+    // Two states that look different at their own address but the same on the map mean the
+    // map is drawing the wrong picture — the screens are fine, the wiring is not.
+    for (const [screen, shots] of previews) {
+      const broken = shots.find((a) =>
+        shots.some((b) => b !== a && a.direct !== b.direct && a.card === b.card))
+      if (broken) {
+        problems.push([screen, 'the map draws the same picture for states that differ at their own '
+          + 'address — the node preview is not wired (?screenmapPreview=<feature>:<node>)'])
+      }
     }
 
     await browserInstance.close()
