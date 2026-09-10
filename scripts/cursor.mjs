@@ -65,8 +65,10 @@ function hooksJson() {
 
 // Claude Code loads a rule when the agent reads a file the `paths:` match; Cursor does the
 // same with `globs:`. A rule with no condition is always on in both, and says so differently.
+const FRONT = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/
+
 function toMdc(body, name) {
-  const front = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/.exec(body)
+  const front = FRONT.exec(body)
   const rest = front ? body.slice(front[0].length) : body
   const globs = []
   if (front) {
@@ -110,6 +112,25 @@ function main() {
     commands += 1
   }
 
+  // The judges: /review hands two screenshots to one of them, /prune hands it a file. Cursor
+  // calls them subagents and keeps them in .cursor/agents, with the same markdown and a name
+  // in the frontmatter.
+  let agents = 0
+  for (const name of listing(path.join(root, '.claude', 'agents'))) {
+    if (!name.endsWith('.md')) continue
+    const body = read(path.join(root, '.claude', 'agents', name))
+    const front = FRONT.exec(body)
+    const rest = front ? body.slice(front[0].length) : body
+    const fields = front ? front[1].trim() : ''
+    const head = ['---']
+    if (!/^name:/m.test(fields)) head.push('name: ' + name.replace(/[.]md$/, ''))
+    if (fields) head.push(fields)
+    if (!/^model:/m.test(fields)) head.push('model: inherit')
+    head.push('---')
+    write('.cursor/agents/' + name, head.join(NL) + NL + rest.replace(/^\s+/, NL))
+    agents += 1
+  }
+
   let skills = 0
   const skillsDir = path.join(root, '.claude', 'skills')
   for (const name of listing(skillsDir)) {
@@ -121,7 +142,7 @@ function main() {
 
   console.log('Cursor side written into .cursor:')
   console.log('  checks: the same files, on Cursor events')
-  console.log('  rules: ' + rules + ' · commands: ' + commands + ' · skills: ' + skills)
+  console.log('  rules: ' + rules + ' · commands: ' + commands + ' · skills: ' + skills + ' · judges: ' + agents)
   console.log('  AGENTS.md is read by both, so it stays where it is.')
 }
 

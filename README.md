@@ -52,8 +52,9 @@ entry questionnaire. `AGENTS.md` is read by both and stays where it is.
 Everything under `.cursor/` is generated on install and update. Change the originals under
 `.claude/`, never the copy.
 
-One thing does not carry across: Cursor hands no transcript to a check, so the question about
-what is worth remembering only fires in Claude Code. Nothing else differs.
+One difference worth knowing: Cursor registers the checks twice, once from its own file and
+once from the Claude Code settings it also reads. They are the same checks, so the answer is
+the same — it just runs them twice.
 
 ## What it needs
 

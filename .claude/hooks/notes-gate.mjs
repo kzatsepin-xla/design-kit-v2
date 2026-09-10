@@ -30,8 +30,8 @@ import os from 'node:os'
 import { cursor, input, keepGoing, rootOf } from './lib/dialect.mjs'
 
 const root = rootOf(process.cwd())
-// Cursor hands no transcript to read, so the digging cannot be spotted there and the check
-// stays quiet rather than guessing.
+// Cursor keeps a transcript of its own and passes the path the same way, in the same shape:
+// message.content[] with tool_use entries. So this reads both without knowing which is which.
 const transcript = input.transcript_path
 if (!transcript || !fs.existsSync(transcript)) process.exit(0)
 
