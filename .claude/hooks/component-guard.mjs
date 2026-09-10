@@ -20,6 +20,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { bodyOf, commandOf, deny as sayNo, fileOf, input, rootOf, toolOf } from './lib/dialect.mjs'
 
+const NL = String.fromCharCode(10)
+
 const root = rootOf(process.cwd())
 
 const dsNames = () => {
@@ -134,6 +136,31 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
         'when it was not: a mockup description in the task is not an agreement.',
       )
     }
+  }
+}
+
+// A colour written out by hand. The theme is the whole point of a design system: pick a value
+// yourself and the screen stops following the product's theme, and nobody can tell later which
+// shade was intended and which was guessed. A live run on another machine produced a sign-in
+// screen with eleven invented colours and no theme at all — it broke no other rule here.
+//
+// The signal is a colour literal, nothing else. Inline styles are not touched: screens that
+// follow the theme use them constantly, and denying those would be a tax on the honest.
+const COLOUR = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?![0-9a-zA-Z_-])|(?:rgba?|hsla?)[(]/
+if (toolOf() === 'Write' || toolOf() === 'Edit') {
+  const painted = bodyOf()
+  const where = String(fileOf() || '').split(path.sep).join('/')
+  const mine = /[/]src[/]/.test(where) && !/[/]src[/]kit[/]/.test(where) && /[.]tsx?$/.test(where)
+  if (mine && COLOUR.test(painted)) {
+    deny(
+      'A colour written out by hand. Take it from the theme instead:' + NL +
+      "  const { theme } = useResolvedTheme({})  →  theme.colors.background.primary, theme.colors.text.primary," + NL +
+      '  theme.colors.control[tone][variant] for anything the player presses.' + NL +
+      'The mockup shows a shade the theme has no token for — that is a question for the designer' + NL +
+      'and for the design system team, not a value to invent. Ask, and say which shade and where.' + NL +
+      'Content that genuinely carries its own colour — cover art, a game logo — belongs in an' + NL +
+      'image or in a data file, not in the screen.',
+    )
   }
 }
 

@@ -18,6 +18,11 @@ alwaysApply: false
 | `useDesignSystem()` for tokens | `useResolvedTheme({ themeMode, themeProductContext })` |
 | `<ThemeProvider>` / `<ThemeScope>` | no such thing: `themeMode` goes on the component itself |
 
+**Art from the mockup is downloaded, never approximated.** A mascot, a cover, an illustration:
+export it and put it in the project. A rounded rectangle in roughly the right colour is not a
+placeholder, it is a wrong screen that looks finished. Cannot get the file — say so and ask,
+do not paint a stand-in.
+
 **One exception.** Responsive typography really does live in CSS variables:
 `var(--xui-font-size-{step})`, `var(--xui-lh-{display|compact|text}-{step})`, 13 steps from
 75 to 750, switching at 768px. There is `cssVar.fontSize("350")` in `@xsolla/xui-core`.
