@@ -28,6 +28,7 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 | New own component | `node scripts/new-component.mjs <Name>` |
 | Product documents | `node scripts/docs.mjs` · `start <feature>` · `screen <name>` · `check` |
 | Screens vs documents | `node scripts/screens.mjs` |
+| Everything before a handoff | `node scripts/preflight.mjs` |
 | What you decided for them | `node scripts/debt.mjs` |
 | Context button, map, docs | `node scripts/context-app.mjs connect` · `export` · `check` |
 | Team gallery | `node scripts/vibe.mjs connect` · `promote <Name>` |
@@ -100,5 +101,6 @@ Unresolved question — mark it `OQ-N` with status Open instead of inventing an 
 
 ## Before showing the work
 
-`node scripts/screens.mjs` — do the screens do what the documents promise. Run it after
-changes, not from memory: a green result from ten minutes ago may already be false.
+`node scripts/preflight.mjs` — documents, screens, map, and what was decided for them, in one
+answer. Run it after the changes, not from memory: a green result from ten minutes ago may
+already be false.
