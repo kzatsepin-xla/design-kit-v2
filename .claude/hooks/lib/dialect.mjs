@@ -23,12 +23,14 @@ let input = {}
 // without a word — the first live run in Cursor edited a kit file straight through.
 try { input = JSON.parse(raw.replace(/^﻿/, '').trim()) } catch {}
 
-// Who is asking. The event name is no good for telling them apart — both put it in the
-// payload, and betting on it made every check answer Claude Code in Cursor's words, which
-// Claude Code does not understand: the checks stopped stopping anything, and hand-built test
-// payloads did not show it because they lacked the field.
-// These two are Cursor's alone.
-const cursor = typeof input.cursor_version === 'string' || Array.isArray(input.workspace_roots)
+// Telling the two apart turned out to be a trap. The event name is in both payloads. The
+// fields that are Cursor's alone are in some of its events and not in others — they are in
+// `stop`, they are missing from `preToolUse` — so a check that guessed from them denied in
+// the wrong words and the edit went through anyway.
+// So nothing is guessed. Every answer carries both wordings at once: each side reads the keys
+// it knows and ignores the rest. This flag survives only for the few places that have to
+// behave differently, not merely speak differently.
+const cursor = Boolean(input.conversation_id || input.cursor_version || input.workspace_roots) && !input.session_id
 
 export { raw, input, cursor }
 
@@ -51,26 +53,28 @@ export function rootOf(fallback) {
 
 /** Stop the action and say why. The wording reaches the agent either way. */
 export function deny(reason, event = 'PreToolUse') {
-  console.log(JSON.stringify(cursor
-    ? { continue: true, permission: 'deny', agent_message: reason, user_message: reason }
-    : { hookSpecificOutput: { hookEventName: event, permissionDecision: 'deny', permissionDecisionReason: reason } }))
+  console.log(JSON.stringify({
+    continue: true,
+    permission: 'deny',
+    agent_message: reason,
+    user_message: reason,
+    hookSpecificOutput: { hookEventName: event, permissionDecision: 'deny', permissionDecisionReason: reason },
+  }))
   process.exit(0)
 }
 
 /** Say something to the agent without stopping anything. */
 export function context(text, event = 'SessionStart') {
-  const forCursor = event === 'PreToolUse'
-    ? { continue: true, permission: 'allow', agent_message: text }
-    : { additional_context: text }
-  console.log(JSON.stringify(cursor
-    ? forCursor
-    : { hookSpecificOutput: { hookEventName: event, additionalContext: text } }))
+  const both = { hookSpecificOutput: { hookEventName: event, additionalContext: text } }
+  if (event === 'PreToolUse') Object.assign(both, { continue: true, permission: 'allow', agent_message: text })
+  else Object.assign(both, { additional_context: text })
+  console.log(JSON.stringify(both))
   process.exit(0)
 }
 
 /** Do not let the turn end yet: something is unfinished. */
 export function keepGoing(reason) {
-  console.log(JSON.stringify(cursor ? { followup_message: reason } : { decision: 'block', reason }))
+  console.log(JSON.stringify({ decision: 'block', reason, followup_message: reason }))
   process.exit(0)
 }
 
@@ -106,11 +110,11 @@ export function say(line) {
 export function flush(event = 'SessionStart') {
   if (!lines.length) return
   const text = lines.join('\n')
-  if (!cursor) {
-    console.log(text)
-    return
-  }
+  // Claude Code reads plain text off a session hook; Cursor wants JSON. Printing the JSON
+  // alone would lose the Claude Code side, so both go out: the object on its own line, the
+  // text after it.
   console.log(JSON.stringify(event === 'Stop'
     ? { followup_message: text }
-    : { additional_context: text }))
+    : { additional_context: text, hookSpecificOutput: { hookEventName: event, additionalContext: text } }))
+  if (event !== 'Stop') console.log(text)
 }
