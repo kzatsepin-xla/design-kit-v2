@@ -28,6 +28,31 @@ import path from 'node:path'
 let input = {}
 try { input = JSON.parse(fs.readFileSync(0, 'utf8')) } catch { process.exit(0) }
 
+// The shell is the way round this check that an agent finds on its own. In a live run one
+// patched a kit script with sed, the map started working on that machine only, and the bug
+// stayed hidden in the kit for everyone else — including from the person who wrote it.
+const KIT = String.raw`(?:\./)?(?:\.claude|scripts|tools)/[^\s'"|;&)]+`
+const MEMORY = /(notes|findings|decisions[a-z-]*)\.md$/
+const WRITES = [
+  new RegExp(String.raw`>>?\s*['"]?(` + KIT + `)`),
+  new RegExp(String.raw`\bsed\s+[^|;&]*-i[^|;&]*\s(` + KIT + `)`),
+  new RegExp(String.raw`\btee\s+[^|;&]*(` + KIT + `)`),
+  new RegExp(String.raw`\brm\s+[^|;&]*(` + KIT + `)`),
+  new RegExp(String.raw`\b(?:cp|mv)\s+[^|;&]*\s(` + KIT + `)\s*(?:$|[|;&])`),
+]
+
+const command = input.tool_input?.command
+if (typeof command === 'string') {
+  for (const re of WRITES) {
+    const hit = re.exec(command)
+    if (!hit) continue
+    const target = hit[hit.length - 1]
+    if (MEMORY.test(target)) continue
+    deny(target)
+  }
+  process.exit(0)
+}
+
 const file = input.tool_input?.file_path || input.tool_input?.path
 if (!file) process.exit(0)
 
@@ -45,15 +70,19 @@ const isNotes = name === 'notes.md' || name === 'findings.md' || /^decisions.*\.
 
 if (!protectedRoot || isNotes) process.exit(0)
 
-const rel = parts.join('/')
-console.log(JSON.stringify({
-  hookSpecificOutput: {
-    hookEventName: 'PreToolUse',
-    permissionDecision: 'deny',
-    permissionDecisionReason:
-      `${rel} belongs to the kit and is not yours to edit while working on the prototype. ` +
-      `It ships to every designer, so a change that looks right on this machine can break theirs. ` +
-      `Screens, styles, state.json and notes.md are all yours. If this file genuinely needs to change, ` +
-      `say so plainly and let the designer decide.`,
-  },
-}))
+deny(parts.join('/'))
+
+function deny(rel) {
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'deny',
+      permissionDecisionReason:
+        `${rel} belongs to the kit and is not yours to edit while working on the prototype. ` +
+        `It ships to every designer, so a change that looks right on this machine can break theirs. ` +
+        `Screens, styles, state.json and notes.md are all yours. If this file genuinely needs to change, ` +
+        `say so plainly and let the designer decide.`,
+    },
+  }))
+  process.exit(0)
+}
