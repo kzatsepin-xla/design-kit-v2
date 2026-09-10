@@ -134,6 +134,16 @@ function report(res, marker, before) {
   console.log(lines.join(NL))
 }
 
+// A project built on the previous kit is not an older version of this one: it keeps its own
+// scripts, skills and npm entries, and this install would replace the scripts folder whole —
+// taking `npm install` and `npm run build` with it. Measured on a real project: 13 npm scripts
+// left pointing at files that no longer exist. Moving one across is a job with decisions in
+// it, so it is not done silently.
+function looksLikeOldKit(target) {
+  return fs.existsSync(path.join(target, '.xsolla-design-pack.json'))
+    || fs.existsSync(path.join(target, 'scripts', 'setup.mjs'))
+}
+
 function install(argv) {
   const dir = argv[0]
   if (!dir) {
@@ -146,6 +156,12 @@ function install(argv) {
     process.exit(1)
   }
   const before = readMarker(target)
+  if (!before && looksLikeOldKit(target)) {
+    console.error('This project was built on the previous kit. Installing over it would replace')
+    console.error('the scripts folder whole and break npm install and npm run build.')
+    console.error('Moving it across is a separate job — tell the designer, do not force it.')
+    process.exit(1)
+  }
   fs.mkdirSync(target, { recursive: true })
   const res = applyFrom(kitRoot, target)
   const marker = writeMarker(target, kitRoot, null)
