@@ -23,6 +23,17 @@ git clone --depth 1 https://github.com/kzatsepin-xla/design-kit-v2 /tmp/design-k
 node /tmp/design-kit/scripts/kit.mjs install .
 ```
 
+## Already on the previous kit?
+
+Then this is a move, not an update, and installing over it would break the project. Open it in
+Claude Code and ask:
+
+> Move this project onto the new kit: https://github.com/kzatsepin-xla/design-kit-v2
+
+The agent follows `MIGRATION.md` from the kit: it commits what you have first, keeps the old
+files instead of deleting them, and tells you afterwards what changed and what is left for you
+to decide.
+
 ## After that, no terminal
 
 Everything else happens in conversation. Ask for the prototype and it runs; ask what is left
