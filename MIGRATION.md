@@ -59,6 +59,12 @@ prototype sources before moving anything:
 
 `vendor/` stays where it is: the gallery and the copy rulebook are not the kit.
 
+Three more things belong to the old kit but are not in it, and none of them is yours to remove:
+`docs/_templates/` (document skeletons the new kit does not read), the project's own `README.md`
+and any designer guide next to it (they describe commands that no longer exist), and whatever
+the old copy pipeline left behind — `.uxwrc`, `ux-manifest.json` files, `vendor/uxw`-lookalikes.
+List them at the end and ask.
+
 ## 3. Bring the new kit in
 
 Only after step 2, otherwise the install refuses on purpose:
@@ -86,6 +92,11 @@ added for itself.
 Then read `.github/workflows/` and the git config the same way. A workflow calling a script you
 removed fails on the next push, and `core.hooksPath` now points at a folder that moved — unset
 it.
+
+**Then look inside `.git/hooks/`.** Unsetting `core.hooksPath` sends git back there, and older
+projects have copies of the same hooks sitting in it, calling the same scripts you just moved.
+Left alone, the designer's very next commit fails. Do not delete them: rename each with a
+suffix like `.migrated-v1-disabled`, which is undone by removing the suffix, and say so.
 
 ## 5. The product file
 
@@ -138,7 +149,9 @@ Run `node scripts/preflight.mjs` and read it with the old methodology in mind:
 - **an interface with nothing from the design system** — worth reading properly. It is often
   true and worth a `// gap:` mark, which is an edit to their file: ask first.
 
-A green run is reachable on a migrated project. If it is red, say which of the above it is.
+The repeated ids no longer stand between the project and a green run. Empty sections and dead
+references still do, and rightly — they are real, and they are the designer's to fill. So a red
+run after a move is normal; what matters is that every line in it is now a real one. Say which.
 
 ## 8. Prove it works, then report
 
