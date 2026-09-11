@@ -17,6 +17,12 @@
 //  By itself, whenever the kit is installed or updated. By hand, if you want to refresh it:
 //    node scripts/cursor.mjs
 //
+//  The kit does not carry a ready-made .cursor folder — it is built here, in your project, out
+//  of the .claude folder that came with the update. A copy kept in the kit would be a second
+//  set of rules to remember to regenerate, and forgetting once is all it takes for half the
+//  team to be reading last week's. In your project it is an ordinary folder: commit it, and a
+//  colleague who opens the repository in Cursor gets the checks without running anything.
+//
 //  WHAT APPEARS
 //    .cursor/hooks.json      the same checks, on Cursor's events
 //    .cursor/rules/*.mdc     the same rules, with Cursor's frontmatter

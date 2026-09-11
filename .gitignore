@@ -1,0 +1,7 @@
+# The Cursor side is a projection of .claude/, written by scripts/cursor.mjs on every install
+# and update. Keeping a copy of it in the kit is how it goes stale: a rule changes here, the
+# copy does not, and half the team reads last week's rules. Generate it when you need it:
+# node scripts/cursor.mjs
+.cursor/
+
+node_modules/

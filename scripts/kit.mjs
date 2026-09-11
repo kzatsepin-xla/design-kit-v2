@@ -66,7 +66,7 @@ const FALLBACK = {
   owned: [
     '.claude/settings.json', '.claude/hooks', '.claude/commands', '.claude/agents',
     '.claude/skills', '.claude/rules/kit.md', '.claude/rules/design-system.md',
-    '.cursor', 'scripts', 'tools',
+    'scripts', 'tools',
   ],
   seeded: [],
   removed: [],
@@ -197,6 +197,10 @@ function refreshShell(target) {
 
 // Cursor reads its own folders, so the kit writes them too — from the same files, never by
 // hand. A designer who opens the project in Cursor gets the same checks and the same rules.
+//
+// The projection is not part of what the kit ships, on purpose: a generated copy kept in the
+// kit is a second set of rules that nobody remembers to regenerate, and it went stale exactly
+// that way once. It is built here, in the project, out of the .claude folder that just arrived.
 function projectCursor(target) {
   const r = spawnSync(process.execPath, [path.join(target, 'scripts', 'cursor.mjs')], {
     cwd: target, encoding: 'utf8',
@@ -459,6 +463,14 @@ function check(argv) {
     console.log('Problems:' + NL + problems.map((p) => '  ' + p).join(NL))
     console.log(NL + 'Repair: node scripts/kit.mjs update')
     process.exit(1)
+  }
+
+  // The Cursor side is generated rather than shipped, so "missing" here means nobody has
+  // written it yet — which is a thing to fix, not to report.
+  if (!fs.existsSync(path.join(target, '.cursor', 'hooks.json'))
+      && fs.existsSync(path.join(target, '.claude', 'hooks'))) {
+    projectCursor(target)
+    if (!brief) console.log('The Cursor side was missing and has been written from .claude.')
   }
 
   const newer = marker ? lookForNewer(target, marker) : null

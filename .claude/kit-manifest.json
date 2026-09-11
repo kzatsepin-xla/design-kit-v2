@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
+  "version": "2.1.0",
   "owned": [
     ".claude/settings.json",
     ".claude/kit-manifest.json",
@@ -9,7 +9,6 @@
     ".claude/skills",
     ".claude/rules/kit.md",
     ".claude/rules/design-system.md",
-    ".cursor",
     "scripts",
     "tools"
   ],

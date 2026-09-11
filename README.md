@@ -60,8 +60,9 @@ Both. The checks are one set of files that answer to whichever asked, and the ki
 Cursor-shaped wrapping itself: `.cursor/hooks.json`, the rules as `.mdc`, the commands and the
 entry questionnaire. `AGENTS.md` is read by both and stays where it is.
 
-Everything under `.cursor/` is generated on install and update. Change the originals under
-`.claude/`, never the copy.
+Everything under `.cursor/` is generated on install and update, and the kit itself carries no
+copy of it: there is one set of files to maintain, `.claude/`, and the Cursor shape is written
+from it every time. Change the originals, never the projection.
 
 One difference worth knowing: Cursor registers the checks twice, once from its own file and
 once from the Claude Code settings it also reads. They are the same checks, so the answer is
