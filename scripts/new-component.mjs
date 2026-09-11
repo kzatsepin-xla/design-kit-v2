@@ -85,7 +85,7 @@ export interface ${Name}Props {
 
 const Root = styled.div\`
   display: flex;
-  gap: \${(p) => p.theme.spacing?.m ?? '16px'};
+  gap: \${(p) => p.theme.spacing.md}px;
 \`
 
 export function ${Name}({ children }: ${Name}Props) {
