@@ -20,6 +20,7 @@
 //  library was missing.
 //
 //  THE POINT
+//  In a document the same mark is written as an HTML comment: `<!-- debt: ... -->`, one line.
 //  The mark lives in the file where the decision was made. Rewrite that part and the mark
 //  goes with it, and the list cleans itself. Nothing to cross out by hand: the list cannot
 //  go stale, because it is not stored anywhere apart from the code.
@@ -41,7 +42,13 @@ const NL = String.fromCharCode(10)
 // Where to look. Service and third-party folders stay out.
 const LOOK_IN = ['src', 'docs']
 const SKIP = new Set(['node_modules', 'vendor', 'dist', '.git', '.claude', 'public'])
-const MARK = /(?:\/\/|\/\*|<!--|#)\s*(debt|gap)\s*:\s*(.+?)\s*(?:\*\/|-->)?$/i
+
+// The mark opens its line. It used to be looked for anywhere in the line, with '#' counting as
+// a comment opener — so a document explaining what the marks are for listed itself as a gap in
+// the design system. In a document a mark is one HTML comment, opened and closed on its line:
+// a line starting with '#' there is a heading, not a comment.
+const CODE_MARK = /^(?:\/\/|\/\*|\*)\s*(debt|gap)\s*:\s*(.+?)\s*(?:\*\/)?$/i
+const MD_MARK = /^<!--\s*(debt|gap)\s*:\s*(.+?)\s*-->$/i
 
 const found = []
 
@@ -56,18 +63,20 @@ function walk(dir) {
     let text
     try { text = fs.readFileSync(p, 'utf8') } catch { continue }
     if (!/debt|gap/i.test(text)) continue
-    // A mark often does not fit on one line and continues on the next comment line;
-    // taking only the first would show the designer half a thought.
+    const markdown = e.name.endsWith('.md')
+    const MARK = markdown ? MD_MARK : CODE_MARK
     const lines = text.split(NL)
     lines.forEach((line, i) => {
       const m = MARK.exec(line.trim())
       if (!m) return
       const kind = m[1].toLowerCase()
       let what = m[2]
-      for (let j = i + 1; j < lines.length; j++) {
+      // In code a mark often does not fit on one line and continues on the next comment line;
+      // taking only the first would show the designer half a thought.
+      for (let j = i + 1; !markdown && j < lines.length; j++) {
         const next = lines[j].trim()
-        if (!/^(\/\/|\*|#)/.test(next) || MARK.test(next)) break
-        const tail = next.replace(/^(\/\/|\*|#)\s?/, '').replace(/\s*(\*\/|-->)\s*$/, '').trim()
+        if (!/^(\/\/|\*)/.test(next) || MARK.test(next)) break
+        const tail = next.replace(/^(\/\/|\*)\s?/, '').replace(/\s*\*\/\s*$/, '').trim()
         if (!tail) break
         what += ' ' + tail
       }

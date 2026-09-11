@@ -55,11 +55,14 @@ array explicitly even when they kept exactly the minimum.
 
 ## Then
 
+`init.mjs` takes every screen the feature has at once — `node scripts/init.mjs catalog game
+cart` — so name them all rather than the first one.
+
 **Full product work** — `node scripts/docs.mjs start <feature>` creates the documents for the
 chosen stages. Requirements first, code when there is something to build: hold
-`node scripts/init.mjs <screen>` until the work actually reaches a screen.
+`node scripts/init.mjs <screens>` until the work actually reaches a screen.
 
-**Prototype now, docs later** — `node scripts/init.mjs <screen>` right away, and put the
+**Prototype now, docs later** — `node scripts/init.mjs <screens>` right away, and put the
 stages they chose into `debt` so the documentation is not silently lost.
 
-**Screens from Figma** — `node scripts/init.mjs <screen>` right away, nothing else.
+**Screens from Figma** — `node scripts/init.mjs <screens>` right away, nothing else.

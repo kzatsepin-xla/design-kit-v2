@@ -13,7 +13,8 @@
 //  The agent calls it after you answer the two questions at the start: how we work and which
 //  design system we build on. You never need to run it yourself, but if you want to:
 //    node scripts/init.mjs profile
-//  (where profile is a screen name in lowercase, dashes allowed).
+//    node scripts/init.mjs catalog game cart library order
+//  (screen names in lowercase, dashes allowed — as many as the feature has).
 //
 //  WHAT APPEARS
 //    src/screens/<screen>/screen.tsx   the screen itself, which the agent then builds
@@ -46,13 +47,17 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
 
-const arg = process.argv[2]
-const refreshing = arg === 'refresh'
-if (!refreshing && (!arg || !/^[a-z][a-z0-9-]*$/.test(arg))) {
-  console.error('Screen name: lowercase letters and dashes. For example: node scripts/init.mjs profile')
+// Every screen named on the line gets its folder. One name used to be all this took, and a
+// feature with five screens meant creating the other four by hand afterwards.
+const argv = process.argv.slice(2)
+const refreshing = argv[0] === 'refresh'
+const screens = refreshing ? [] : argv
+if (!refreshing && (!screens.length || screens.some((s) => !/^[a-z][a-z0-9-]*$/.test(s)))) {
+  console.error('Screen names: lowercase letters and dashes, one or several.')
+  console.error('For example: node scripts/init.mjs catalog game cart')
   process.exit(1)
 }
-const screen = refreshing ? null : arg
+const screen = refreshing ? null : screens[0]
 
 const root = process.cwd()
 const state = fs.existsSync('state.json') ? JSON.parse(fs.readFileSync('state.json', 'utf8')) : {}
@@ -207,6 +212,32 @@ const appTsx = () => [
   '',
 ].join(newline)
 
+// Types were written everywhere and checked by nobody: Vite strips them without looking, so a
+// prop that does not exist or an export that was renamed only showed itself in the browser,
+// as a blank screen. The check was there all along — `screens.mjs` runs tsc — it simply had no
+// typescript to run and no tsconfig to read. Both arrive here now.
+//
+// Not strict on purpose: this is a prototype, and a hundred complaints about a value that
+// might be undefined would teach everyone to ignore the whole report. What it catches is the
+// mistake that stops the screen drawing.
+const TYPE_DEPS = { typescript: 'latest', '@types/react': 'latest', '@types/react-dom': 'latest' }
+
+const tsconfig = () => JSON.stringify({
+  compilerOptions: {
+    target: 'ES2022',
+    lib: ['ES2022', 'DOM', 'DOM.Iterable'],
+    module: 'ESNext',
+    moduleResolution: 'bundler',
+    jsx: 'react-jsx',
+    types: ['vite/client'],
+    resolveJsonModule: true,
+    noEmit: true,
+    skipLibCheck: true,
+    strict: false,
+  },
+  include: ['src'],
+}, null, 2) + newline
+
 const SHELL = {
   'vite.config.ts': viteConfig,
   'src/main.tsx': mainTsx,
@@ -246,9 +277,35 @@ function rememberShell(files) {
 
 // ——— refresh: the update's half of this script ———
 
+// A project made before the kit installed typescript has neither the config nor the packages,
+// and nothing in the shell refresh below would ever create a file that is not already there.
+function ensureTypes() {
+  const out = []
+  const pkgFile = path.join(root, 'package.json')
+  if (!fs.existsSync(pkgFile) || !fs.existsSync(path.join(root, 'src'))) return out
+
+  if (!fs.existsSync(path.join(root, 'tsconfig.json'))) {
+    fs.writeFileSync(path.join(root, 'tsconfig.json'), tsconfig())
+    out.push('Added tsconfig.json: nothing was checking the types here, so a wrong prop only')
+    out.push('showed up in the browser.')
+  }
+
+  let pkg
+  try { pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8')) } catch { return out }
+  const dev = (pkg.devDependencies ||= {})
+  const missing = Object.keys(TYPE_DEPS).filter((n) => !dev[n] && !(pkg.dependencies || {})[n])
+  if (missing.length) {
+    for (const n of missing) dev[n] = TYPE_DEPS[n]
+    fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + newline)
+    out.push('Added ' + missing.join(', ') + ' — run npm install once, and the screen check')
+    out.push('starts reporting type errors instead of leaving them to the browser.')
+  }
+  return out
+}
+
 if (refreshing) {
   const known = (marker() || {}).shell || {}
-  const notes = []
+  const notes = ensureTypes()
   const rewritten = []
   for (const [rel, build] of Object.entries(SHELL)) {
     const file = path.join(root, rel)
@@ -294,8 +351,10 @@ write('package.json', JSON.stringify({
   type: 'module',
   scripts: { dev: 'vite', build: 'vite build' },
   dependencies: deps,
-  devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest' },
+  devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest', ...TYPE_DEPS },
 }, null, 2) + '\n')
+
+write('tsconfig.json', tsconfig())
 
 write('.gitignore', `node_modules/
 dist/
@@ -308,7 +367,7 @@ write('index.html', `<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${screen}</title>
+    <title>${screens.length > 1 ? path.basename(root) : screen}</title>
     <!-- The browser's own 8px margin around the page is not a design decision. And padding
          counts inside the height: a full-height screen is otherwise always taller than the
          window by its own padding, which the Context App preview turns into a frame that
@@ -328,10 +387,12 @@ write('index.html', `<!doctype html>
 write('src/main.tsx', mainTsx())
 write('src/app.tsx', appTsx())
 
-write(`src/screens/${screen}/screen.tsx`, `export function Screen() {
-  return <h1>${screen}</h1>
+for (const name of screens) {
+  write(`src/screens/${name}/screen.tsx`, `export function Screen() {
+  return <h1>${name}</h1>
 }
 `)
+}
 
 rememberShell(Object.keys(SHELL))
 

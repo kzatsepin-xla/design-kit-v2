@@ -4,6 +4,16 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.3.0 — 2026-09-11
+
+- A freshly created set of documents passes its own check: the scenario index is read as an index, not as a second set of scenarios.
+- A finding about the library written today is no longer stamped "noted on an older version" — new lines go at the end of the file, where the version divider expects them.
+- Connecting the team gallery writes its own import into the build config instead of asking you to do it by hand.
+- Reading or editing a file through the shell is no longer mistaken for creating a component behind the check's back.
+- A sentence about the marks inside a document is no longer collected as a mark.
+- The prototype now has type checking that actually runs: a prop that does not exist is caught by the screen check instead of by the browser.
+- A prototype can be created with all its screens at once, not one folder and four by hand.
+- The report after creating documents no longer stops mid-sentence.
 ## 2.2.0 — 2026-09-11
 
 - In Cursor the checks now keep their place in a session, the design system guide survives an update and arrives whole, and a judge that may only look cannot write.

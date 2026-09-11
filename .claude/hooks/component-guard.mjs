@@ -55,11 +55,19 @@ if (toolOf() === 'Bash') {
 }
 
 // A shell command creates a file as easily as Write — and that used to bypass this check.
+//
+// What it must catch is the file appearing; what it kept catching instead was any command
+// carrying a '>' and a capitalised .tsx anywhere in it. `grep "=>" src/screens/Cart.tsx` was
+// refused, and so was an ordinary sed over a file that already exists. So the path has to be
+// the destination: straight after a redirect, or the last argument of a command that puts a
+// file there.
 if (toolOf() === 'Bash') {
   const cmd = String(commandOf() || '')
-  const writes = /(?:touch|cp|mv|install)\s+[^|;&]*src\//.test(cmd) ||
-                 />\s*[^|;&]*src\//.test(cmd)
-  if (!writes || !/[A-Z][A-Za-z0-9]*\.tsx/.test(cmd)) process.exit(0)
+  const PATH_TSX = "((?:[^\\s|;&'\"]*/)?[A-Z][A-Za-z0-9]*\\.tsx)"
+  const redirected = new RegExp('>>?\\s*[\'"]?' + PATH_TSX).exec(cmd)
+  const copied = new RegExp('(?:^|[\\s|;&])(?:touch|cp|mv|install)\\s[^|;&]*?' + PATH_TSX + "[\\s'\"]*(?:$|[|;&])").exec(cmd)
+  const made = redirected || copied
+  if (!made || !made[1].includes('src/')) process.exit(0)
   deny('Component files are not created through the shell. That is bypassing the check.')
 }
 

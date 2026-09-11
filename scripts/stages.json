@@ -271,6 +271,7 @@
         {
           "file": "scenario-matrix.md",
           "title": "Scenario matrix",
+          "index": true,
           "sections": [
             {
               "h": "All scenarios",

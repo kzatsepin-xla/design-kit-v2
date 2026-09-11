@@ -358,6 +358,11 @@ async function main() {
     console.log('  checked against the code only: no browser, so what the screen draws was not seen')
     console.log('  fetch it: node scripts/screens.mjs --install')
   }
+  if (types === null) {
+    console.log('')
+    console.log('  the types were not checked: typescript is not installed here, and the build')
+    console.log('  never looks at them — install it: npm i -D typescript @types/react @types/react-dom')
+  }
   if (types && types.length) {
     console.log('')
     console.log('  types:')

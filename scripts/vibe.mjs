@@ -58,20 +58,30 @@ function ensureNotIgnored() {
 }
 
 // The @xui-vibe alias: without it an import from the gallery does not resolve.
+//
+// This used to recognise only the config the kit itself had written, word for word. By the
+// time anyone connects the gallery that config is never word for word any more: the Context
+// button rewrites it while the prototype is being created, which happens first, always. So
+// connecting answered "rewritten by hand, add the alias yourself" every single time. Now the
+// insertion point is found by shape, in the order the shapes nest: an alias map already there,
+// a resolve block without one, or the config object itself.
 function ensureAlias() {
   const file = path.join(root, 'vite.config.ts')
   if (!fs.existsSync(file)) return 'no vite.config.ts yet — the alias will be added on the next connect'
   let text = read(file)
   if (text.includes('@xui-vibe')) return null
 
-  const alias = "  resolve: { alias: { '@xui-vibe': path.resolve('vendor/xui-vibe/src') } }," + NL
-  const multi = 'export default defineConfig({' + NL
-  const single = 'export default defineConfig({ plugins: [react()] })'
+  const entry = "'@xui-vibe': path.resolve('vendor/xui-vibe/src')"
+  const at = (m, what) => text.slice(0, m.index + m[0].length) + what + text.slice(m.index + m[0].length)
 
-  if (text.includes(multi)) text = text.replace(multi, multi + alias)
-  else if (text.includes(single)) {
-    text = text.replace(single, 'export default defineConfig({' + NL + alias + '  plugins: [react()],' + NL + '})')
-  } else return 'vite.config.ts was rewritten by hand — add the @xui-vibe alias yourself'
+  const aliasMap = text.match(/resolve:\s*\{[^{}]*alias:\s*\{/)
+  const resolveBlock = text.match(/resolve:\s*\{/)
+  const config = text.match(/export default\s+defineConfig\(\s*\{/)
+
+  if (aliasMap) text = at(aliasMap, ' ' + entry + ',')
+  else if (resolveBlock) text = at(resolveBlock, ' alias: { ' + entry + ' },')
+  else if (config) text = at(config, NL + '  resolve: { alias: { ' + entry + ' } },')
+  else return 'vite.config.ts has an unfamiliar shape — add the @xui-vibe alias yourself'
 
   if (!text.includes("import path from 'node:path'")) text = "import path from 'node:path'" + NL + text
   fs.writeFileSync(file, text)
@@ -86,7 +96,7 @@ function ensureTsPaths() {
   try { cfg = JSON.parse(read(file)) } catch { return }
   const opts = (cfg.compilerOptions ||= {})
   if (opts.paths?.['@xui-vibe']) return
-  opts.baseUrl ||= '.'
+  // No baseUrl: typescript dropped the option, and a path is read from where the config sits.
   opts.paths = { ...(opts.paths || {}), '@xui-vibe': ['vendor/xui-vibe/src/index.ts'], '@xui-vibe/*': ['vendor/xui-vibe/src/*'] }
   fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + NL)
 }

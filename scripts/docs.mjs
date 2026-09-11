@@ -175,8 +175,8 @@ function cmdStart(feature) {
   report()
   const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
   if (perScreen.length) {
-  const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
     console.log(NL + 'Per-screen documents (' + perScreen.join(', ') + ') are created separately,')
+    console.log('one screen at a time: node scripts/docs.mjs screen <screen-name>')
   }
 }
 
@@ -246,7 +246,15 @@ function emptySections(text) {
 
 const ID_RE = /\b(BR|JS|HP|EC|FR|OQ|PP|G)-(\d+)\b/g
 
-function collectIds(text) {
+// A document marked "index" in stages.json lists what other documents define — the scenario
+// matrix gathers HP, EC and FR in one table. Its rows open with the id, which is exactly how a
+// definition looks, so the check used to report every scenario as described twice the moment
+// the documents were generated, before anyone had written a line.
+const indexFiles = new Set(
+  catalog.stages.flatMap((s) => s.artifacts.filter((a) => a.index).map((a) => path.basename(a.file))),
+)
+
+function collectIds(text, isIndex) {
   const defined = new Set()
   const used = new Set()
   for (const line of text.split(NL)) {
@@ -260,7 +268,7 @@ function collectIds(text) {
         new RegExp('^#{1,6}\\s*' + id + '\\b').test(t) ||          // a heading like ## HP-1
         new RegExp('^\\|\\s*(\\*\\*)?' + id + '\\b').test(t) ||    // the first cell of a table row
         new RegExp('^[-*]\\s*(\\*\\*)?' + id + '\\b').test(t)      // a bullet item
-      if (isDefinition) defined.add(id); else used.add(id)
+      if (isDefinition && !isIndex) defined.add(id); else used.add(id)
     }
   }
   return { defined, used }
@@ -289,7 +297,7 @@ function cmdCheck() {
     const rel = path.relative(root, file).split(path.sep).join('/')
     const text = fs.readFileSync(file, 'utf8')
     for (const sec of emptySections(text)) problems.push([rel, 'section "' + sec + '" is empty'])
-    const { defined, used } = collectIds(text)
+    const { defined, used } = collectIds(text, indexFiles.has(path.basename(file)))
     for (const id of defined) {
       if (seen.has(id) && seen.get(id) !== rel) {
         const line = [rel, id + ' is described twice — also in ' + seen.get(id)]
