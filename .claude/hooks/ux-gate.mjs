@@ -24,7 +24,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { commandOf, context, input, rootOf } from './lib/dialect.mjs'
+import { commandOf, context, input, rootOf, sessionOf } from './lib/dialect.mjs'
 
 const cmd = commandOf() || ''
 const outward = /\bgit\s+push\b/.test(cmd) || /\bgh\s+pr\s+create\b/.test(cmd)
@@ -43,7 +43,7 @@ try {
 } catch {}
 
 // And in any case, no more than once per conversation.
-const flag = path.join(os.tmpdir(), 'ux-gate-' + (input.session_id || 'x'))
+const flag = path.join(os.tmpdir(), 'ux-gate-' + sessionOf())
 if (fs.existsSync(flag)) process.exit(0)
 fs.writeFileSync(flag, '1')
 

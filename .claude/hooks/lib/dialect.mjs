@@ -88,6 +88,14 @@ export function keepGoing(reason) {
   process.exit(0)
 }
 
+// Claude Code puts a session_id on every event. Cursor puts one only on the event that starts
+// a session, and a conversation_id on all of them — so a check keyed by session_id wrote its
+// "already fired" file under the name "undefined" there, and that one file then silenced the
+// check on that machine for good. What both sides send on every event is used instead.
+export function sessionOf() {
+  return input.conversation_id || input.session_id || 'x'
+}
+
 /** What the agent is doing, in one vocabulary: Bash, Write or Edit. */
 export function toolOf() {
   const name = input.tool_name

@@ -40,12 +40,9 @@ function countFindings(root) {
   return null
 }
 
-const hookInput = input
 const projectRoot = rootOf(process.cwd())
-if (hookInput.session_id) {
-  const found = countFindings(projectRoot)
-  fs.writeFileSync(path.join(os.tmpdir(), "notes-baseline-" + hookInput.session_id), String(found ?? 0))
-}
+const found = countFindings(projectRoot)
+fs.writeFileSync(path.join(os.tmpdir(), "notes-baseline-" + sessionOf()), String(found ?? 0))
 
 const file = path.join(projectRoot, 'state.json')
 
@@ -86,7 +83,7 @@ say('[state] This is where the designer left off. Do not ask what was already de
 // and nobody finds out. It happened once: a typo in component-guard cost a whole
 // run without protection. Cheaper to check them all here than to chase the consequences.
 import { execFileSync } from 'node:child_process'
-import { flush, input, rootOf, say } from './lib/dialect.mjs'
+import { flush, rootOf, say, sessionOf } from './lib/dialect.mjs'
 const hooksDir = path.join(projectRoot, '.claude', 'hooks')
 if (fs.existsSync(hooksDir)) {
   const broken = fs.readdirSync(hooksDir).filter((f) => f.endsWith('.mjs')).filter((f) => {

@@ -67,6 +67,10 @@ try {
   fs.mkdirSync(path.dirname(dest), { recursive: true })
   fs.cpSync(from, dest, { recursive: true })
 
+  // A skill that appears after the install has to reach the Cursor side too, or the guide
+  // exists for one half of the team until the next kit update.
+  try { execSync('node scripts/cursor.mjs', { cwd: root, stdio: 'ignore' }) } catch {}
+
   const files = fs.readdirSync(dest).length
   const size = fs.readdirSync(dest).reduce((n, f) => n + fs.statSync(path.join(dest, f)).size, 0)
   console.log(`${source.title}: updated — ${files} files, ${(size / 1024).toFixed(1)} KB`)

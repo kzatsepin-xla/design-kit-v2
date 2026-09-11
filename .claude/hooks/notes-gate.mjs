@@ -27,7 +27,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
-import { cursor, input, keepGoing, rootOf } from './lib/dialect.mjs'
+import { cursor, input, keepGoing, rootOf, sessionOf } from './lib/dialect.mjs'
 
 const root = rootOf(process.cwd())
 // Cursor keeps a transcript of its own and passes the path the same way, in the same shape:
@@ -36,7 +36,7 @@ const transcript = input.transcript_path
 if (!transcript || !fs.existsSync(transcript)) process.exit(0)
 
 // Fire once per session: repeating the demand turns into a loop.
-const flag = path.join(os.tmpdir(), `notes-gate-${input.session_id || 'x'}`)
+const flag = path.join(os.tmpdir(), `notes-gate-${sessionOf()}`)
 if (fs.existsSync(flag)) process.exit(0)
 
 // Findings live next to the design-system catalogue; no catalogue, nothing to ask for.
@@ -84,7 +84,7 @@ if (!dug) process.exit(0)
 // No snapshot (the hook did not run) — stay out of the way: better skip than block blindly.
 let baseline = null
 try {
-  baseline = parseInt(fs.readFileSync(path.join(os.tmpdir(), "notes-baseline-" + input.session_id), "utf8"), 10)
+  baseline = parseInt(fs.readFileSync(path.join(os.tmpdir(), "notes-baseline-" + sessionOf()), "utf8"), 10)
 } catch {}
 if (baseline === null || Number.isNaN(baseline)) process.exit(0)
 

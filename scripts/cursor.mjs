@@ -31,6 +31,11 @@
 //
 //  Everything in `.cursor/` is generated. Edit the originals under `.claude/`, then run this.
 //
+//  WHAT CANNOT CROSS
+//  The `env` block of `.claude/settings.json` — the cheaper model for the judges, the features
+//  switched off — is Claude Code's alone. Cursor has no equivalent, so those settings simply do
+//  not apply there. Everything that shapes the work itself does cross.
+//
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -161,17 +166,30 @@ function main() {
     if (!/^name:/m.test(fields)) head.push('name: ' + name.replace(/[.]md$/, ''))
     if (fields) head.push(fields)
     if (!/^model:/m.test(fields)) head.push('model: inherit')
+    // Claude Code keeps a judge from writing by handing it only reading tools; Cursor has no
+    // tools list and one flag instead. Without the translation the same judge can edit files
+    // on one side and not the other — and these two are only ever meant to look and say.
+    const tools = (/^tools:\s*(.+)$/m.exec(fields) || [])[1]
+    if (tools && !/^readonly:/m.test(fields)
+        && tools.split(',').every((t) => /^(Read|ReadFile|Glob|Grep|Search|WebFetch|WebSearch|LS|List|ListDir)$/.test(t.trim()))) {
+      head.push('readonly: true')
+    }
     head.push('---')
     write('.cursor/agents/' + name, head.join(NL) + NL + rest.replace(/^\s+/, NL))
     agents += 1
   }
 
+  // The whole folder, not just SKILL.md: the design system team's guide is a dozen files that
+  // its own text points at, and a skill projected without them sends the agent to pages that
+  // are not there.
   let skills = 0
   const skillsDir = path.join(root, '.claude', 'skills')
   for (const name of listing(skillsDir)) {
-    const from = path.join(skillsDir, name, 'SKILL.md')
-    if (!fs.existsSync(from)) continue
-    write('.cursor/skills/' + name + '/SKILL.md', read(from))
+    const from = path.join(skillsDir, name)
+    if (!fs.existsSync(path.join(from, 'SKILL.md'))) continue
+    const to = path.join(root, '.cursor', 'skills', name)
+    fs.mkdirSync(path.dirname(to), { recursive: true })
+    fs.cpSync(from, to, { recursive: true })
     skills += 1
   }
 
