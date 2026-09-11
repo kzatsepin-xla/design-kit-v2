@@ -46,24 +46,48 @@ const listing = (dir) => (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
 
 // ——— the checks ———
 
-// Cursor's events, matched to what each check is for. Two differences worth knowing: it has no
-// separate event for an edit that has not happened yet, so writes are caught by preToolUse
-// with the tool name; and it hands no transcript to a stop hook, so the findings check has
-// nothing to read there and stays quiet.
-const HOOKS = {
-  sessionStart: ['session-start.mjs'],
-  preToolUse: ['guard.mjs', 'component-guard.mjs'],
-  beforeShellExecution: ['guard.mjs', 'component-guard.mjs', 'ux-gate.mjs'],
-  stop: ['notes-gate.mjs', 'context-app-sync.mjs'],
+// Which check runs when is decided once, in .claude/settings.json, and read from there rather
+// than written out again here. Listing them twice is the one way left for the two sides to
+// disagree: a check added for Claude Code and forgotten here would simply never run in Cursor,
+// and nothing would say so.
+//
+// The events are the same moments under different names. Two differences are worth knowing:
+// Cursor has no separate event for an edit that has not happened yet, so a shell command is a
+// different event from a file write; and it hands no transcript to a stop hook, so the findings
+// check has nothing to read there and stays quiet.
+const EVENTS = {
+  SessionStart: () => ['sessionStart'],
+  UserPromptSubmit: () => ['beforeSubmitPrompt'],
+  PostToolUse: () => ['afterFileEdit'],
+  Stop: () => ['stop'],
+  PreToolUse: (matcher) => {
+    const both = []
+    if (!matcher || /Edit|Write/.test(matcher)) both.push('preToolUse')
+    if (!matcher || /Bash/.test(matcher)) both.push('beforeShellExecution')
+    return both
+  },
 }
 
 function hooksJson() {
+  const settings = JSON.parse(read(path.join(root, '.claude', 'settings.json')))
   const hooks = {}
-  for (const [event, files] of Object.entries(HOOKS)) {
-    hooks[event] = files
-      .filter((f) => fs.existsSync(path.join(root, '.claude', 'hooks', f)))
-      .map((f) => ({ command: 'node .claude/hooks/' + f }))
+  const unknown = []
+
+  for (const [event, groups] of Object.entries(settings.hooks || {})) {
+    if (!EVENTS[event]) { unknown.push(event); continue }
+    for (const group of groups) {
+      for (const name of EVENTS[event](group.matcher)) {
+        for (const hook of group.hooks || []) {
+          const file = (/hooks[/\\]([\w.-]+)/.exec(hook.command || '') || [])[1]
+          if (!file || !fs.existsSync(path.join(root, '.claude', 'hooks', file))) continue
+          const command = 'node .claude/hooks/' + file
+          hooks[name] = hooks[name] || []
+          if (!hooks[name].some((h) => h.command === command)) hooks[name].push({ command })
+        }
+      }
+    }
   }
+  if (unknown.length) console.log('No Cursor event for: ' + unknown.join(', ') + ' — not projected.')
   return JSON.stringify({ version: 1, hooks }, null, 2) + NL
 }
 
