@@ -18,7 +18,7 @@ paths:
 | `useDesignSystem()` for tokens | `useResolvedTheme({ themeMode, themeProductContext })` |
 | `<ThemeProvider>` / `<ThemeScope>` | no such thing: `themeMode` goes on the component itself |
 
-*Art from the mockup is downloaded, never approximated.
+**Art from the mockup is downloaded, never approximated.**
 
 **Vocabulary.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.
 `variant`: primary | secondary | tertiary | ghost. Colours: `theme.colors.control[tone][variant]`.
