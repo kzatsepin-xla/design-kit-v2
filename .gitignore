@@ -5,3 +5,8 @@
 .cursor/
 
 node_modules/
+
+# Notes on building the kit, and the scratch a session leaves behind. Personal to the machine
+# they were written on, and a distraction in a repository people clone to get the kit itself.
+_dev/
+_fix/

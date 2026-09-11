@@ -27,11 +27,11 @@ import path from 'node:path'
 import { commandOf, deny, fileOf, input, rootOf } from './lib/dialect.mjs'
 
 // Inside the kit's own workshop these files are the work, not someone else's property. The
-// workshop is recognised by what an installed project never has: the _dev folder, and no
-// installation marker. Without this the kit blocks the person building it, which is how this
-// line came to be written.
+// workshop is recognised by a marker the kit carries but never installs — .claude/workshop.md
+// — with no installation marker beside it. Without this the kit blocks the person building it,
+// which is how this line came to be written.
 const home = rootOf(process.cwd())
-if (fs.existsSync(path.join(home, '_dev')) && !fs.existsSync(path.join(home, '.claude', 'kit.json'))) {
+if (fs.existsSync(path.join(home, '.claude', 'workshop.md')) && !fs.existsSync(path.join(home, '.claude', 'kit.json'))) {
   process.exit(0)
 }
 

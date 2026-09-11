@@ -83,5 +83,4 @@ the same — it just runs them twice.
 .claude/rules/     what the agent knows about this project
 .claude/ds/        the component catalogue and the findings about it
 scripts/           everything you can run by hand — each file opens with why it exists
-_dev/              notes on building the kit itself
 ```
