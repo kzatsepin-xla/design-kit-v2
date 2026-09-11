@@ -14,7 +14,6 @@ enforced by a check is not copied here: the rule lives in the check, not in a re
 
 ---
 
-- No abstract taste critic. `/review` means comparing against the mockup, that is the whole point: no mockup link, no run.
 - The copy rulebook ships with the prototype but never runs on its own: the agent touches copy only when I ask, and before a push or PR it asks once whether to check it.
 - The copy check blocks nothing. Before work goes out the agent simply offers it — once per conversation, and only if the copy has not been looked at yet.
 - Keep the local copy of the Context App — the map has to be checked before deploy — but it stays out of the build: on the stand the app loads from the stand.
