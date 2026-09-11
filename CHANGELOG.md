@@ -4,6 +4,11 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.4.0 — 2026-09-11
+
+- Anything drawn by hand in a prototype is now visible to the inspector: point at a self-made top bar and it says what it is and which file it lives in, instead of saying nothing at all.
+- The screen check stops being satisfied by a single import: it counts what a file draws itself against what it takes from the library, so a hand-drawn page frame with one badge in it no longer passes as built on the design system.
+- Drawing the frame of the page from scratch is stopped where it starts: a header, a nav or a sidebar written by hand asks you first, because the system ships navigation.
 ## 2.3.1 — 2026-09-11
 
 - The type check no longer starts red: the kit tells styled-components what the theme is, and complaints from the team gallery's own code are left out of the report.

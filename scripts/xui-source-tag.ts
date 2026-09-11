@@ -10,6 +10,12 @@
  *     import); reported under the dotted name, rooted in the real export name
  *   - `<StyledCell />` where `const StyledCell = styled(Cell)` — a restyled DS
  *     component is still that component, so it inherits its name and origin
+ *   - `<Top />` where `const Top = styled.header` — an element drawn by hand in
+ *     this project, reported under its own name with origin `local`. Without it
+ *     a hand-built page shell was invisible to the inspector: the nearest mark
+ *     sat on the component containing it, four fibers above whatever the cursor
+ *     was on, and the reader gives up long before that. Pointing at a hand-made
+ *     header returned nothing, which reads as "this is not indexed at all".
  * The last two used to fall through to the reader's fiber fallback, which on a
  * production build (no `_debugSource`) resolves a styled wrapper's
  * `Styled(Cell)` display name to nothing at all.
@@ -277,6 +283,26 @@ function styledBaseRef(
   return null;
 }
 
+/**
+ * Whether an initializer is a `styled` factory call at all, whatever it wraps —
+ * `styled.header\`…\``, `styled(Thing)({…})`, `styled.div.attrs({…})\`…\``.
+ * `styledBaseRef` answers the narrower question of which tracked component is
+ * being restyled, and returns null for a host tag: exactly the case this has to
+ * recognise.
+ */
+function isStyledCall(
+  t: typeof BabelCore.types,
+  node: BabelCore.types.Node | null | undefined,
+  factories: Set<string>,
+): boolean {
+  if (!node) return false;
+  if (t.isIdentifier(node)) return factories.has(node.name);
+  if (t.isTaggedTemplateExpression(node)) return isStyledCall(t, node.tag, factories);
+  if (t.isCallExpression(node)) return isStyledCall(t, node.callee, factories);
+  if (t.isMemberExpression(node)) return isStyledCall(t, node.object, factories);
+  return false;
+}
+
 function literalPropValue(value: Expression | null | undefined): { ok: true; value: unknown } | { ok: false } {
   if (!value) return { ok: false };
   switch (value.type) {
@@ -431,6 +457,94 @@ function collectStyledAliases(
   }
 }
 
+/**
+ * Everything else built with `styled` in this file: a host-tag wrapper, or a
+ * wrapper around something the catalogue knows nothing about. These are the
+ * designer's own elements — the top bar, the page frame, the card that was not
+ * taken from the library — and they are reported under their own name with the
+ * same `local` origin a hand-written component carries.
+ *
+ * Runs after `collectStyledAliases` and never overwrites it: a restyled
+ * design-system component keeps the identity of the component it restyles.
+ */
+function collectHandMadeElements(
+  t: typeof BabelCore.types,
+  body: BabelCore.types.Statement[],
+  state: PluginState,
+): void {
+  const factories = styledFactoryNames(t, body);
+  if (factories.size === 0) return;
+
+  for (const stmt of body) {
+    const decl = t.isExportNamedDeclaration(stmt) ? stmt.declaration : stmt;
+    if (!t.isVariableDeclaration(decl)) continue;
+    for (const declarator of decl.declarations) {
+      if (!t.isIdentifier(declarator.id)) continue;
+      if (state.trackedNames!.has(declarator.id.name)) continue;
+      if (!isStyledCall(t, declarator.init, factories)) continue;
+      // Their own `withConfig` may carry a `shouldForwardProp` of their own, and a second
+      // one appended after it would quietly replace theirs. Leaving such a declaration
+      // untagged costs one element in the inspector; overriding it could change what the
+      // element renders.
+      if (hasWithConfig(t, declarator.init)) continue;
+      if (!dropTagBeforeTheDom(t, declarator.init)) continue;
+      state.trackedNames!.set(declarator.id.name, {
+        component: declarator.id.name,
+        origin: "local",
+      });
+    }
+  }
+}
+
+/** A `withConfig` anywhere in the builder chain. */
+function hasWithConfig(t: typeof BabelCore.types, node: BabelCore.types.Node | null | undefined): boolean {
+  if (!node) return false;
+  if (t.isTaggedTemplateExpression(node)) return hasWithConfig(t, node.tag);
+  if (t.isCallExpression(node)) return hasWithConfig(t, node.callee);
+  if (t.isMemberExpression(node)) {
+    if (t.isIdentifier(node.property, { name: "withConfig" })) return true;
+    return hasWithConfig(t, node.object);
+  }
+  return false;
+}
+
+/**
+ * `styled.header\`…\`` -> `styled.header.withConfig({ shouldForwardProp: … })\`…\``.
+ *
+ * The mark is an ordinary prop, and styled-components hands every prop it does not
+ * recognise straight to the DOM node: without this the tag lands in the page as a stray
+ * attribute and React logs "does not recognize the __xuiSrc prop" for every element. The
+ * filter removes it on the way down only — the styled component's own props still carry
+ * it, which is where the inspector reads it from.
+ */
+function dropTagBeforeTheDom(
+  t: typeof BabelCore.types,
+  node: BabelCore.types.Node | null | undefined,
+): boolean {
+  const prop = t.identifier("p");
+  const filter = t.objectExpression([
+    t.objectProperty(
+      t.identifier("shouldForwardProp"),
+      t.arrowFunctionExpression(
+        [prop],
+        t.binaryExpression("!==", t.identifier("p"), t.stringLiteral(XUI_SRC_PROP)),
+      ),
+    ),
+  ]);
+  const configured = (expr: Expression) =>
+    t.callExpression(t.memberExpression(expr, t.identifier("withConfig")), [filter]);
+
+  if (t.isTaggedTemplateExpression(node) && t.isExpression(node.tag)) {
+    node.tag = configured(node.tag);
+    return true;
+  }
+  if (t.isCallExpression(node) && t.isExpression(node.callee)) {
+    node.callee = configured(node.callee);
+    return true;
+  }
+  return false;
+}
+
 export default function xuiSourceTagPlugin({ types: t }: typeof BabelCore): PluginObj<PluginState> {
   return {
     name: "xui-source-tag",
@@ -446,6 +560,7 @@ export default function xuiSourceTagPlugin({ types: t }: typeof BabelCore): Plug
           // alias declared below the component that renders it still resolves.
           collectImportedNames(t, path.node.body, state);
           collectStyledAliases(t, path.node.body, state);
+          collectHandMadeElements(t, path.node.body, state);
         },
         exit(path, state) {
           const pending = state.pendingEntries;

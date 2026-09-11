@@ -82,10 +82,30 @@ const ROLES = {
   tooltip: 'tooltip', dropdown: 'dropdown', avatar: 'avatar', badge: 'badge',
   slider: 'slider', dialog: 'modal', modal: 'modal', tabs: 'tabs', pager: 'pagination',
 }
+// The frame of the page drawn from scratch. A live run built a store's top bar — logo, three
+// links, the current page highlighted — and named its parts Top, Mark and Entry, which the
+// rule below cannot recognise and did not. The tag underneath is not so easy to disguise: a
+// header, a nav or a sidebar is navigation, and the system ships navigation.
+const CHROME = { header: 'nav', nav: 'nav', aside: 'navigation', footer: 'footer' }
 if (toolOf() === 'Write' || toolOf() === 'Edit') {
   const body0 = bodyOf()
   let pubs = []
   try { pubs = JSON.parse(fs.readFileSync(path.join(root, '.claude', 'ds', 'index.json'), 'utf8')).published } catch {}
+  // The mark is the designer's answer already given: they were asked, they chose their own,
+  // and the reason is in the file. Denying it then would make their decision unwritable.
+  const admitted = /(?:\/\/|\{\/\*)[ \t]*gap[ \t]*:[ \t]*\S/i.test(body0)
+  for (const m of admitted ? [] : body0.matchAll(/const ([A-Z][A-Za-z0-9]*)\s*=\s*styled\.(header|nav|aside|footer)\b/g)) {
+    const role = CHROME[m[2]]
+    if (!pubs.some((p) => p.includes(role))) continue
+    deny(
+      'You are drawing the frame of the page by hand: ' + m[1] + ' is a styled.' + m[2] + '.\n' +
+      'The system covers this — look before you draw: `node scripts/ds.mjs ' + role + '`,\n' +
+      'and the team gallery has page headers of its own.\n\n' +
+      'Nothing there fits: that is a question for the designer, not a licence to draw it quietly.\n' +
+      'Say what does not fit and offer the choice. If they agree to your own, leave the reason in\n' +
+      'the file: // gap: what the library was missing — that list goes to the design system team.',
+    )
+  }
   for (const m of body0.matchAll(/const ([A-Z][A-Za-z0-9]*)\s*=\s*styled[.(]/g)) {
     const words = m[1].replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase().split(' ')
     const role = words.map((w) => ROLES[w]).find(Boolean)

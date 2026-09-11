@@ -123,11 +123,13 @@ function staticCheck(list) {
 // A real hole in the library is not drift, and stopping the work over it would be worse than
 // the hole. Mark it — `// gap: XUI has no range slider` — and the file passes; the mark shows
 // up in `node scripts/debt.mjs` as the list the design system team wants.
-const FROM_XUI = /from\s+['"]@xsolla\/xui-/
-const FROM_GALLERY = /from\s+['"]@xui-vibe/
-// A capitalised name imported from a local path: the file composes another project component,
-// and that one is checked on its own.
-const FROM_LOCAL = /import\s+[^;]*\b[A-Z][A-Za-z0-9]*[^;]*from\s+['"](?:\.|@\/|[^'"]*components\/)[^'"]*['"]/
+// One import from the library used to buy a whole file its silence. A live run built a store
+// front on a hand-drawn top bar — logo, three links, the current-page highlight, the page
+// frame — and the file passed because it also used a Badge for the cart counter. So it is
+// counted now rather than merely detected: elements the file draws itself against components
+// it takes from the library.
+const HAND_DRAWN = /(?:^|\n)\s*(?:export\s+)?const\s+[A-Z][A-Za-z0-9]*\s*=\s*styled\.[a-z]/g
+const TRACKED_IMPORT = /^(?:@xsolla\/xui-|@xui-vibe|\.)|components\//
 const RENDERS = /<[A-Z][\w.]*[\s/>]/
 const GAP_MARK = /(?:\/\/|\{\/\*)[ \t]*gap[ \t]*:[ \t]*\S/i
 // Written by the kit, not by the designer: the router and the entry point.
@@ -141,6 +143,27 @@ function usesXui() {
     const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
     return deps.some((d) => d.startsWith('@xsolla/xui-'))
   } catch { return false }
+}
+
+// Names this file brought in from the design system, the team gallery, or another component
+// of the project — the three places a screen is allowed to take an element from.
+function fromTheLibrary(src) {
+  const names = new Set()
+  const re = /import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g
+  let m
+  while ((m = re.exec(src))) {
+    if (!TRACKED_IMPORT.test(m[2])) continue
+    for (const part of m[1].split(',')) {
+      const name = part.trim().split(/\s+as\s+/).pop().trim()
+      if (/^[A-Z]/.test(name)) names.add(name)
+    }
+  }
+  let used = 0
+  for (const name of names) {
+    const uses = src.match(new RegExp('<' + name + '[\\s/>]', 'g'))
+    used += uses ? uses.length : 0
+  }
+  return used
 }
 
 function handRolled() {
@@ -157,11 +180,13 @@ function handRolled() {
       if (/\.(stories|test|spec)\.tsx$/.test(e.name) || PLUMBING.has(e.name)) continue
       const src = read(p)
       if (!RENDERS.test(src)) continue
-      if (FROM_XUI.test(src) || FROM_GALLERY.test(src) || FROM_LOCAL.test(src)) continue
+      const own = (src.match(HAND_DRAWN) || []).length
+      const library = fromTheLibrary(src)
+      if (own <= library) continue
       if (GAP_MARK.test(src)) continue
       const rel = path.relative(root, p).split(path.sep).join('/')
-      problems.push([rel, 'draws an interface with nothing from the design system behind it — '
-        + 'compose it from XUI, or say what the library is missing: // gap: what is missing'])
+      problems.push([rel, 'draws ' + own + ' elements of its own against ' + library + ' taken from '
+        + 'the library — compose it from XUI, or say what the library is missing: // gap: what is missing'])
     }
   }
   walk(path.join(root, 'src'))
