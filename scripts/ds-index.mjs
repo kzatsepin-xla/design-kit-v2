@@ -73,7 +73,17 @@ if (fs.existsSync(nm)) {
       const src = fs.readFileSync(dts, 'utf8')
       const names = new Set()
       for (const m of src.matchAll(/declare (?:const|function) ([A-Z][A-Za-z0-9]*)/g)) names.add(m[1])
-      for (const m of src.matchAll(/export \{[^}]*?\b([A-Z][A-Za-z0-9]*)\b[^}]*?\}/g)) names.add(m[1])
+      // Every name in the braces, not the first one. A package that exports its components in
+      // batches — `export { Footer, GridFour, Header, ... }`, which is how the icon packages
+      // ship — gave up exactly one name per line: eighteen icons indexed out of hundreds, so
+      // the search answered "nothing like trash, create your own" about an icon that exists.
+      // Creating one is the thing the rules forbid outright.
+      for (const m of src.matchAll(/export\s*\{([^}]*)\}/g)) {
+        for (const part of m[1].split(',')) {
+          const name = part.trim().split(/\s+as\s+/).pop().trim()
+          if (/^[A-Z][A-Za-z0-9]*$/.test(name)) names.add(name)
+        }
+      }
       for (const name of [...names].sort()) components.push({ name, props: propsOf(src, name) })
     }
     // A package built with its own copy of styled-components raises a second instance of the

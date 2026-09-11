@@ -4,6 +4,25 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.8.0 — 2026-09-11
+
+- The page of design-system details no longer names a component, a prop or a token: those move with the library and a page that names them goes stale unnoticed. What moves is answered by the catalogue, the package types and the findings file, all three about the version installed today; what stays on the page is how to work with a design system at all.
+- The guide the kit fetches from the design system team now opens with a line saying it can describe an older library than the one installed, and that the package types are what compiles — ten runs out of twenty were sent by it to a token the library does not have.
+- A box of your own that only arranges what the library drew is no longer counted as a hand-drawn element: a page frame or a four-up grid needs no gap mark, and the list the design system team reads stops filling up with flex rows.
+- A table holds what its own types say it holds, so a cell with two lines of your own in it is no longer reported as stuffing.
+- Writing a screen or a data file through the shell is refused whatever it is called — while this looked at capitalised names only, a lower-case screen file went in with nothing read at all.
+- The screen check waits for the screen to appear instead of counting milliseconds: on a cold start it read an empty page and called two states identical, then passed on the next run.
+- A decision written as a JSX comment counts: {/* debt: ... */} was invisible to the handover list, and that is exactly where a decision inside the markup gets written.
+- An arrow on the map is a return only when its label starts with going back — 'Confirm the cancellation' was being drawn as a back edge.
+- The catalogue holds every name a package exports, not the first one on each line: the icon packages were indexed at eighteen icons out of seven hundred, so a search for a trash icon answered "nothing like that, create your own" — about the one thing the rules forbid creating. Matches are also ordered by nearness now, so the name you asked for comes first.
+- The search knows what a designer calls things: an alert or a banner finds the notification panel, a chip finds the tag, a dropdown finds the select.
+- Creating the documents says when a chosen stage leans on one the project did not take, so job stories do not end up pointing at rules with nowhere to live.
+- The page now takes its text colour from the theme, not from the browser: a heading written without a colour prop came out black on the dark theme, and six runs in a row fixed that by hand, component by component.
+- The screen the kit creates takes the state as a prop, the way every screen ends up written — the empty template taught the one signature that cannot answer for a state at all.
+- The search names the parts a component carries, so List.Row and Table.Cell stop being something you only find by reading the package's types.
+- The rules say which stage each family of ids belongs to, so a project that did not take the domain stage writes its rules as words instead of inventing a BR-3 with nowhere to point.
+- A picture of a map node that came back empty no longer accuses the map of drawing the same thing twice: under load the node is still resolving, and an empty capture says nothing either way.
+
 ## 2.7.1 — 2026-09-11
 
 - A project whose folder name carries a space or a Cyrillic letter works now: the document, package and pre-flight commands were reading their own location out of a web address, where a space is %20, and looked for their files under a name that does not exist.

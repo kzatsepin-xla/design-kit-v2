@@ -112,10 +112,14 @@ const mainTsx = () => (ds === 'xui'
     "import { App } from './app'",
     '',
     '// The page behind the screen: the background token, so a scrolled page never shows a',
-    '// strip of the browser default underneath.',
+    '// strip of the browser default underneath — and the text colour with it. Typography',
+    '// inherits rather than defaulting, so on a dark theme a heading written without a colour',
+    '// prop came out browser-black and invisible; six runs in a row hit it and fixed it by hand,',
+    '// component by component. One line here is the fix for all of them.',
     'const GlobalStyle = createGlobalStyle`',
     '  body {',
     '    background: ${(p) => p.theme.colors.background.primary};',
+    '    color: ${(p) => p.theme.colors.content.primary};',
     '  }',
     '`',
     '',
@@ -462,8 +466,16 @@ write('src/app.tsx', appTsx())
 if (ds === 'xui') write('src/kit/styled-theme.d.ts', themeTypes())
 
 for (const name of screens) {
-  write(`src/screens/${name}/screen.tsx`, `export function Screen() {
-  return <h1>${name}</h1>
+  // The state comes in as a prop, and the whole of the kit downstream is about states: the
+  // matrix promises them, the map opens them, the check compares them. Written without it, the
+  // first thing this file taught was the one signature that cannot answer for any of that.
+  write(`src/screens/${name}/screen.tsx`, `type Props = {
+  /** The state asked for in the address: #${name}?state=empty. Nothing asked for is the ordinary one. */
+  state: string | null
+}
+
+export function Screen({ state }: Props) {
+  return <h1>{state ? \`${name} · \${state}\` : '${name}'}</h1>
 }
 `)
 }

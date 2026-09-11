@@ -194,6 +194,26 @@ function cmdStart(feature) {
   markEmptyStages(base)
   saveState({ feature, stages: chosenStages().map((s) => s.id) })
   report()
+  // A stage stands on the one before it — jobs and tasks refer to the rules of the domain, a
+  // state matrix refers to the scenarios. The catalogue has said so all along and nothing read
+  // it, so a project that took 03 without 01 wrote job stories that could point at no BR at
+  // all, and the agent noticed only at the end. Said once, here, where the folders appear.
+  const taken = new Set(chosenStages().map((s) => s.id))
+  const leaning = chosenStages()
+    .flatMap((s) => (s.needs || []).filter((n) => !taken.has(n)).map((n) => [s, n]))
+  if (leaning.length) {
+    const nameOf = (id) => {
+      const stage = catalog.stages.find((s) => s.id === id)
+      return stage ? stage.id + ' ' + stage.title : id
+    }
+    console.log(NL + 'These stages lean on one the project did not take:')
+    for (const [stage, need] of leaning) {
+      console.log('  ' + stage.id + ' ' + stage.title + ' refers to ' + nameOf(need))
+    }
+    console.log('Nothing is broken by it — there is simply nowhere to put what the missing stage')
+    console.log('holds, so it ends up as prose instead of ids other documents can point at. Take')
+    console.log('it by adding the id to `stages` in state.json, or carry on knowingly.')
+  }
   const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
   if (perScreen.length) {
     console.log(NL + 'Per-screen documents (' + perScreen.join(', ') + ') are created separately,')

@@ -47,7 +47,10 @@ const SKIP = new Set(['node_modules', 'vendor', 'dist', '.git', '.claude', 'publ
 // a comment opener — so a document explaining what the marks are for listed itself as a gap in
 // the design system. In a document a mark is one HTML comment, opened and closed on its line:
 // a line starting with '#' there is a heading, not a comment.
-const CODE_MARK = /^(?:\/\/|\/\*|\*)\s*(debt|gap)\s*:\s*(.+?)\s*(?:\*\/)?$/i
+// Inside the markup half of a .tsx file a comment can only be written as {/* ... */}, and a
+// mark in that form was read by nobody: the agent wrote it where the decision was made, and
+// the handover list came out empty. Both shapes count now.
+const CODE_MARK = /^(?:\{\s*)?(?:\/\/|\/\*|\*)\s*(debt|gap)\s*:\s*(.+?)\s*(?:\*\/\s*\}?)?$/i
 const MD_MARK = /^<!--\s*(debt|gap)\s*:\s*(.+?)\s*-->$/i
 
 const found = []

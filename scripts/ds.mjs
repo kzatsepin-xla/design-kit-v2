@@ -52,9 +52,32 @@ if (!fs.existsSync(file)) { console.error('no catalogue yet — build it: node s
 
 const index = JSON.parse(fs.readFileSync(file, 'utf8'))
 
+// What a designer calls a thing is not what the library calls it, and the search answering
+// "nothing like that" is the moment a component gets drawn by hand. Runs turned up the same
+// misses again and again: an alert and a banner are a notification panel here, a chip is a
+// tag, a loader is a spinner. Only names are translated — never a decision about what to use.
+const ALSO_CALLED = {
+  alert: ['notification', 'status'], banner: ['notification', 'promo'], callout: ['notification'],
+  notice: ['notification'], toast: ['toast', 'notification'], snackbar: ['toast'],
+  chip: ['tag'], pill: ['tag'], label: ['tag', 'typography'],
+  loader: ['spinner', 'progress'], skeleton: ['spinner', 'progress'], placeholder: ['empty-state', 'spinner'],
+  dropdown: ['select', 'context-menu'], combobox: ['select'], picker: ['select', 'calendar'],
+  accordion: ['collapse', 'expander'], stepper: ['stepper', 'progress'],
+  breadcrumbs: ['breadcrumbs', 'nav'], sidebar: ['nav', 'side'], header: ['nav', 'app-bar'],
+  panel: ['notification', 'cell'], surface: ['cell', 'card'], tile: ['card', 'cell'],
+  slider: ['slider', 'range'], switch: ['switch', 'toggle'], toggle: ['switch'],
+  spinner: ['spinner'], avatar: ['avatar'], empty: ['empty-state'],
+  delete: ['trash', 'bin', 'remove'], remove: ['trash', 'close'], bin: ['trash'],
+  edit: ['pencil', 'edit'], settings: ['gear', 'settings'], profile: ['user', 'avatar'],
+  back: ['arrow', 'chevron'], forward: ['arrow', 'chevron'], more: ['dots', 'menu'],
+}
+
 let terms = [query]
 // 'media card' is searched both as mediacard and word by word
 terms.push(query.replace(/[\s_-]/g, ''), ...query.split(/[\s_-]+/).filter((w) => w.length > 2))
+for (const word of [query, ...query.split(/[\s_-]+/)]) {
+  for (const other of ALSO_CALLED[word] || []) terms.push(other)
+}
 terms = [...new Set(terms.filter(Boolean))]
 
 const norm = (s) => s.toLowerCase().replace(/[@\/\s_-]/g, '')
@@ -150,11 +173,32 @@ if (ready.length) {
     // still shows everything, because that is what was asked for.
     const all = f.inst.components
     const matched = hit(f.short) ? all : all.filter((c) => hit(c.name))
-    const shown = matched.length ? matched : all
+    // Nearest first. A package with hundreds of names in it — the icons — answered a search for
+    // "download" with AlarmDownloadIn, because that is what comes first in the alphabet.
+    const closeness = (name) => {
+      const n = norm(name)
+      const best = terms.map((term) => {
+        const q = norm(term)
+        if (n === q) return 0
+        if (n.startsWith(q)) return 1
+        if (n.endsWith(q)) return 2
+        return 3
+      })
+      return Math.min(...best)
+    }
+    const shown = (matched.length ? matched : all)
+      .slice()
+      .sort((a, b) => closeness(a.name) - closeness(b.name) || a.name.localeCompare(b.name))
     for (const c of shown) {
-      const p = c.props.slice(0, 10).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
-      const more = c.props.length > 10 ? ` … +${c.props.length - 10}` : ''
+      // A component that carries other components — List.Row, Table.Cell — hides them among
+      // its props as types nobody reads, and the answer to "how do I write a row" was the
+      // package's own .d.ts every time. They are the first thing to say about such a component.
+      const parts = c.props.filter((x) => /ForwardRef|ComponentType|FC</.test(x.type))
+      const own = c.props.filter((x) => !parts.includes(x))
+      const p = own.slice(0, 10).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
+      const more = own.length > 10 ? ` … +${own.length - 10}` : ''
       console.log(`  ${c.name}  ${f.pkg}${f.inst.ownStyled ? '  ⚠ carries its own styled-components' : ''}`)
+      if (parts.length) console.log(`    parts: ${parts.map((x) => c.name + '.' + x.name).join(' · ')}`)
       if (p.length) console.log(`    ${p.join(' · ')}${more}`)
     }
     if (shown.length < all.length) {

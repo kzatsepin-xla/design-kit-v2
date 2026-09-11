@@ -33,6 +33,8 @@ import path from 'node:path'
 import os from 'node:os'
 import { execSync } from 'node:child_process'
 
+const NL = String.fromCharCode(10)
+
 const SOURCE = {
   xui: {
     repo: 'https://github.com/xsolla/xsolla-plugins',
@@ -82,6 +84,34 @@ try {
   fs.rmSync(dest, { recursive: true, force: true })
   fs.mkdirSync(path.dirname(dest), { recursive: true })
   fs.cpSync(from, dest, { recursive: true })
+
+  // The guide belongs to the design system team and moves at their pace, so parts of it
+  // describe a library that has since changed: ten runs out of twenty reported it teaching
+  // theme.radius.card, which the installed theme does not have at all. An agent reading it
+  // first has no way to know. One line at the top of each page points at what does compile —
+  // the types in node_modules and the catalogue built from them. Not a word of theirs is edited.
+  const note = [
+    '> This guide belongs to the design system team and can describe an older library than the',
+    '> one installed here. Where it disagrees with the package types, the types are what',
+    '> compiles: check with `node scripts/ds.mjs <name>` before writing a token or a prop off',
+    '> this page.',
+    '',
+  ].join(NL)
+  const pages = []
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, e.name)
+      if (e.isDirectory()) { walk(file); continue }
+      if (!e.name.endsWith('.md')) continue
+      const text = fs.readFileSync(file, 'utf8')
+      if (text.includes('.claude/rules/design-system.md')) continue
+      // Below the front matter and the first heading, where a reader is already looking.
+      const at = text.indexOf(NL, text.indexOf(NL + '# ') + 1)
+      fs.writeFileSync(file, at === -1 ? note + text : text.slice(0, at + 1) + NL + note + text.slice(at + 1))
+      pages.push(e.name)
+    }
+  }
+  walk(dest)
 
   // A skill that appears after the install has to reach the Cursor side too, or the guide
   // exists for one half of the team until the next kit update.

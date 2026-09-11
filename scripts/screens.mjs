@@ -144,7 +144,53 @@ try {
   ({ ownInside } = await import('../.claude/hooks/lib/slots.mjs'))
 } catch {}
 
-const HAND_DRAWN = /(?:^|\n)\s*(?:export\s+)?const\s+[A-Z][A-Za-z0-9]*\s*=\s*styled\.[a-z]/g
+// A box of one's own is not automatically an interface element. A page frame, a four-up grid,
+// a row that spaces two things apart — those arrange what the library drew and are the screen's
+// own business. Counting them as hand-drawn made every honest screen fail until a `// gap:`
+// mark was added, and the mark then went to the design system team as "the library was missing
+// a flex row", which is not a thing anybody is missing. So what a box does is read, not that it
+// exists: arranging is free, painting counts.
+const ARRANGING = new Set([
+  'display', 'flex', 'flex-direction', 'flex-wrap', 'flex-flow', 'flex-grow', 'flex-shrink',
+  'flex-basis', 'gap', 'row-gap', 'column-gap', 'grid', 'grid-template', 'grid-template-columns',
+  'grid-template-rows', 'grid-template-areas', 'grid-auto-flow', 'grid-auto-rows',
+  'grid-auto-columns', 'grid-area', 'grid-column', 'grid-row', 'place-items', 'place-content',
+  'place-self', 'align-items', 'align-self', 'align-content', 'justify-content', 'justify-items',
+  'justify-self', 'order', 'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'margin-inline', 'margin-block', 'padding', 'padding-top', 'padding-right', 'padding-bottom',
+  'padding-left', 'padding-inline', 'padding-block', 'width', 'min-width', 'max-width', 'height',
+  'min-height', 'max-height', 'aspect-ratio', 'position', 'top', 'right', 'bottom', 'left',
+  'inset', 'z-index', 'overflow', 'overflow-x', 'overflow-y', 'box-sizing', 'container-type',
+])
+
+const paints = (css) => {
+  for (const m of css.matchAll(/(?:^|[\s;{])([a-z][a-z-]*)\s*:/g)) {
+    if (!ARRANGING.has(m[1])) return true
+  }
+  return false
+}
+
+// Every `const X = styled.tag\`...\`` in the file, with its rules read, so the ones that only
+// arrange can be left out of the count.
+function drawnByHand(src) {
+  const re = /(?:^|\n)\s*(?:export\s+)?const\s+[A-Z][A-Za-z0-9]*\s*=\s*styled\.[a-z][A-Za-z0-9]*\s*`/g
+  let count = 0
+  let m
+  while ((m = re.exec(src))) {
+    let i = re.lastIndex
+    let inside = 0
+    for (; i < src.length; i++) {
+      const c = src[i]
+      if (c === '\\') { i += 1; continue }
+      if (c === '$' && src[i + 1] === '{') { inside += 1; i += 1; continue }
+      if (inside > 0) { if (c === '}') inside -= 1; continue }
+      if (c === '`') break
+    }
+    if (paints(src.slice(re.lastIndex, i))) count += 1
+    re.lastIndex = Math.max(i, re.lastIndex)
+  }
+  return count
+}
 const TRACKED_IMPORT = /^(?:@xsolla\/xui-|@xui-vibe|\.)|components\//
 const RENDERS = /<[A-Z][\w.]*[\s/>]/
 const GAP_MARK = /(?:\/\/|\{\/\*)[ \t]*gap[ \t]*:[ \t]*\S/i
@@ -205,7 +251,7 @@ function handRolled() {
           + inside.slice(0, 3).join('; ') + ' — a component takes what it declares and nothing else.'
           + ' What it cannot say, the screen says another way, and the gap goes to the designer as an OQ-N'])
       }
-      const own = (src.match(HAND_DRAWN) || []).length
+      const own = drawnByHand(src)
       const library = fromTheLibrary(src)
       if (own <= library) continue
       if (GAP_MARK.test(src)) continue
@@ -256,6 +302,21 @@ async function waitFor(url, tries = 40) {
   return false
 }
 
+// A screen is not there the moment the page says "load". The first address after a cold start
+// waits on Vite compiling the whole prototype, and a flat pause of a few hundred milliseconds
+// ran out in the middle of it: the check then read an empty root, called two states identical,
+// and was green again on the next run. So it waits for something to be drawn, and only then
+// lets the screen settle.
+async function settled(page) {
+  try {
+    await page.waitForFunction(
+      () => (document.getElementById('root')?.childElementCount ?? 0) > 0,
+      null, { timeout: 15000 },
+    )
+  } catch { /* nothing ever appeared: the emptiness itself is what the check reports below */ }
+  await page.waitForTimeout(350)
+}
+
 async function runtimeCheck(list) {
   const pw = await browser()
   if (!pw) return null
@@ -285,7 +346,7 @@ async function runtimeCheck(list) {
 
       const hash = p.screen + (p.state ? '?state=' + p.state : '')
       await page.goto(url + '/#' + hash, { waitUntil: 'load' })
-      await page.waitForTimeout(700)
+      await settled(page)
 
       const shot = await page.evaluate(() => {
         const root = document.getElementById('root')
@@ -320,13 +381,17 @@ async function runtimeCheck(list) {
       // exactly this, and nothing here could see it.
       if (p.feature && p.state) {
         await page.goto(url + '/?screenmapPreview=' + encodeURIComponent(p.feature + ':' + p.id), { waitUntil: 'load' })
-        await page.waitForTimeout(700)
+        await settled(page)
         const card = await page.evaluate(() => {
           const root = document.getElementById('root')
           return (root?.innerText || '').replace(/\s+/g, ' ').trim()
         })
         const seen = previews.get(p.screen) || []
-        previews.set(p.screen, [...seen, { state: p.state, direct: fold(shot.text), card: fold(card) }])
+        // A picture that came back empty says nothing: the preview resolves the node through a
+        // fetch, and under load that can still be in flight. Two empty captures used to read as
+        // "the same picture" and accuse a map that was wired correctly — which is the one kind
+        // of complaint nobody can act on. Only what was actually drawn is compared.
+        if (card) previews.set(p.screen, [...seen, { state: p.state, direct: fold(shot.text), card: fold(card) }])
       }
 
       const key = fold(shot.text) + '|' + shot.nodes

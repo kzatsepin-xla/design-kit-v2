@@ -3,30 +3,39 @@ paths:
   - "src/**/*.tsx"
   - "src/**/*.ts"
 ---
-# Design system: the details
+# Building on a design system
 
-Everything below is about the Xsolla design system, `@xsolla/xui-*`. `state.json` says which
-system this project builds on: another one, or none at all, and none of this applies — follow
-that system's own documentation instead, and take colours and spacing from its tokens.
+How this project works with the design system it stands on — `state.json` says which one.
+Nothing here names a component, a prop or a token. Those move with the library, a page that
+names them goes stale without anybody noticing, and this project already has three answers
+that are always about the version installed right now.
 
-## Do not write this
+## Where the truth is
 
-| Not this | This |
-|---|---|
-| `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | they do not exist: `theme.colors.*`, `theme.spacing.*` |
-| `theme.colors.text.*` | no such group. Text is `theme.colors.content.*`; the groups are `background`, `content`, `border`, `overlay`, `layer`, `control`, `data` |
-| `theme.radius.*` | does not exist either: radii live in `theme.shape` — `shape.button.<size>.borderRadius`, `shape.cell.borderRadius`. The 12px card radius is the separate `radius` export from `@xsolla/xui-core` |
-| `import "./Component.css"`, CSS Modules, Tailwind | styled-components plus theme tokens |
-| `background: "#0F0F0F"`, `padding: 16px` | a token, never a value of your own |
-| `onClick` on a system component | `onPress`; `onValueChange` on switches; `onChange` / `onChangeText` on fields |
-| `<Button><Icon/></Button>` | icons are props: `iconLeft` / `iconRight` (not `leftIcon`) |
-| your own markup in a slot of a system component — `badge={<div>…}`, corner tags, `trailing`, children of a card | only the props the component declares. A slot the library calls "custom content" is still not yours: what the component cannot say, the screen says another way, and the gap goes to the designer as an `OQ-N` |
-| `useDesignSystem()` for tokens | `useResolvedTheme({ themeMode, themeProductContext })` |
-| `<ThemeProvider>` / `<ThemeScope>` | no such thing: `themeMode` goes on the component itself |
+- `node scripts/ds.mjs <what you need>` — the catalogue, built from the packages actually in
+  this project. It says what exists, whether it is installed, what parts it carries and what
+  it takes.
+- The package's own types. The screen check runs the type checker, so a prop that does not
+  exist is an error you are shown, not a guess you carry around.
+- `.claude/ds/findings.md` — what turned out to be true in practice and is written nowhere
+  else. A line above the last version divider was noticed on an older library: a lead to
+  re-check, not a fact.
 
-**Art from the mockup is downloaded, never approximated.**
+A guide fetched from the design system team can be older than the library in this folder.
+Where it and the types disagree, the types are what compiles.
 
-**Vocabulary.** `tone`: brand | brandExtra | alert | mono. `size`: xl | lg | md | sm | xs.
-`variant`: primary | secondary | tertiary | ghost. Colours: `theme.colors.control[tone][variant]`.
-`ThemeMode`: dark | light | pentagram-dark | pentagram-light | ltg-dark. `ProductContext`:
-b2c | b2b | paystation | presentation — changes the font and type scale only, never the colours.
+## What does not move with the library
+
+- **Take the component from the system and set what it declares.** Do not bend it, do not put
+  markup of your own inside it, do not press a shape onto it from outside. The whole of that
+  boundary, and the way out of it, is in `kit.md`.
+- **Values come from the theme**, never invented: colour, spacing, radius, type. The mockup
+  shows a shade the theme has no token for — that is a question for the designer and for the
+  design system team, not a number to make up.
+- **Icons and logos come from the icon packages**, never exported from a mockup. Only content
+  leaves a mockup as an image — covers, art, screenshots — and it is downloaded, never
+  approximated.
+- **No CSS files, no CSS modules, no Tailwind.** The project draws with styled-components and
+  the theme; a system that hands its values out another way is followed its own way.
+- **The layout is yours**: the page frame, the grid, the row that spaces two things apart.
+  Everything standing inside them comes from the library.

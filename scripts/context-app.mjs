@@ -192,7 +192,9 @@ function flowMapOf(featureId) {
     // A return is marked as a return, or the map auto-layout breaks. Decided by the action
     // label rather than by the order files are read: contracts are read alphabetically, and
     // the return from achievements came before See all from home.
-    const back = /back|return|cancel|close|dismiss/i.test(t.label)
+    // The word has to open the label, not merely appear in it: "Confirm the cancellation" is
+    // a step forward and was being drawn as a return arrow because it carries "cancel".
+    const back = /^(?:go\s+)?(?:back|return|cancel|close|dismiss)\b/i.test(t.label.trim())
     edges.push({ from, to, label: t.label, kind: back ? 'back' : 'primary' })
   }
   return { featureId, title: featureId, flows, nodes, edges }

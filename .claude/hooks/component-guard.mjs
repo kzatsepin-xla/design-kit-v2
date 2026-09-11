@@ -64,12 +64,23 @@ if (toolOf() === 'Bash') {
 // file there.
 if (toolOf() === 'Bash') {
   const cmd = String(commandOf() || '')
-  const PATH_TSX = "((?:[^\\s|;&'\"]*/)?[A-Z][A-Za-z0-9]*\\.tsx)"
+  // Any .tsx under src/, whatever it is called. While this looked for a capitalised name only,
+  // a lower-case screen file written with a heredoc went through with nothing read at all —
+  // not the colours, not what was being put inside a library component — and the rule read as
+  // a tax on naming rather than a gate. Live runs hit both sides of that.
+  const PATH_TSX = "((?:[^\\s|;&'\"]*/)?[A-Za-z][A-Za-z0-9._-]*\\.tsx?)"
   const redirected = new RegExp('>>?\\s*[\'"]?' + PATH_TSX).exec(cmd)
   const copied = new RegExp('(?:^|[\\s|;&])(?:touch|cp|mv|install)\\s[^|;&]*?' + PATH_TSX + "[\\s'\"]*(?:$|[|;&])").exec(cmd)
   const made = redirected || copied
   if (!made || !made[1].includes('src/')) process.exit(0)
-  deny('Component files are not created through the shell. That is bypassing the check.')
+  deny(
+    'Writing ' + made[1] + ' through the shell means nothing reads' + NL +
+    'what goes into it: not the colours, not what is being put inside a library component, not' + NL +
+    'whether the name is one the design system already uses. That is the whole of these checks.' + NL + NL +
+    'Write the file with the tool that creates and edits files instead — the same content goes' + NL +
+    'in, with the checks applied, and nothing about it has to change. Only a new component of' + NL +
+    'your own starts elsewhere: node scripts/new-component.mjs <Name> "what was missing".',
+  )
 }
 
 // A homemade element instead of the system one. Real case: the agent hit the limit of the

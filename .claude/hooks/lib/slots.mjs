@@ -69,7 +69,10 @@ function ownValues(source, ours) {
 // inside is not a card with a marker hung on it, and treating the two alike would teach the
 // designer to ignore this check. Everything else in the library has its own slots and its own
 // content, and filling them from outside is what this file exists to stop.
-const CONTAINERS = /^(?:Modal|Dialog|Drawer|BottomSheet|Sheet|Popover|Popup|Portal|Overlay|Tooltip|Bounding|Layout|Page)$/
+// Table is here on the library's own word: its types call it structural, and describe a
+// consumer-composed filter panel, a custom empty-state block and cells the consumer fills.
+// A run through a table hit this rule on every cell that held two lines of its own.
+const CONTAINERS = /^(?:Modal|Dialog|Drawer|BottomSheet|Sheet|Popover|Popup|Portal|Overlay|Tooltip|Bounding|Layout|Page|Table)$/
 
 // The parts of a component that belong to the design system: what it is made of. Everything
 // left out of this — where it sits, how wide it is, what room it leaves around itself — is the

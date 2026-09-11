@@ -114,6 +114,11 @@ which stages to run in the entry questionnaire; `docs.mjs` creates only those. N
 what ties them together: rules BR-N, job stories JS-N, happy paths HP-N, edge cases EC-N,
 failures FR-N, open questions OQ-N. Reference by id, never by retelling.
 
+Each family lives in the stage that defines it — BR in `01`, JS in `03`, HP, EC and FR in `04`.
+A stage the project did not take has no ids to give: write what it would have held as plain
+words in the document you do have, and do not invent a `BR-3` with nowhere to point. The check
+reads a reference to an id nobody defined as a fault, and it is right to.
+
 Unresolved question — mark it `OQ-N` with status Open instead of inventing an answer.
 
 ## Before showing the work
