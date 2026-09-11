@@ -236,7 +236,15 @@ function whatChanged(source, from) {
     const version = (/^([0-9]+(?:\.[0-9]+)*)/.exec(section) || [])[1]
     if (!version) continue
     if (from && compare(version, from) <= 0) break
-    for (const line of section.split(NL)) if (/^\s*[-*]\s/.test(line)) lines.push(line.trim())
+    // An entry is a sentence, not a line: a wrapped one carries on underneath, and reading only
+    // the first line of it hands the designer half a thought. Nothing before the first entry of
+    // a release belongs to anything — the date line included.
+    let open = false
+    for (const line of section.split(NL)) {
+      if (/^\s*[-*]\s/.test(line)) { lines.push(line.trim()); open = true }
+      else if (!line.trim()) open = false
+      else if (open) lines[lines.length - 1] += ' ' + line.trim()
+    }
     if (!from) break                       // no version to compare against: the newest entry only
   }
   return lines
