@@ -221,6 +221,23 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
   }
 }
 
+// The file as it will be when the write lands: the whole content for a write, the edits put in
+// their places for an edit. Null when the payload says neither, and the caller falls back.
+function applied(before, ti) {
+  if (typeof ti.content === 'string') return ti.content
+  const edits = Array.isArray(ti.edits) ? ti.edits : (ti.old_string !== undefined ? [ti] : null)
+  if (!edits || !before) return null
+  let out = before
+  for (const e of edits) {
+    if (typeof e.old_string !== 'string' || typeof e.new_string !== 'string') continue
+    if (!out.includes(e.old_string)) return null            // not the file this edit was written for
+    out = e.replace_all
+      ? out.split(e.old_string).join(e.new_string)
+      : out.replace(e.old_string, e.new_string)
+  }
+  return out
+}
+
 // ——— nothing of ours goes inside a system component ———
 // The reading of it lives in lib/slots.mjs, because the screen check needs the same answer:
 // a file can reach the disk without passing a hook.
@@ -230,14 +247,20 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
   // handwriting rather than the designer's surface.
   if (/\/src\/.*\.(tsx|jsx)$/.test(where) && !/\/src\/kit\//.test(where)
     && !/\/src\/(main|app)\.tsx$/.test(where)) {
-    const fragment = bodyOf()
-    // An Edit hands over the new lines alone, and the imports are rarely among them: the file
-    // on disk is what says where a name came from.
-    let known = fragment
-    try { known = fs.readFileSync(String(fileOf()), 'utf8') + NL + fragment } catch {}
-    const caught = ownInside(fragment, known)
+    // An edit hands over the new lines alone, and a line on its own carries no nesting: the
+    // element it is being dropped inside is up in the file, not in the fragment. Read that way,
+    // a marker pushed into a card one line at a time went straight through — which is how an
+    // agent works most of the time. So the file is read as it will be once the edit lands.
+    const before = (() => {
+      try { return fs.readFileSync(String(fileOf()), 'utf8') } catch { return '' }
+    })()
+    const after = applied(before, input.tool_input || {}) || (before + NL + bodyOf())
+    // Only what this edit brings. A fault already sitting elsewhere in the file is not this
+    // edit's doing, and refusing an unrelated fix over it is how a check earns its way round.
+    const had = new Set(ownInside(before, before))
+    const caught = ownInside(after, after).filter((c) => !had.has(c))
     if (caught.length) {
-      deny('Your own markup is going inside a component of the design system:' + NL +
+      deny('A design system component is being changed past what it declares:' + NL +
         caught.slice(0, 4).map((c) => '  ' + c).join(NL) + NL + SLOTS_REASON)
     }
   }

@@ -4,6 +4,14 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.7.0 — 2026-09-11
+
+- Markup of your own pushed into a library component is now seen wherever it sits, not only as the first thing inside it: further down among its children, behind a condition, built inside a map, returned from a function, or kept in a name a line above.
+- An edit is read as the file will be once it lands, so a marker dropped into a card one line at a time no longer goes through — and a fault that was already in the file does not block an unrelated edit to it.
+- A component reshaped from outside is stopped as well: padding, height, type, border or background pressed onto it with an inline style, a class name reaching in from a stylesheet, or markup poured in as raw HTML. Where it sits and how wide it is stay the screen's own business.
+- A modal, a drawer or a popover is left alone: holding whatever the screen puts inside it is the whole job of one, and the check used to call that a fault.
+- A line of the rule quoted in a comment is no longer read as a breach of it.
+
 ## 2.6.2 — 2026-09-11
 
 - Putting something of your own inside a library component is now stopped as it is typed, and named in the screen check for anything already on disk. A component takes what it declares; what the library has no place for comes to you as a question.

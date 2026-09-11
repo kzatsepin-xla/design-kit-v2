@@ -201,9 +201,9 @@ function handRolled() {
       // A gap mark does not excuse this one — the answer is never a better wrapper.
       const inside = ownInside(src)
       if (inside.length) {
-        problems.push([rel0, 'hands a design system component something of its own: '
-          + inside.slice(0, 3).join('; ') + ' — a component takes only what it declares. What it'
-          + ' cannot say, the screen says another way, and the gap goes to the designer as an OQ-N'])
+        problems.push([rel0, 'changes a design system component past what it declares: '
+          + inside.slice(0, 3).join('; ') + ' — a component takes what it declares and nothing else.'
+          + ' What it cannot say, the screen says another way, and the gap goes to the designer as an OQ-N'])
       }
       const own = (src.match(HAND_DRAWN) || []).length
       const library = fromTheLibrary(src)

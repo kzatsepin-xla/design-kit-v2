@@ -63,7 +63,10 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
   never put another component inside it that it did not ask for. A prop the library itself
   calls "custom content" is not an invitation: filling it rebuilds the component from the
   outside, where the design system team can never see what you changed. Never bend one into
-  shape, and never hide a wrapper for it in another folder.
+  shape, and never hide a wrapper for it in another folder. Its padding, its type, its border
+  and its background are the library's answer, not yours: no inline style and no class name
+  reaching into them. Where it sits and how much room it takes is the screen's business, and
+  that part is yours.
 - **Icons and logos come from the icon packages**, never exported from Figma. Only content —
   covers, art, screenshots — comes as images.
 - Hit the limit of a system component — change the idea, not the component. The library has
