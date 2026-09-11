@@ -18,13 +18,14 @@
 //
 //  WHAT APPEARS
 //    docs/product/PRD.md                   one per project, not per feature
-//    docs/features/<feature>/00_context/   and the other chosen stages
-//  Inside is not emptiness but a skeleton: headings, tables and a hint about what to write.
+//    docs/features/<feature>/00_context/   and a folder for every other stage
+//  Inside a chosen stage is not emptiness but a skeleton: headings, tables and a hint about
+//  what to write. Inside a stage nobody chose — one file saying it is empty and why.
 //
 //  WHAT IT DOES NOT DO
-//  It does not write the content for you, and it does not create stages you did not choose in
-//  the questionnaire: the set lives in state.json and can change at any time. It never touches
-//  a file that already exists — your edits are safe.
+//  It does not write the content for you, and it does not create documents for stages you did
+//  not choose in the questionnaire: the set lives in state.json and can change at any time. It
+//  never touches a file that already exists — your edits are safe.
 //
 //  IF SOMETHING GOES WRONG
 //  'no feature selected' — tell the agent which feature you are working on.
@@ -112,6 +113,43 @@ function write(rel, body) {
   created.push(rel)
 }
 
+// ——— a folder for every stage, even the ones nobody chose ———
+//
+// Only the chosen stages used to appear on disk, so a feature folder showed 00, 04, 06, 07 and
+// read as a numbering with holes in it — as if the missing stages had been lost rather than
+// declined. Every stage gets its folder now, and a folder with no documents in it says in a
+// file why it is empty. Fill the stage later and the note goes by itself.
+
+const PLACEHOLDER = 'not-filled-in.md'
+
+function placeholderFor(stage, chosen) {
+  const body = chosen
+    ? ['The documents here are written one per screen, so the folder stays empty until the first',
+       'one: `node scripts/docs.mjs screen <screen-name>`.']
+    : ['This stage was not chosen for the project, so it holds no documents. The folder is here so',
+       'the ladder of stages stays visible: a missing folder reads as "there is no such stage".', '',
+       'To take it, tell the agent: it adds "' + stage.id + '" to `stages` in state.json and runs',
+       '`node scripts/docs.mjs start <feature>` again. The documents appear here, this file goes.']
+  return ['# ' + stage.id + ' ' + stage.title + ' — not filled in', '',
+    ...body, '',
+    '**What this stage is for:** ' + stage.why, '',
+  ].join(NL)
+}
+
+function markEmptyStages(base) {
+  const chosen = new Set(chosenStages().map((s) => s.id))
+  for (const stage of catalog.stages) {
+    const dir = path.join(root, base, stage.dir)
+    const mark = path.join(dir, PLACEHOLDER)
+    // Real documents arrived — the note has nothing left to explain.
+    if (mdFiles(dir).length) { fs.rmSync(mark, { force: true }); continue }
+    fs.mkdirSync(dir, { recursive: true })
+    if (fs.existsSync(mark)) continue
+    fs.writeFileSync(mark, placeholderFor(stage, chosen.has(stage.id)))
+    created.push(base + '/' + stage.dir + '/' + PLACEHOLDER)
+  }
+}
+
 // ——— command: create the documents for a feature ———
 
 function cmdStart(feature) {
@@ -132,6 +170,7 @@ function cmdStart(feature) {
       write(base + '/' + stage.dir + '/' + art.file, skeleton(stage, art, feature))
     }
   }
+  markEmptyStages(base)
   saveState({ feature, stages: chosenStages().map((s) => s.id) })
   report()
   const perScreen = chosenStages().filter((s) => s.perScreen).map((s) => s.id + ' ' + s.title)
@@ -160,18 +199,21 @@ function cmdScreen(screen) {
     }
   }
   if (!any) { console.log('None of the chosen stages keeps per-screen documents — nothing to create.'); return }
+  markEmptyStages(base)
   report()
 }
 
 // ——— reading what has been written ———
 
+// The note left in an empty stage is not a document: it must not count towards progress, and
+// the check has nothing to look for in it.
 function mdFiles(dir) {
   const out = []
   if (!fs.existsSync(dir)) return out
   for (const name of fs.readdirSync(dir)) {
     const p = path.join(dir, name)
     if (fs.statSync(p).isDirectory()) out.push(...mdFiles(p))
-    else if (name.endsWith('.md')) out.push(p)
+    else if (name.endsWith('.md') && name !== PLACEHOLDER) out.push(p)
   }
   return out
 }
