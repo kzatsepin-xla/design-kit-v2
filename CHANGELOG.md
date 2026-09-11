@@ -4,6 +4,26 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.9.0 — 2026-09-11
+
+- A section that holds nothing but an empty table is empty again: the header row is the template's own writing, and counting it as an answer let a screen contract pass with its blocks, its actions and its data untouched — three quarters of a contract, and the actions table is where the map's arrows come from.
+- The screen check brings the map level with the documents before it judges anything. Write the state matrices, run the check in the same breath, and it used to read yesterday's map: three screens looked at instead of twenty-seven states, and a green answer for work nobody had opened.
+- The base set of packages carries what a screen with nine states actually needs — a spinner, a status, an inline notification, a cell, a tag, a table and tabs. Four runs in a row began by installing the same five before a line could be written, and the cell is the plain surface ten projects had been drawing by hand.
+- The search builds the catalogue itself when a project has none. The documents that name components are written before the prototype exists, and until now the first search of a project answered "build it yourself" with a script no table mentions.
+- The search keeps its answer short: a package holding hundreds of names shows the nearest eight and says how many more, instead of pushing what has to be installed off the top of the screen.
+- A prop whose name is written in quotes is in the catalogue — `aria-label` was missing from every answer, and the type checker was the one telling you it is required.
+- A module that paints is counted wherever it sits: boxes moved into a `.ts` beside the screen used to leave the count entirely, and the screen then looked composed from the library while every surface on it was the project's own.
+- An id named in a document that does not own it is read as a reference, not a second definition — a contract mentioning `EC-9` was reported as describing it twice, which is the opposite of what the rules ask for.
+- The package that only passes work to its neighbours is out of the base set: it exported nothing of its own and read as an answer to "where is the layout" when there is none.
+- The search says where the rest of a component's API is written instead of trailing off in a count, because runs that saw "… +10" went and read the package's types by hand anyway.
+- The rules say the plainest way to trip the rule about what goes inside a component: your own means a plain div too, and the answer is the component's own props rather than a wrapper.
+- The contract says what to write in its Mockup section when there is no Figma frame at all, so a feature drawn from a description can go green without anybody inventing a link or a paragraph.
+- The rules name the one command that creates the prototype, and the flag that fetches the browser the screen check opens screens in. Neither was in the table, and the first is how a prototype comes into existence.
+- The rules write down the four things a program reads to the letter: a state applies when its line opens with yes, an arrow comes from an actions cell that names exactly one screen, the address of a state is the first word of its heading in lower case, and two states of one screen that draw the same thing are reported as one.
+- The rules name the components whose job is to hold your content — a modal, a drawer, a popover, a tooltip, a portal, a page and a table — so the difference between those and a card or a cell is no longer something to learn from the source of a check.
+- An in-place shell edit of a screen is refused the way a heredoc already was: a run reported reaching for sed the moment the redirect was stopped.
+- A stage that is waiting for its first screen no longer says it was not filled in — it says what it is waiting for, and a stage nobody took says that instead.
+
 ## 2.8.0 — 2026-09-11
 
 - The page of design-system details no longer names a component, a prop or a token: those move with the library and a page that names them goes stale unnoticed. What moves is answered by the catalogue, the package types and the findings file, all three about the version installed today; what stays on the page is how to work with a design system at all.

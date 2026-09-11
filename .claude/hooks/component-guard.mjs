@@ -71,7 +71,11 @@ if (toolOf() === 'Bash') {
   const PATH_TSX = "((?:[^\\s|;&'\"]*/)?[A-Za-z][A-Za-z0-9._-]*\\.tsx?)"
   const redirected = new RegExp('>>?\\s*[\'"]?' + PATH_TSX).exec(cmd)
   const copied = new RegExp('(?:^|[\\s|;&])(?:touch|cp|mv|install)\\s[^|;&]*?' + PATH_TSX + "[\\s'\"]*(?:$|[|;&])").exec(cmd)
-  const made = redirected || copied
+  // An edit in place is a write like any other, and it was the one way left round this: a run
+  // reported reaching for `sed -i` precisely because the heredoc had been refused.
+  const edited = new RegExp('\\b(?:sed|perl)\\s+[^|;&]*-i[^|;&]*\\s' + PATH_TSX).exec(cmd)
+    || new RegExp('\\btee\\s+[^|;&]*?' + PATH_TSX).exec(cmd)
+  const made = redirected || copied || edited
   if (!made || !made[1].includes('src/')) process.exit(0)
   deny(
     'Writing ' + made[1] + ' through the shell means nothing reads' + NL +

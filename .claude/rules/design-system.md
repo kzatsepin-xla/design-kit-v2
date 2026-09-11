@@ -38,4 +38,7 @@ Where it and the types disagree, the types are what compiles.
 - **No CSS files, no CSS modules, no Tailwind.** The project draws with styled-components and
   the theme; a system that hands its values out another way is followed its own way.
 - **The layout is yours**: the page frame, the grid, the row that spaces two things apart.
-  Everything standing inside them comes from the library.
+  Everything standing inside them comes from the library. Arranging is free — display, flex,
+  grid, gap, padding, margin, width, position. The moment a box of yours also paints — a
+  background, a border, a radius, a shadow, type — it counts as an element you drew, and the
+  screen check says so unless the file still takes more from the library than it draws.

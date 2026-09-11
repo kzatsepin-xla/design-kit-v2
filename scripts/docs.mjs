@@ -141,17 +141,24 @@ function write(rel, body) {
 // declined. Every stage gets its folder now, and a folder with no documents in it says in a
 // file why it is empty. Fill the stage later and the note goes by itself.
 
-const PLACEHOLDER = 'not-filled-in.md'
+// Two different silences, and one name for both read as the same accusation. A stage nobody
+// took is not filled in; a stage that was taken and keeps its documents per screen is simply
+// waiting for the first screen — and calling that "not filled in" made a chosen stage look
+// skipped in every project, which two runs reported as reading like a mistake.
+const PLACEHOLDER = 'not-taken.md'
+const WAITING = 'waiting-for-the-first-screen.md'
+const PLACEHOLDERS = new Set([PLACEHOLDER, WAITING, 'not-filled-in.md'])
 
 function placeholderFor(stage, chosen) {
   const body = chosen
-    ? ['The documents here are written one per screen, so the folder stays empty until the first',
-       'one: `node scripts/docs.mjs screen <screen-name>`.']
+    ? ['This stage is part of the project. Its documents are written one per screen, so the folder',
+       'stays empty until the first one: `node scripts/docs.mjs screen <screen-name>`. Nothing has',
+       'been skipped here.']
     : ['This stage was not chosen for the project, so it holds no documents. The folder is here so',
        'the ladder of stages stays visible: a missing folder reads as "there is no such stage".', '',
        'To take it, tell the agent: it adds "' + stage.id + '" to `stages` in state.json and runs',
        '`node scripts/docs.mjs start <feature>` again. The documents appear here, this file goes.']
-  return ['# ' + stage.id + ' ' + stage.title + ' — not filled in', '',
+  return ['# ' + stage.id + ' ' + stage.title + (chosen ? ' — waiting for the first screen' : ' — not taken'), '',
     ...body, '',
     '**What this stage is for:** ' + stage.why, '',
   ].join(NL)
@@ -161,13 +168,20 @@ function markEmptyStages(base) {
   const chosen = new Set(chosenStages().map((s) => s.id))
   for (const stage of catalog.stages) {
     const dir = path.join(root, base, stage.dir)
-    const mark = path.join(dir, PLACEHOLDER)
-    // Real documents arrived — the note has nothing left to explain.
-    if (mdFiles(dir).length) { fs.rmSync(mark, { force: true }); continue }
+    const taken = chosen.has(stage.id)
+    const name = taken ? WAITING : PLACEHOLDER
+    const mark = path.join(dir, name)
+    // Real documents arrived — the note has nothing left to explain. The older name is cleared
+    // away too, so a project that already has one does not keep both.
+    if (mdFiles(dir).length) {
+      for (const old of PLACEHOLDERS) fs.rmSync(path.join(dir, old), { force: true })
+      continue
+    }
     fs.mkdirSync(dir, { recursive: true })
+    for (const old of PLACEHOLDERS) if (old !== name) fs.rmSync(path.join(dir, old), { force: true })
     if (fs.existsSync(mark)) continue
-    fs.writeFileSync(mark, placeholderFor(stage, chosen.has(stage.id)))
-    created.push(base + '/' + stage.dir + '/' + PLACEHOLDER)
+    fs.writeFileSync(mark, placeholderFor(stage, taken))
+    created.push(base + '/' + stage.dir + '/' + name)
   }
 }
 
@@ -254,7 +268,7 @@ function mdFiles(dir) {
   for (const name of fs.readdirSync(dir)) {
     const p = path.join(dir, name)
     if (fs.statSync(p).isDirectory()) out.push(...mdFiles(p))
-    else if (name.endsWith('.md') && name !== PLACEHOLDER) out.push(p)
+    else if (name.endsWith('.md') && !PLACEHOLDERS.has(name)) out.push(p)
   }
   return out
 }
@@ -267,10 +281,17 @@ function emptySections(text) {
   let current = null
   let filled = false
   const close = () => { if (current && !filled) empty.push(current) }
-  for (const line of lines) {
+  // The header row of a table is the template's own writing, not an answer. Read as content it
+  // made every section that holds a table count as filled — a contract with its Blocks, Actions
+  // and Data tables wholly empty passed the check without a word, which is three quarters of a
+  // screen contract. A header is the row with the dashes under it.
+  const separator = (s) => /^\|[\s|:-]*\|$/.test(s)
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i]
     if (line.startsWith('## ')) { close(); current = line.slice(3).trim(); filled = false; continue }
     if (!current) continue
     const t = line.trim()
+    if (t.startsWith('|') && separator((lines[i + 1] || '').trim())) { i += 1; continue }
     if (!t) continue
     if (t.startsWith('>')) continue                       // a hint
     if (/^\|[\s|:-]*\|$/.test(t)) continue                // a separator or an empty table row
@@ -295,7 +316,20 @@ const indexFiles = new Set(
   catalog.stages.flatMap((s) => s.artifacts.filter((a) => a.index).map((a) => path.basename(a.file))),
 )
 
-function collectIds(text, isIndex) {
+// Where each family of ids is written down, taken from the catalogue: EC in the edge cases, BR
+// in the business rules. A line that looks like a definition anywhere else is a reference —
+// "EC-9, a game with one edition, is state 4" in a contract was being read as a second
+// definition of EC-9 and reported as described twice, which is what the rules ask for in the
+// first place. When the stage that owns a family was not taken at all, the old reading stands:
+// there is nowhere else for it to live.
+const homeOf = new Map()
+for (const s of catalog.stages) {
+  for (const a of s.artifacts) {
+    for (const sec of a.sections || []) if (sec.ids) homeOf.set(sec.ids, path.basename(a.file))
+  }
+}
+
+function collectIds(text, isIndex, file, present) {
   const defined = new Set()
   const used = new Set()
   for (const line of text.split(NL)) {
@@ -305,11 +339,13 @@ function collectIds(text, isIndex) {
     ID_RE.lastIndex = 0
     while ((m = ID_RE.exec(line))) {
       const id = m[0]
-      const isDefinition =
+      const shaped =
         new RegExp('^#{1,6}\\s*' + id + '\\b').test(t) ||          // a heading like ## HP-1
         new RegExp('^\\|\\s*(\\*\\*)?' + id + '\\b').test(t) ||    // the first cell of a table row
         new RegExp('^[-*]\\s*(\\*\\*)?' + id + '\\b').test(t)      // a bullet item
-      if (isDefinition && !isIndex) defined.add(id); else used.add(id)
+      const home = homeOf.get(m[1])
+      const athome = !home || !present.has(home) || home === file
+      if (shaped && athome && !isIndex) defined.add(id); else used.add(id)
     }
   }
   return { defined, used }
@@ -346,6 +382,7 @@ function checkFeature(feature) {
     return true
   }
 
+  const present = new Set(files.map((f) => path.basename(f)))
   const problems = []
   // Documents brought over from the previous kit repeat an id across files on purpose, and
   // rewriting someone's finished documents to satisfy a check is not on. Those repeats become
@@ -360,7 +397,7 @@ function checkFeature(feature) {
     const rel = path.relative(root, file).split(path.sep).join('/')
     const text = fs.readFileSync(file, 'utf8')
     for (const sec of emptySections(text)) problems.push([rel, 'section "' + sec + '" is empty'])
-    const { defined, used } = collectIds(text, indexFiles.has(path.basename(file)))
+    const { defined, used } = collectIds(text, indexFiles.has(path.basename(file)), path.basename(file), present)
     for (const id of defined) {
       if (seen.has(id) && seen.get(id) !== rel) {
         const line = [rel, id + ' is described twice — also in ' + seen.get(id)]

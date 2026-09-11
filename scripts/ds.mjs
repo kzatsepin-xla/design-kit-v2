@@ -18,6 +18,7 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
+import { spawnSync } from 'node:child_process'
 
 const root = process.cwd()
 const file = path.join(root, '.claude', 'ds', 'index.json')
@@ -48,7 +49,20 @@ if (project.kind === 'custom') {
   process.exit(0)
 }
 
-if (!fs.existsSync(file)) { console.error('no catalogue yet — build it: node scripts/ds-index.mjs'); process.exit(1) }
+// The documents are written before the prototype exists, and they name components — so the
+// first search of a project happens while there is no catalogue and no node_modules at all.
+// Answering "build it yourself, here is a script nobody mentioned" stopped the work at exactly
+// the stage that needs the search most. The catalogue reads the registry on its own, so it is
+// built here and the question is answered.
+if (!fs.existsSync(file)) {
+  console.log('building the catalogue first, this happens once…')
+  spawnSync(process.execPath, [path.join(root, 'scripts', 'ds-index.mjs')], { cwd: root, stdio: 'inherit' })
+  if (!fs.existsSync(file)) {
+    console.error('the catalogue could not be built — no way to the registry from here')
+    process.exit(1)
+  }
+  console.log('')
+}
 
 const index = JSON.parse(fs.readFileSync(file, 'utf8'))
 
@@ -186,22 +200,37 @@ if (ready.length) {
       })
       return Math.min(...best)
     }
-    const shown = (matched.length ? matched : all)
+    const ordered = (matched.length ? matched : all)
       .slice()
       .sort((a, b) => closeness(a.name) - closeness(b.name) || a.name.localeCompare(b.name))
+    // A package can hold hundreds of names — the icons do — and printing every match pushed the
+    // part that matters, what exists and what has to be installed, off the top of the answer.
+    const shown = ordered.slice(0, 8)
+    const hidden = ordered.length - shown.length
     for (const c of shown) {
       // A component that carries other components — List.Row, Table.Cell — hides them among
       // its props as types nobody reads, and the answer to "how do I write a row" was the
       // package's own .d.ts every time. They are the first thing to say about such a component.
       const parts = c.props.filter((x) => /ForwardRef|ComponentType|FC</.test(x.type))
       const own = c.props.filter((x) => !parts.includes(x))
-      const p = own.slice(0, 10).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
-      const more = own.length > 10 ? ` … +${own.length - 10}` : ''
-      console.log(`  ${c.name}  ${f.pkg}${f.inst.ownStyled ? '  ⚠ carries its own styled-components' : ''}`)
+      // A count of what was left out is not an answer: runs ended in reading the package's own
+      // types by hand anyway, so the line that trails off now says where the rest is written.
+      const p = own.slice(0, 14).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
+      const more = own.length > 14
+        ? ` … +${own.length - 14} more in node_modules/${f.pkg}/web/index.d.ts`
+        : ''
+      // A component whose props are built on a box takes layout of its own — that is how two
+      // things are spaced inside it without a wrapper, which the rule asks for and nothing
+      // could show until now.
+      const box = (c.on || []).some((x) => /Box/.test(x))
+      console.log(`  ${c.name}  ${f.pkg}${box ? '  · takes layout props of its own (gap, flex, justifyContent)' : ''}`
+        + `${f.inst.ownStyled ? '  ⚠ carries its own styled-components' : ''}`)
       if (parts.length) console.log(`    parts: ${parts.map((x) => c.name + '.' + x.name).join(' · ')}`)
       if (p.length) console.log(`    ${p.join(' · ')}${more}`)
     }
-    if (shown.length < all.length) {
+    if (hidden > 0) {
+      console.log(`    … and ${hidden} more like it in ${f.pkg}`)
+    } else if (shown.length < all.length) {
       console.log(`    … and ${all.length - shown.length} more in ${f.pkg}, none of them named like "${query}"`)
     }
     // A package that only re-exports its neighbours has nothing of its own to show, and telling

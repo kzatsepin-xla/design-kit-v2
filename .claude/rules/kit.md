@@ -27,11 +27,12 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 
 | What | Command |
 |---|---|
+| Create the prototype | `node scripts/init.mjs <screen> <screen>` |
 | Run the prototype | `npm run dev` |
 | Find a component | `node scripts/ds.mjs <what you need>` |
 | New own component | `node scripts/new-component.mjs <Name> "what was missing"` |
 | Product documents | `node scripts/docs.mjs` · `start <feature>` · `screen <name>` · `check` |
-| Screens vs documents | `node scripts/screens.mjs` |
+| Screens vs documents | `node scripts/screens.mjs` · `--install` once, and the states are opened in a browser instead of read in the code |
 | Everything before a handoff | `node scripts/preflight.mjs` |
 | Update the kit | `node scripts/kit.mjs update` · `check` |
 | Update the packages | `node scripts/deps.mjs` · `--check` · `--majors` |
@@ -66,13 +67,24 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
   shape, and never hide a wrapper for it in another folder. Its padding, its type, its border
   and its background are the library's answer, not yours: no inline style and no class name
   reaching into them. Where it sits and how much room it takes is the screen's business, and
-  that part is yours.
+  that part is yours. And the way to lay out what is inside one is the component's own layout
+  props — a row spaces its parts with the `gap` and `justifyContent` it declares, not by having
+  a `div` of yours wrapped around them. A handful of components are the exception because
+  holding your content is their whole job: a modal, a drawer, a sheet, a popover, a tooltip, a
+  portal, a page or layout wrapper, and a table, whose own types call it structural. Everything
+  else — a card, a cell, a row, a bar — has its own slots, and those are not an invitation.
+  Your own means anything you wrote, a plain `<div>` or `<span>` included: that is the likeliest
+  way to trip this on a first attempt, and the answer is the component's own props, not a
+  wrapper.
 - **Icons and logos come from the icon packages**, never exported from Figma. Only content —
   covers, art, screenshots — comes as images.
 - Hit the limit of a system component — change the idea, not the component. The library has
   no place for the thing the mockup shows: say so plainly, put it to the designer, and leave
   it an `OQ-N`. Not permission to build your own next to it, and not permission to stuff it
   in through a slot.
+- **A screen or a component is written with the editing tool, never through the shell.** A
+  heredoc, a redirect or a `sed -i` into `src/` puts a file down that no check has read, and the
+  check refuses it — the content is the same either way, the reading is not.
 - Never write "agreed with the designer" unless they actually agreed.
 
 ## The project's own file
@@ -93,8 +105,10 @@ The designer will also reject or redirect something in passing — "not the dark
 it, and write it into the decision file that matches the scope. A rule already enforced by a
 check needs no line anywhere.
 
-Details, findings and the component catalogue live in `.claude/ds/` — the search reaches
-them; do not read them wholesale.
+Details, findings and the component catalogue live in `.claude/ds/` — the search reaches them;
+do not read them wholesale. The design system team's own guide is a skill of its own, under
+`.claude/skills/`, and it can describe an older library than the one installed: where it and
+the package types disagree, the types are what compiles.
 
 ## When you decide for them
 
@@ -120,6 +134,20 @@ words in the document you do have, and do not invent a `BR-3` with nowhere to po
 reads a reference to an id nobody defined as a fault, and it is right to.
 
 Unresolved question — mark it `OQ-N` with status Open instead of inventing an answer.
+
+Two places are read by a program rather than by a person, so they are written to the letter.
+A state applies when its line opens with the word yes — `**Applies:** yes`, and anything else,
+`N/A` first of all, takes it off the map with the reason kept. An arrow between screens comes
+from the last column of a contract's Actions table, and only when that cell names exactly one
+screen of this feature: "home or the portal" names none, "back to the list and the offer"
+names two, and both are dropped without a word. The address of a state is the first word of
+its heading in lower case — `## 6. Error — ...` opens at `#<screen>?state=error` — and two
+states of one screen that draw the same thing are reported as one: if they truly are the same,
+one of them is N/A with a reason.
+
+The design system ships far more than the project installs — a search answering "in the system
+but not installed" is the normal answer, not a miss. Install it and re-index; that is the
+second line the search prints.
 
 ## Before showing the work
 

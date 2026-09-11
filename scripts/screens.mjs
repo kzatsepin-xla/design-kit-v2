@@ -48,6 +48,34 @@ const dirs = (p) => (fs.existsSync(p) ? fs.readdirSync(p, { withFileTypes: true 
 
 // Promises come from the Context App map: it is already built from the state matrices.
 // No map — at least check that every screen opens.
+// The map is built from the documents, and it is what this check reads its promises from. Write
+// the state matrices, run the check in the same breath, and the map is still yesterday's: three
+// screens checked instead of twenty-seven states, and a green answer for work nobody looked at.
+// The exporter is local and quick, so the map is brought level before anything is judged.
+function freshenMap() {
+  const manifest = path.join(root, 'public', 'context-app-data', 'manifest.json')
+  if (!fs.existsSync(manifest)) return null
+  const newest = (dir, best = 0) => {
+    let entries
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return best }
+    for (const e of entries) {
+      if (e.name.startsWith('.')) continue
+      const p = path.join(dir, e.name)
+      try { best = e.isDirectory() ? newest(p, best) : Math.max(best, fs.statSync(p).mtimeMs) } catch {}
+    }
+    return best
+  }
+  const docs = newest(path.join(root, 'docs', 'features'))
+  if (!docs || docs <= fs.statSync(manifest).mtimeMs) return null
+  const r = spawnSync(process.execPath, [path.join(root, 'scripts', 'context-app.mjs'), 'export'], {
+    cwd: root, encoding: 'utf8',
+  })
+  if (r.status !== 0) return 'the documents are newer than the map and it could not be rebuilt — node scripts/context-app.mjs export'
+  const nodes = /nodes on the map: (\d+)/.exec(r.stdout || '')
+  return 'the documents had moved since the map was built, so it was rebuilt first'
+    + (nodes ? ' — ' + nodes[1] + ' nodes' : '')
+}
+
 function promises() {
   const manifest = path.join(root, 'public', 'context-app-data', 'manifest.json')
   const out = []
@@ -238,10 +266,20 @@ function handRolled() {
       const p = path.join(d, e.name)
       // src/kit is the inspector runtime the kit puts down, not designer surface.
       if (e.isDirectory()) { if (e.name !== 'kit' && !e.name.startsWith('.')) walk(p); continue }
-      if (!e.name.endsWith('.tsx')) continue
-      if (/\.(stories|test|spec)\.tsx$/.test(e.name) || PLUMBING.has(e.name)) continue
+      if (!/\.tsx?$/.test(e.name)) continue
+      if (/\.(stories|test|spec)\.tsx?$/.test(e.name) || PLUMBING.has(e.name)) continue
       const src = read(p)
-      if (!RENDERS.test(src)) continue
+      // A module with no markup in it still draws, if what it defines paints. Boxes moved into a
+      // .ts next door used to leave the count entirely — the screen then looked composed from the
+      // library while every surface on it was the project's own.
+      if (!RENDERS.test(src)) {
+        if (!drawnByHand(src) || GAP_MARK.test(src)) continue
+        const rel1 = path.relative(root, p).split(path.sep).join('/')
+        problems.push([rel1, 'draws elements of its own and takes nothing from the library — a'
+          + ' surface, a border or a colour of your own is a component, wherever the file sits:'
+          + ' compose it from the system, or say what the library is missing: // gap: what is missing'])
+        continue
+      }
       const rel0 = path.relative(root, p).split(path.sep).join('/')
       // Handed to a library component: our own markup through a prop, or as its first child.
       // A gap mark does not excuse this one — the answer is never a better wrapper.
@@ -475,6 +513,9 @@ async function main() {
     console.log('below could be checked. Install them once there is a way to the registry: npm install')
     process.exit(1)
   }
+
+  const refreshed = freshenMap()
+  if (refreshed) console.log(refreshed)
 
   const list = promises()
   if (!list.length) {

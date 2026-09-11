@@ -47,13 +47,26 @@ try {
 const nm = path.join(root, 'node_modules', '@xsolla')
 const installed = []
 
+// What a component's props are built on, in its own words: `interface CellProps extends
+// BoxProps` is how the library says this one takes layout props of its own — which is the
+// answer to "how do I space the two things inside it without wrapping them in a div of mine".
+// Read from the types, so it cannot go stale the way a sentence in a rule file does.
+const builtOn = (src, name) => {
+  const m = new RegExp('interface ' + name + 'Props\\s+extends\\s+([^{]+)').exec(src)
+  if (!m) return []
+  return m[1].split(',').map((s) => s.trim()).filter((s) => /^[A-Z][A-Za-z0-9]*$/.test(s))
+}
+
 const propsOf = (src, name) => {
   let i = src.indexOf('interface ' + name + 'Props')
   if (i < 0) i = src.indexOf('type ' + name + 'Props')
   if (i < 0) return []
   const body = src.slice(i, i + 4000)
   const props = []
-  for (const m of body.matchAll(/^\s{2,4}(?:\/\*\*[^*]*\*\/\s*)?([a-zA-Z_$][\w$]*)(\?)?:\s*([^;\n]+)/gm)) {
+  // A name with a dash in it is written in quotes — `"aria-label"?: string` — and reading only
+  // bare names dropped it from the catalogue. A required prop missing from the answer is how an
+  // agent finds out from the type checker instead.
+  for (const m of body.matchAll(/^\s{2,4}(?:\/\*\*[^*]*\*\/\s*)?["']?([a-zA-Z_$][\w$-]*)["']?(\?)?:\s*([^;\n]+)/gm)) {
     props.push({ name: m[1], optional: !!m[2], type: m[3].trim().replace(/\s+/g, ' ').slice(0, 70) })
     if (props.length > 40) break
   }
@@ -84,7 +97,9 @@ if (fs.existsSync(nm)) {
           if (/^[A-Z][A-Za-z0-9]*$/.test(name)) names.add(name)
         }
       }
-      for (const name of [...names].sort()) components.push({ name, props: propsOf(src, name) })
+      for (const name of [...names].sort()) {
+        components.push({ name, props: propsOf(src, name), on: builtOn(src, name) })
+      }
     }
     // A package built with its own copy of styled-components raises a second instance of the
     // library: on one screen with its neighbours, its styles silently fall off.

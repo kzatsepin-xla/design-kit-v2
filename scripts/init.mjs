@@ -415,9 +415,17 @@ if (refreshing) {
 const deps = { react: '^19', 'react-dom': '^19' }
 if (ds === 'xui') {
   // a base set: covers an ordinary screen without installing packages one by one
-  for (const p of ['core', 'typography', 'layout', 'button', 'input', 'input-phone', 'select',
+  // The base set is what an ordinary screen needs, and what counts as ordinary was measured:
+  // in run after run the first four packages an agent had to add before writing a line were the
+  // spinner, the status pill, the inline notification and the cell — a screen with nine states
+  // needs a way to say loading, a state, a notice and a plain surface. They are in the set now.
+  // No 'layout' here on purpose: that package exports nothing of its own, it only passes work
+  // to field-group, list and modal, which are installed by name below. In the set it read as an
+  // answer to "where is the layout" and there is none.
+  for (const p of ['core', 'typography', 'button', 'input', 'input-phone', 'select',
                    'modal', 'toast', 'avatar', 'badge', 'divider', 'list', 'tooltip',
-                   'field-group', 'icons-base']) deps['@xsolla/xui-' + p] = 'latest'
+                   'field-group', 'icons-base', 'spinner', 'status', 'notification', 'cell',
+                   'tag', 'table', 'tabs']) deps['@xsolla/xui-' + p] = 'latest'
   deps['styled-components'] = 'latest'   // almost every XUI component needs it
 }
 if (ds === 'custom' && dsUrl && !/^https?:/.test(dsUrl)) deps[dsUrl] = 'latest'

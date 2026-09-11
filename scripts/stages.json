@@ -38,7 +38,7 @@
             },
             {
               "h": "Scope",
-              "hint": "In scope and explicitly out of scope — one list each."
+              "hint": "In scope and explicitly out of scope \u2014 one list each."
             },
             {
               "h": "Sources",
@@ -262,7 +262,7 @@
       "id": "04",
       "dir": "04_scenarios",
       "title": "Scenarios",
-      "why": "happy paths, edge cases, failure and recovery — the backbone of future screens",
+      "why": "happy paths, edge cases, failure and recovery \u2014 the backbone of future screens",
       "default": true,
       "needs": [
         "00"
@@ -290,7 +290,7 @@
           "title": "Happy paths",
           "sections": [
             {
-              "h": "HP-1 — name",
+              "h": "HP-1 \u2014 name",
               "hint": "Role, precondition, expected outcome, then a step table: step, user action, system response, screen.",
               "ids": "HP"
             }
@@ -420,7 +420,7 @@
             },
             {
               "h": "Mockup",
-              "hint": "Link to the Figma frame for this screen (the URL must carry ?node-id=). /review compares the built screen against it — without this link there is nothing to compare."
+              "hint": "Link to the Figma frame for this screen (the URL must carry ?node-id=). /review compares the built screen against it \u2014 without this link there is nothing to compare. There is no frame yet: write \"none yet\" on the line and raise it as an OQ-N. That is a filled section, and it says plainly that the screen was built from a description rather than from a drawing."
             },
             {
               "h": "Blocks",
@@ -436,7 +436,8 @@
                 "Action",
                 "What happens",
                 "Where it leads"
-              ]
+              ],
+              "hint": "The last column is read by the map: name exactly one screen of this feature and an arrow appears between them, name none or two and the row is passed over in silence. \"Stays here\" is a fine answer for an action that opens nothing."
             },
             {
               "h": "Data",
