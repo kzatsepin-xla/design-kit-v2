@@ -23,6 +23,12 @@
 //    vite.config.ts                    so edits appear live
 //    .gitignore                        so service folders stay out of history
 //
+//  AND LATER, WHEN THE KIT IS UPDATED
+//  Three of those files are the kit's handwriting rather than yours: the screen router, the
+//  page shell and the build config. A fix to them has to reach projects that already exist,
+//  so an update calls this script again — `node scripts/init.mjs refresh`. It rewrites only
+//  the ones you have not touched, leaves the rest exactly as they are, and says which.
+//
 //  WHAT IT DOES NOT DO
 //  It never touches what already exists — your edits are safe and it can run any number of
 //  times. It does not invent the content of a screen: the agent draws, the script only
@@ -37,13 +43,16 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { execSync } from 'node:child_process'
 
-const screen = process.argv[2]
-if (!screen || !/^[a-z][a-z0-9-]*$/.test(screen)) {
+const arg = process.argv[2]
+const refreshing = arg === 'refresh'
+if (!refreshing && (!arg || !/^[a-z][a-z0-9-]*$/.test(arg))) {
   console.error('Screen name: lowercase letters and dashes. For example: node scripts/init.mjs profile')
   process.exit(1)
 }
+const screen = refreshing ? null : arg
 
 const root = process.cwd()
 const state = fs.existsSync('state.json') ? JSON.parse(fs.readFileSync('state.json', 'utf8')) : {}
@@ -61,109 +70,67 @@ function write(rel, body) {
   created.push(rel)
 }
 
-// ——— dependencies for the chosen design system ———
+// ——— the files the kit keeps writing ———
+//
+// These three carry no decision of yours: which screen is open, how the map draws its little
+// pictures, how the page is built. That is why they are the ones an update may refresh — and
+// why the rest of the prototype is never regenerated.
 
-const deps = { react: '^19', 'react-dom': '^19' }
-if (ds === 'xui') {
-  // a base set: covers an ordinary screen without installing packages one by one
-  for (const p of ['core', 'typography', 'layout', 'button', 'input', 'input-phone', 'select',
-                   'modal', 'toast', 'avatar', 'badge', 'divider', 'list', 'tooltip',
-                   'field-group', 'icons-base']) deps['@xsolla/xui-' + p] = 'latest'
-  deps['styled-components'] = 'latest'   // almost every XUI component needs it
-}
-if (ds === 'custom' && dsUrl && !/^https?:/.test(dsUrl)) deps[dsUrl] = 'latest'
-
-write('package.json', JSON.stringify({
-  name: path.basename(root),
-  private: true,
-  type: 'module',
-  scripts: { dev: 'vite', build: 'vite build' },
-  dependencies: deps,
-  devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest' },
-}, null, 2) + '\n')
-
-write('.gitignore', `node_modules/
-dist/
-`)
-
-write('vite.config.ts', `import { defineConfig } from 'vite'
+const viteConfig = () => `import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig({ plugins: [react()] })
-`)
+`
 
-write('index.html', `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${screen}</title>
-    <!-- The browser's own 8px margin around the page is not a design decision. And padding
-         counts inside the height: a full-height screen is otherwise always taller than the
-         window by its own padding, which the Context App preview turns into a frame that
-         grows on every measurement. -->
-    <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      body { margin: 0; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-`)
-
-const mount = ds === 'xui'
+const mainTsx = () => (ds === 'xui'
   ? [
-      "import { StrictMode } from 'react'",
-      "import { createRoot } from 'react-dom/client'",
-      "import { ThemeProvider, createGlobalStyle } from 'styled-components'",
-      "import { XUIProvider, useResolvedTheme } from '@xsolla/xui-core'",
-      "import { App } from './app'",
-      '',
-      '// The page behind the screen: the background token, so a scrolled page never shows a',
-      '// strip of the browser default underneath.',
-      'const GlobalStyle = createGlobalStyle`',
-      '  body {',
-      '    background: ${(p) => p.theme.colors.background.primary};',
-      '  }',
-      '`',
-      '',
-      '// XUI hands its tokens out through a hook, not through styled-components. Components of',
-      '// your own want them under `p.theme`, so the resolved theme is passed on once, here.',
-      'function Themed({ children }: { children: React.ReactNode }) {',
-      '  const { theme } = useResolvedTheme({})',
-      '  return <ThemeProvider theme={theme}>{children}</ThemeProvider>',
-      '}',
-      '',
-      "createRoot(document.getElementById('root')!).render(",
-      '  <StrictMode>',
-      '    <XUIProvider>',
-      '      <Themed>',
-      '        <GlobalStyle />',
-      '        <App />',
-      '      </Themed>',
-      '    </XUIProvider>',
-      '  </StrictMode>,',
-      ')',
-      '',
-    ].join(newline)
+    "import { StrictMode } from 'react'",
+    "import { createRoot } from 'react-dom/client'",
+    "import { ThemeProvider, createGlobalStyle } from 'styled-components'",
+    "import { XUIProvider, useResolvedTheme } from '@xsolla/xui-core'",
+    "import { App } from './app'",
+    '',
+    '// The page behind the screen: the background token, so a scrolled page never shows a',
+    '// strip of the browser default underneath.',
+    'const GlobalStyle = createGlobalStyle`',
+    '  body {',
+    '    background: ${(p) => p.theme.colors.background.primary};',
+    '  }',
+    '`',
+    '',
+    '// XUI hands its tokens out through a hook, not through styled-components. Components of',
+    '// your own want them under `p.theme`, so the resolved theme is passed on once, here.',
+    'function Themed({ children }: { children: React.ReactNode }) {',
+    '  const { theme } = useResolvedTheme({})',
+    '  return <ThemeProvider theme={theme}>{children}</ThemeProvider>',
+    '}',
+    '',
+    "createRoot(document.getElementById('root')!).render(",
+    '  <StrictMode>',
+    '    <XUIProvider>',
+    '      <Themed>',
+    '        <GlobalStyle />',
+    '        <App />',
+    '      </Themed>',
+    '    </XUIProvider>',
+    '  </StrictMode>,',
+    ')',
+    '',
+  ].join(newline)
   : [
-      "import { StrictMode } from 'react'",
-      "import { createRoot } from 'react-dom/client'",
-      "import { App } from './app'",
-      '',
-      "createRoot(document.getElementById('root')!).render(",
-      '  <StrictMode>',
-      '    <App />',
-      '  </StrictMode>,',
-      ')',
-      '',
-    ].join(newline)
-write('src/main.tsx', mount)
+    "import { StrictMode } from 'react'",
+    "import { createRoot } from 'react-dom/client'",
+    "import { App } from './app'",
+    '',
+    "createRoot(document.getElementById('root')!).render(",
+    '  <StrictMode>',
+    '    <App />',
+    '  </StrictMode>,',
+    ')',
+    '',
+  ].join(newline))
 
-write('src/app.tsx', [
+const appTsx = () => [
   "import { useEffect, useState } from 'react'",
   '',
   '// Every folder in screens/ is a screen. Nothing to register:',
@@ -232,19 +199,141 @@ write('src/app.tsx', [
   '    return Previewed ? <Previewed state={preview.state} /> : <p>No such screen.</p>',
   '  }',
   '',
-  '  const current = screens[route.name] ? route.name : names[0]',
+  "  const current = screens[route.name] ? route.name : names[0]",
   '  const Screen = screens[current]',
   '',
   '  return Screen ? <Screen state={route.state} /> : <p>No screens yet.</p>',
   '}',
   '',
-].join(newline))
+].join(newline)
 
+const SHELL = {
+  'vite.config.ts': viteConfig,
+  'src/main.tsx': mainTsx,
+  'src/app.tsx': appTsx,
+}
+
+// The kit remembers what it wrote, so a later update can tell its own handwriting from yours.
+const MARKER = path.join(root, '.claude', 'kit.json')
+const hashOf = (file) => {
+  try {
+    return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex').slice(0, 12)
+  } catch {
+    return null
+  }
+}
+
+function marker() {
+  try {
+    return JSON.parse(fs.readFileSync(MARKER, 'utf8'))
+  } catch {
+    return null
+  }
+}
+
+function rememberShell(files) {
+  const data = marker()
+  if (!data) return
+  data.shell = { ...(data.shell || {}) }
+  for (const rel of files) {
+    const h = hashOf(path.join(root, rel))
+    if (h) data.shell[rel] = h
+  }
+  try {
+    fs.writeFileSync(MARKER, JSON.stringify(data, null, 2) + newline)
+  } catch {}
+}
+
+// ——— refresh: the update's half of this script ———
+
+if (refreshing) {
+  const known = (marker() || {}).shell || {}
+  const notes = []
+  const rewritten = []
+  for (const [rel, build] of Object.entries(SHELL)) {
+    const file = path.join(root, rel)
+    if (!fs.existsSync(file)) continue
+    const now = fs.readFileSync(file, 'utf8')
+    const next = build()
+    if (now === next) { rewritten.push(rel); continue }        // already current, just re-record
+    if (!known[rel]) {
+      // Written before the kit started remembering its own handwriting, so there is no telling
+      // an edit of theirs from a fix of ours. Leaving it alone is the only safe answer.
+      notes.push('The kit has a newer ' + rel + ', and yours was left alone: it predates the'
+        + ' day the kit started keeping track, so nobody can tell whether you changed it.')
+      continue
+    }
+    if (known[rel] === hashOf(file)) {
+      fs.writeFileSync(file, next)
+      rewritten.push(rel)
+      notes.push('Brought up to date, and you had not touched it: ' + rel)
+    } else {
+      notes.push('Left as it is, because you have edited it: ' + rel)
+    }
+  }
+  if (rewritten.length) rememberShell(rewritten)
+  for (const note of notes) console.log(note)
+  process.exit(0)
+}
+
+// ——— dependencies for the chosen design system ———
+
+const deps = { react: '^19', 'react-dom': '^19' }
+if (ds === 'xui') {
+  // a base set: covers an ordinary screen without installing packages one by one
+  for (const p of ['core', 'typography', 'layout', 'button', 'input', 'input-phone', 'select',
+                   'modal', 'toast', 'avatar', 'badge', 'divider', 'list', 'tooltip',
+                   'field-group', 'icons-base']) deps['@xsolla/xui-' + p] = 'latest'
+  deps['styled-components'] = 'latest'   // almost every XUI component needs it
+}
+if (ds === 'custom' && dsUrl && !/^https?:/.test(dsUrl)) deps[dsUrl] = 'latest'
+
+write('package.json', JSON.stringify({
+  name: path.basename(root),
+  private: true,
+  type: 'module',
+  scripts: { dev: 'vite', build: 'vite build' },
+  dependencies: deps,
+  devDependencies: { '@vitejs/plugin-react': 'latest', vite: 'latest' },
+}, null, 2) + '\n')
+
+write('.gitignore', `node_modules/
+dist/
+`)
+
+write('vite.config.ts', viteConfig())
+
+write('index.html', `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${screen}</title>
+    <!-- The browser's own 8px margin around the page is not a design decision. And padding
+         counts inside the height: a full-height screen is otherwise always taller than the
+         window by its own padding, which the Context App preview turns into a frame that
+         grows on every measurement. -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+`)
+
+write('src/main.tsx', mainTsx())
+write('src/app.tsx', appTsx())
 
 write(`src/screens/${screen}/screen.tsx`, `export function Screen() {
   return <h1>${screen}</h1>
 }
 `)
+
+rememberShell(Object.keys(SHELL))
 
 // ——— dependencies are installed once ———
 

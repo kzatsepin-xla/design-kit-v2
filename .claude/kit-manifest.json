@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "owned": [
+    ".claude/settings.json",
+    ".claude/kit-manifest.json",
+    ".claude/hooks",
+    ".claude/commands",
+    ".claude/agents",
+    ".claude/skills",
+    ".claude/rules/kit.md",
+    ".claude/rules/design-system.md",
+    ".cursor",
+    "scripts",
+    "tools"
+  ],
+  "seeded": [
+    ".claude/rules/decisions-code.md",
+    ".claude/rules/decisions-docs.md",
+    ".claude/ds/findings.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "state.json"
+  ],
+  "removed": []
+}

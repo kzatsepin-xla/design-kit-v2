@@ -16,6 +16,7 @@
 //    documents   are sections filled, are the numbers unique, do references point somewhere
 //    screens     do the screens do what the documents promise
 //    map         is the data behind the Context button still valid
+//    kit         are the checks themselves whole, and is there a newer kit
 //    decisions   what was decided for you, and what the design system was missing
 //
 //  Each part is skipped when the project has nothing of that kind yet: a prototype without
@@ -43,15 +44,26 @@ function run(title, script, args) {
   return { title, ok: r.status === 0, text }
 }
 
+// The checks themselves come first: a hook that stopped parsing is skipped silently, and then
+// every answer below it is an answer from half a kit. Once a day this also asks whether a newer
+// kit is out — offline it simply says nothing.
+const kit = run('kit', 'kit.mjs', ['check', '--brief'])
+
 const steps = []
 
 if (has('docs', 'features')) steps.push(run('documents', 'docs.mjs', ['check']))
 if (has('src', 'screens')) steps.push(run('screens', 'screens.mjs', []))
 if (has('public', 'context-app-data')) steps.push(run('map', 'context-app.mjs', ['check']))
 
+if (!kit.ok) {
+  console.log('STOP kit')
+  for (const line of kit.text.split(NL).slice(0, 12)) console.log('       ' + line)
+}
+
 if (!steps.length) {
-  console.log('nothing to check yet: no documents, no screens, no map')
-  process.exit(0)
+  if (kit.ok) console.log('nothing to check yet: no documents, no screens, no map')
+  if (kit.ok && kit.text) console.log(kit.text)
+  process.exit(kit.ok ? 0 : 1)
 }
 
 for (const s of steps) {
@@ -93,6 +105,14 @@ if (!has('public', 'context-app-data')) {
 }
 
 const failed = steps.filter((s) => !s.ok)
+if (!kit.ok) failed.push(kit)
+
+// Not a failure and not urgent: the kit works, there is simply a newer one on the server.
+if (kit.ok && kit.text) {
+  console.log('')
+  console.log(kit.text)
+}
+
 console.log('')
 console.log(
   failed.length

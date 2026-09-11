@@ -37,11 +37,22 @@ to decide.
 ## After that, no terminal
 
 Everything else happens in conversation. Ask for the prototype and it runs; ask what is left
-and it looks. Two of the routines have a shortcut:
+and it looks. Three of the routines have a shortcut:
 
 - `/check` before showing the work: documents, screens and the map, in one answer.
 - `/update` to pull a newer kit. It replaces its own files only — decisions, findings,
   documents and screens stay where they are.
+- `/deps` to pull newer packages: the design system, the component catalogue, the Context
+  button, the copy rulebook, the gallery.
+
+Two clocks, on purpose. The kit changes when the checks change, and updating it cannot break a
+screen. The packages change when the design system ships, and that can. A step that moves a
+package to a new generation is named in the report and left alone until you say yes.
+
+An update never runs the code it is replacing: it fetches the newest kit and lets that copy do
+the work, so a project untouched for half a year updates the way today's kit expects. Files the
+kit wrote into the prototype — the screen router, the page shell, the build config — are
+refreshed only where you have not edited them.
 
 ## Claude Code or Cursor
 
