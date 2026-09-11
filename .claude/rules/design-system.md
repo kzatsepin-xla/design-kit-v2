@@ -20,6 +20,7 @@ that system's own documentation instead, and take colours and spacing from its t
 | `background: "#0F0F0F"`, `padding: 16px` | a token, never a value of your own |
 | `onClick` on a system component | `onPress`; `onValueChange` on switches; `onChange` / `onChangeText` on fields |
 | `<Button><Icon/></Button>` | icons are props: `iconLeft` / `iconRight` (not `leftIcon`) |
+| your own markup in a slot of a system component — `badge={<div>…}`, corner tags, `trailing`, children of a card | only the props the component declares. A slot the library calls "custom content" is still not yours: what the component cannot say, the screen says another way, and the gap goes to the designer as an `OQ-N` |
 | `useDesignSystem()` for tokens | `useResolvedTheme({ themeMode, themeProductContext })` |
 | `<ThemeProvider>` / `<ThemeScope>` | no such thing: `themeMode` goes on the component itself |
 

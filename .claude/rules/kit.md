@@ -58,12 +58,18 @@ card as `b2c-game-card`. Search shorter before concluding it does not exist.
 
 ## Hard boundaries
 
-- **Never bend a system component into shape**, and never hide a wrapper for it in another
-  folder.
+- **A system component takes only what it declares.** Set the parameters it offers — a title,
+  a size, a state, an icon where it asks for one. Never put your own markup inside it, and
+  never put another component inside it that it did not ask for. A prop the library itself
+  calls "custom content" is not an invitation: filling it rebuilds the component from the
+  outside, where the design system team can never see what you changed. Never bend one into
+  shape, and never hide a wrapper for it in another folder.
 - **Icons and logos come from the icon packages**, never exported from Figma. Only content —
   covers, art, screenshots — comes as images.
-- Hit the limit of a system component — that is a question for the designer, not permission
-  to build your own next to it. Name what does not fit and offer the choice.
+- Hit the limit of a system component — change the idea, not the component. The library has
+  no place for the thing the mockup shows: say so plainly, put it to the designer, and leave
+  it an `OQ-N`. Not permission to build your own next to it, and not permission to stuff it
+  in through a slot.
 - Never write "agreed with the designer" unless they actually agreed.
 
 ## The project's own file
