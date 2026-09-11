@@ -10,3 +10,8 @@ node_modules/
 # they were written on, and a distraction in a repository people clone to get the kit itself.
 _dev/
 _fix/
+
+# The scales: they read session transcripts and say what a run of the kit costs in context.
+# That is how the kit gets built, not part of what it installs, so they stay on the machine
+# doing the building. The manifest deletes the folder from projects that already have it.
+tools/

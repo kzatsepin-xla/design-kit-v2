@@ -4,6 +4,9 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.4.1 — 2026-09-11
+
+- The kit no longer leaves its own build tools in your project: tools/ is for building the kit, not for working in it, and an update takes the folder away.
 ## 2.4.0 — 2026-09-11
 
 - Anything drawn by hand in a prototype is now visible to the inspector: point at a self-made top bar and it says what it is and which file it lives in, instead of saying nothing at all.

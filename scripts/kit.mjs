@@ -66,7 +66,7 @@ const FALLBACK = {
   owned: [
     '.claude/settings.json', '.claude/hooks', '.claude/commands', '.claude/agents',
     '.claude/skills', '.claude/rules/kit.md', '.claude/rules/design-system.md',
-    'scripts', 'tools',
+    'scripts',
   ],
   seeded: [],
   removed: [],

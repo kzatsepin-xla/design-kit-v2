@@ -1,5 +1,5 @@
 {
-  "version": "2.4.0",
+  "version": "2.4.1",
   "owned": [
     ".claude/settings.json",
     ".claude/kit-manifest.json",
@@ -9,8 +9,7 @@
     ".claude/skills/start",
     ".claude/rules/kit.md",
     ".claude/rules/design-system.md",
-    "scripts",
-    "tools"
+    "scripts"
   ],
   "seeded": [
     ".claude/rules/decisions-code.md",
@@ -20,5 +19,7 @@
     "CLAUDE.md",
     "state.json"
   ],
-  "removed": []
+  "removed": [
+    "tools"
+  ]
 }
