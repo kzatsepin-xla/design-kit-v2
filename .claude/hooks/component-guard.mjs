@@ -19,6 +19,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { bodyOf, commandOf, deny as sayNo, fileOf, input, rootOf, toolOf } from './lib/dialect.mjs'
+import { SLOTS_REASON, ownInside } from './lib/slots.mjs'
 
 const NL = String.fromCharCode(10)
 
@@ -217,6 +218,28 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
         'was guessed. No token covers this shade — that is a question for the designer, not a' + NL +
         'value to invent. Content that carries its own colour — cover art, a logo — belongs in an' + NL +
         'image or in a data file, not in the screen.')
+  }
+}
+
+// ——— nothing of ours goes inside a system component ———
+// The reading of it lives in lib/slots.mjs, because the screen check needs the same answer:
+// a file can reach the disk without passing a hook.
+if (toolOf() === 'Write' || toolOf() === 'Edit') {
+  const where = String(fileOf() || '').split(path.sep).join('/')
+  // src/kit is the inspector runtime, and the router and the entry point are the kit's own
+  // handwriting rather than the designer's surface.
+  if (/\/src\/.*\.(tsx|jsx)$/.test(where) && !/\/src\/kit\//.test(where)
+    && !/\/src\/(main|app)\.tsx$/.test(where)) {
+    const fragment = bodyOf()
+    // An Edit hands over the new lines alone, and the imports are rarely among them: the file
+    // on disk is what says where a name came from.
+    let known = fragment
+    try { known = fs.readFileSync(String(fileOf()), 'utf8') + NL + fragment } catch {}
+    const caught = ownInside(fragment, known)
+    if (caught.length) {
+      deny('Your own markup is going inside a component of the design system:' + NL +
+        caught.slice(0, 4).map((c) => '  ' + c).join(NL) + NL + SLOTS_REASON)
+    }
   }
 }
 

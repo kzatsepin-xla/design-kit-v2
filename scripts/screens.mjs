@@ -137,6 +137,13 @@ function staticCheck(list) {
 // frame — and the file passed because it also used a Badge for the cart counter. So it is
 // counted now rather than merely detected: elements the file draws itself against components
 // it takes from the library.
+// The same reading the write-time check uses, so the two never drift apart. Loaded softly:
+// a check that throws on a missing file would take the whole screen report with it.
+let ownInside = () => []
+try {
+  ({ ownInside } = await import('../.claude/hooks/lib/slots.mjs'))
+} catch {}
+
 const HAND_DRAWN = /(?:^|\n)\s*(?:export\s+)?const\s+[A-Z][A-Za-z0-9]*\s*=\s*styled\.[a-z]/g
 const TRACKED_IMPORT = /^(?:@xsolla\/xui-|@xui-vibe|\.)|components\//
 const RENDERS = /<[A-Z][\w.]*[\s/>]/
@@ -189,6 +196,15 @@ function handRolled() {
       if (/\.(stories|test|spec)\.tsx$/.test(e.name) || PLUMBING.has(e.name)) continue
       const src = read(p)
       if (!RENDERS.test(src)) continue
+      const rel0 = path.relative(root, p).split(path.sep).join('/')
+      // Handed to a library component: our own markup through a prop, or as its first child.
+      // A gap mark does not excuse this one — the answer is never a better wrapper.
+      const inside = ownInside(src)
+      if (inside.length) {
+        problems.push([rel0, 'hands a design system component something of its own: '
+          + inside.slice(0, 3).join('; ') + ' — a component takes only what it declares. What it'
+          + ' cannot say, the screen says another way, and the gap goes to the designer as an OQ-N'])
+      }
       const own = (src.match(HAND_DRAWN) || []).length
       const library = fromTheLibrary(src)
       if (own <= library) continue

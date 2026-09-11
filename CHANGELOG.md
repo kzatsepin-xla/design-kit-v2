@@ -4,6 +4,10 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.6.2 — 2026-09-11
+
+- Putting something of your own inside a library component is now stopped as it is typed, and named in the screen check for anything already on disk. A component takes what it declares; what the library has no place for comes to you as a question.
+
 ## 2.6.1 — 2026-09-11
 
 - A library component is now used only as it is: nothing of ours goes inside it. When the library has no place for something the mockup shows, you get the question instead of a look-alike built from pieces.
