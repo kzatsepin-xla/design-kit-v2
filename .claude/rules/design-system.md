@@ -5,6 +5,10 @@ paths:
 ---
 # Design system: the details
 
+Everything below is about the Xsolla design system, `@xsolla/xui-*`. `state.json` says which
+system this project builds on: another one, or none at all, and none of this applies — follow
+that system's own documentation instead, and take colours and spacing from its tokens.
+
 ## Do not write this
 
 | Not this | This |

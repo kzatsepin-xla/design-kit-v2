@@ -4,6 +4,30 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.6.0 — 2026-09-11
+
+- The search no longer answers for a library this project does not use: a prototype on another design system is pointed at its own documentation instead of a list of Xsolla packages to install.
+- The page of design-system details says in its first line which system it is about, so a project built on another one is not told to follow rules that do not apply to it.
+- A second feature no longer shows the first one's screens on its map, and its card no longer offers to open one of them.
+- The document check reads every feature the project has: starting a second one used to take the first out of every check while the run before a handoff still reported green.
+- A hand-broken state.json now says so in one sentence instead of a page of Node's own error, and says what the file is for.
+- An install that could not reach the registry says why, and the run no longer ends by inviting you to open a prototype that cannot start.
+- The screen check stops when the packages are not installed: the prototype does not start then, so nothing below that line could be true.
+- A step that moves the design system to a new generation waits for your yes again — in a library living at 0.x that is the middle number, and it was being read as the first one.
+- An update now tells you the version this project is on, not the one that happens to be on the server.
+
+## 2.5.0 — 2026-09-11
+
+- The end-of-turn check speaks again: a screen that drifted away from its documents, and the map being rebuilt, were both worked out and then thrown away instead of being said.
+- A screen nobody described in the documents is checked too — it used to be invisible to every check while the run still ended in "ready to show".
+- The ordinary state is no longer reported as missing from the code: every honest screen was failing that line, and a run that always ends red is a run nobody reads.
+- A state without words in it — a spinner while the data arrives — is no longer called an empty screen.
+- A component of your own is created with the reason it exists, in the same line, so it no longer fails the very check that sent you to create it.
+- A component of your own now builds in a project without the Xsolla design system: it no longer imports a package nobody installed.
+- In a project built from scratch a colour is no longer refused with advice about a theme that project does not have.
+- The search answers what was asked: a package found through one of its exports shows that export, not its whole contents, and a package that only passes work to its neighbours says so.
+- A kit file reached through a link in the path is protected again — the check used to decide the file was outside the project and stand aside.
+
 ## 2.4.2 — 2026-09-11
 
 - The list of open questions no longer pads itself: a rule that happens to say «still open» is a rule, not a question waiting for you.

@@ -24,6 +24,30 @@ const file = path.join(root, '.claude', 'ds', 'index.json')
 const query = process.argv.slice(2).join(' ').trim().toLowerCase()
 
 if (!query) { console.error('what are we looking for? node scripts/ds.mjs card'); process.exit(1) }
+
+// This catalogue is the Xsolla design system and nothing else. A project built on another
+// system, or on none, used to get the same answer anyway — a list of Xsolla packages under
+// the words "install it, do not draw your own". Following that advice installs a second
+// design system into a prototype that already has one.
+const project = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(root, 'state.json'), 'utf8')).designSystem || {}
+  } catch { return {} }
+})()
+
+if (project.kind === 'none') {
+  console.log('This project is built from scratch: there is no library to search.')
+  console.log('Create your own: node scripts/new-component.mjs <Name> "what was missing"')
+  process.exit(0)
+}
+
+if (project.kind === 'custom') {
+  console.log('This project is built on its own design system' + (project.url ? ': ' + project.url : '') + '.')
+  console.log('There is no catalogue of it here, so look in its own documentation for "' + query + '".')
+  console.log('The catalogue in this folder belongs to the Xsolla design system and does not apply.')
+  process.exit(0)
+}
+
 if (!fs.existsSync(file)) { console.error('no catalogue yet — build it: node scripts/ds-index.mjs'); process.exit(1) }
 
 const index = JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -35,6 +59,18 @@ terms = [...new Set(terms.filter(Boolean))]
 
 const norm = (s) => s.toLowerCase().replace(/[@\/\s_-]/g, '')
 const hit = (hay) => terms.some((t) => norm(hay).includes(norm(t)))
+
+// What a package re-exports, read off its own types. Several packages in the system are just
+// a barrel over their neighbours — xui-layout holds nothing but field-group, list and modal.
+function reexportsOf(pkg) {
+  const dts = ['web/index.d.ts', 'index.d.ts', 'dist/index.d.ts']
+    .map((p) => path.join(root, 'node_modules', pkg, p))
+    .find((p) => fs.existsSync(p))
+  if (!dts) return []
+  const out = new Set()
+  for (const m of fs.readFileSync(dts, 'utf8').matchAll(/export\s+\*\s+from\s+['"]([^'"]+)['"]/g)) out.add(m[1])
+  return [...out]
+}
 
 const installedByPkg = new Map(index.installed.map((p) => [p.pkg, p]))
 const branchOnly = new Set(index.branchOnly || [])
@@ -107,13 +143,31 @@ const avail = found.filter((f) => !f.inst)
 if (ready.length) {
   console.log('INSTALLED — use as is:')
   for (const f of ready) {
-    for (const c of f.inst.components) {
+    // A package matched by one of its exports is not a package the designer asked for. `stack`
+    // finds ModalStackProvider inside the core package, and the whole of core — thirty constants
+    // and providers — used to be printed, with the one line that answered the question at the
+    // bottom of it. Only the names that match are shown then; a package matched by its own name
+    // still shows everything, because that is what was asked for.
+    const all = f.inst.components
+    const matched = hit(f.short) ? all : all.filter((c) => hit(c.name))
+    const shown = matched.length ? matched : all
+    for (const c of shown) {
       const p = c.props.slice(0, 10).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
       const more = c.props.length > 10 ? ` … +${c.props.length - 10}` : ''
       console.log(`  ${c.name}  ${f.pkg}${f.inst.ownStyled ? '  ⚠ carries its own styled-components' : ''}`)
       if (p.length) console.log(`    ${p.join(' · ')}${more}`)
     }
-    if (!f.inst.components.length) console.log(`  ${f.pkg} (components not parsed — read the package types)`)
+    if (shown.length < all.length) {
+      console.log(`    … and ${all.length - shown.length} more in ${f.pkg}, none of them named like "${query}"`)
+    }
+    // A package that only re-exports its neighbours has nothing of its own to show, and telling
+    // the designer to read its types sends them to a file with three lines of forwarding in it.
+    if (!all.length) {
+      const barrel = reexportsOf(f.pkg)
+      console.log(barrel.length
+        ? `  ${f.pkg} passes on what other packages hold: ${barrel.join(', ')} — search for those`
+        : `  ${f.pkg} (components not parsed — read the package types)`)
+    }
   }
 }
 

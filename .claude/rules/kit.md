@@ -29,7 +29,7 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 |---|---|
 | Run the prototype | `npm run dev` |
 | Find a component | `node scripts/ds.mjs <what you need>` |
-| New own component | `node scripts/new-component.mjs <Name>` |
+| New own component | `node scripts/new-component.mjs <Name> "what was missing"` |
 | Product documents | `node scripts/docs.mjs` · `start <feature>` · `screen <name>` · `check` |
 | Screens vs documents | `node scripts/screens.mjs` |
 | Everything before a handoff | `node scripts/preflight.mjs` |
@@ -48,9 +48,10 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
    Found and installed: use it. Found but not installed: install it, do not draw your own.
 2. **Team gallery** `@xui-vibe` — components other designers already wrote. The search shows
    them in the same output. Say plainly that it is a colleague's work, not the design system.
-3. **Your own** — only when the first two are empty: `node scripts/new-component.mjs <Name>`.
-   Leave `// gap: what the library was missing` in the file — that list goes to the design
-   system team, and `screens.mjs` fails a hand-made interface without it.
+3. **Your own** — only when the first two are empty:
+   `node scripts/new-component.mjs <Name> "what the library was missing"`. That sentence lands
+   in the file as a `// gap:` mark — the list goes to the design system team, and `screens.mjs`
+   fails a hand-made interface without it.
 
 A layer name in a mockup is not a package name: `Progress` lives as `progress-bar`, a game
 card as `b2c-game-card`. Search shorter before concluding it does not exist.

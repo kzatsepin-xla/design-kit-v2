@@ -386,7 +386,12 @@ function update(argv) {
   const fresh = manifestOf(tmp)
   if (compare(fresh.version, before.version) <= 0 && shaOf(tmp) === before.sha) {
     fs.rmSync(tmp, { recursive: true, force: true })
-    console.log('Already the newest kit. Version ' + fresh.version + '.')
+    // The project's own version, not the server's: they are the same number in the ordinary
+    // case, and when they are not, printing the server's told the designer their project had
+    // gone backwards.
+    console.log(compare(fresh.version, before.version) < 0
+      ? 'This project is on kit ' + before.version + ', newer than the ' + fresh.version + ' on the server. Nothing to update.'
+      : 'Already the newest kit. Version ' + before.version + '.')
     return
   }
   const r = spawnSync(process.execPath, [
@@ -509,8 +514,10 @@ function release(argv) {
   const log = path.join(kitRoot, 'CHANGELOG.md')
   const text = fs.readFileSync(log, 'utf8')
   const at = text.indexOf(NL + '## ')
+  // Two blank lines at the end, not one: the second is the empty line that has to stand between
+  // the last entry of this release and the heading of the previous one.
   const entry = ['## ' + manifest.version + ' — ' + new Date().toISOString().slice(0, 10), '',
-    ...lines.map((l) => '- ' + l), ''].join(NL)
+    ...lines.map((l) => '- ' + l), '', ''].join(NL)
   fs.writeFileSync(log, at === -1 ? text + NL + entry : text.slice(0, at + 1) + entry + text.slice(at + 1))
 
   console.log('Version ' + manifest.version + ' written into the manifest and the changelog.')

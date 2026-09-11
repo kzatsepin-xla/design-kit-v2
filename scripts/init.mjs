@@ -60,7 +60,23 @@ if (!refreshing && (!screens.length || screens.some((s) => !/^[a-z][a-z0-9-]*$/.
 const screen = refreshing ? null : screens[0]
 
 const root = process.cwd()
-const state = fs.existsSync('state.json') ? JSON.parse(fs.readFileSync('state.json', 'utf8')) : {}
+// state.json is hand-editable and sometimes hand-broken — a trailing comma is enough. Parsed
+// without care it killed this script with a stack trace addressed to nobody: a designer who
+// does not use a terminal cannot read "Expected double-quoted property name at position 48",
+// and the line does not even name the file.
+function readState(file) {
+  if (!fs.existsSync(file)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch (e) {
+    console.error('state.json cannot be read: ' + String(e.message || e))
+    console.error('It holds the mode, the design system and the current feature, so nothing here')
+    console.error('can run until it is valid JSON again. Usually a stray comma or a missing quote.')
+    process.exit(1)
+  }
+}
+
+const state = readState('state.json')
 const ds = state.designSystem?.kind ?? 'none'   // xui | custom | none
 const dsUrl = state.designSystem?.url ?? null
 
@@ -328,6 +344,21 @@ function ensureTypes() {
   return out
 }
 
+// The build config does not stay as this script writes it. The Context button adds its
+// middleware and the inspector's marking plugin, the team gallery adds its alias — all of it
+// on top of the same file, minutes after it is created. Those lines are the kit's own work
+// too, so they are put back whenever the file is rewritten, and counted as the kit's
+// handwriting when the hash is taken. Without that every project on earth looked edited by
+// hand from its first day, and a fix to the config reached none of them.
+function rewire(rel) {
+  if (rel !== 'vite.config.ts') return
+  for (const [script, arg] of [['context-app.mjs', 'wire'], ['vibe.mjs', 'wire']]) {
+    const file = path.join(root, 'scripts', script)
+    if (!fs.existsSync(file)) continue
+    try { execSync('node ' + JSON.stringify(file) + ' ' + arg, { cwd: root, stdio: 'ignore' }) } catch {}
+  }
+}
+
 if (refreshing) {
   const known = (marker() || {}).shell || {}
   const notes = ensureTypes()
@@ -338,6 +369,17 @@ if (refreshing) {
     const now = fs.readFileSync(file, 'utf8')
     const next = build()
     if (now === next) { rewritten.push(rel); continue }        // already current, just re-record
+    // Written before the patches were counted as the kit's own: the file on disk is the old
+    // template with the button and the gallery added on top, and its hash therefore matches
+    // nothing. Rebuilding it the way the kit would today answers whether anything of the
+    // designer's is in there — if the result is the same file, nobody but the kit ever wrote
+    // it, and the next update can refresh it properly.
+    if (known[rel] && known[rel] !== hashOf(file)) {
+      fs.writeFileSync(file, next)
+      rewire(rel)
+      if (fs.readFileSync(file, 'utf8') === now) { rewritten.push(rel); continue }
+      fs.writeFileSync(file, now)
+    }
     if (!known[rel]) {
       // Written before the kit started remembering its own handwriting, so there is no telling
       // an edit of theirs from a fix of ours. Leaving it alone is the only safe answer.
@@ -347,8 +389,14 @@ if (refreshing) {
     }
     if (known[rel] === hashOf(file)) {
       fs.writeFileSync(file, next)
+      rewire(rel)
       rewritten.push(rel)
-      notes.push('Brought up to date, and you had not touched it: ' + rel)
+      // Rewritten from the template and wired back up to exactly what was there: nothing for
+      // the designer to hear about. The file only differed from the plain template because the
+      // button and the gallery had added their lines to it.
+      if (fs.readFileSync(file, 'utf8') !== now) {
+        notes.push('Brought up to date, and you had not touched it: ' + rel)
+      }
     } else {
       notes.push('Left as it is, because you have edited it: ' + rel)
     }
@@ -420,25 +468,35 @@ for (const name of screens) {
 `)
 }
 
-rememberShell(Object.keys(SHELL))
+// The hashes are taken at the very end of this run, not here: what the button and the gallery
+// add to the build config below is the kit's handwriting as much as the template is.
+const shellCreated = Object.keys(SHELL).filter((rel) => created.includes(rel))
 
 // ——— dependencies are installed once ———
 
 let installed = false
+let installFailed = false
 if (!fs.existsSync(path.join(root, 'node_modules'))) {
   process.stdout.write('installing dependencies… ')
   try {
-    execSync('npm install --silent', { stdio: 'pipe' })
+    // Not --silent: when this fails, what npm printed is the only clue there is, and under
+    // --silent npm says nothing at all. A run behind a firewall used to end in the word
+    // "failed" followed by two blank lines.
+    execSync('npm install --no-audit --no-fund --loglevel=error', { stdio: 'pipe' })
     installed = true
     console.log('done')
   } catch (e) {
+    installFailed = true
     console.log('failed')
-    const msg = String(e.stderr || e.message)
+    const msg = String(e.stderr || e.message || '')
     if (/E40[13]|ENEEDAUTH|xsolla/i.test(msg) && ds === 'xui') {
       console.error('\nThe @xsolla/xui-* packages are private — you need access to the internal Xsolla npm registry.')
-      console.error('The files are created; install the dependencies once you have access: npm install')
+    } else if (/ENOTFOUND|EAI_AGAIN|ETIMEDOUT|ECONNREFUSED|proxy/i.test(msg)) {
+      console.error('\nThe packages could not be fetched: no way to the registry from here.')
+    } else if (msg.trim()) {
+      console.error('\n' + msg.split('\n').filter(Boolean).slice(0, 3).join('\n'))
     } else {
-      console.error('\n' + msg.split('\n').slice(0, 3).join('\n'))
+      console.error('\nnpm gave no reason. Usually that is no network, or no access to the registry.')
     }
   }
 }
@@ -447,13 +505,21 @@ if (!fs.existsSync(path.join(root, 'node_modules'))) {
 // Without it the agent works out the library by reading service files: in one measurement that
 // cost 100k against 17k for the same screen. The catalogue is built from what is installed.
 
-if (ds !== 'none' && fs.existsSync(path.join(root, 'node_modules'))) {
+if (ds === 'xui' && fs.existsSync(path.join(root, 'node_modules'))) {
   try {
     execSync('node scripts/ds-index.mjs', { stdio: 'inherit' })
     execSync('node scripts/fetch-ds-skill.mjs', { stdio: 'inherit' })   // the design-system team's guide
   } catch {
     console.log('could not build the catalogue — not critical, the agent will read the types')
   }
+}
+
+// The catalogue is a list of Xsolla packages, so there is nothing to build here for a project
+// that stands on another design system. Built anyway, it answered every search with packages
+// from a library this project does not use, under the words "install it, do not draw your own".
+if (ds === 'custom') {
+  console.log('design system: ' + (dsUrl || 'the one you named') + ' — its own documentation is the source here,')
+  console.log('  there is no catalogue of it in the project, and the search says so')
 }
 
 // The interface copy rulebook. It lives in vendor/ and never starts by itself:
@@ -471,13 +537,23 @@ if (created.includes('index.html')) {
   } catch {}
 }
 
+rememberShell(shellCreated)
+
 // ——— report ———
 
 console.log()
 if (created.length) console.log('created:\n' + created.map((f) => '  ' + f).join('\n'))
 if (skipped.length) console.log('already there:\n' + skipped.map((f) => '  ' + f).join('\n'))
 
-if (created.length) {
+// Saying "open it" after a failed install sends the designer to a command that cannot work:
+// there is no vite in the folder and nothing to run. The files are real, the prototype is not
+// yet, and that is worth one plain sentence rather than a cheerful last line.
+if (installFailed) {
+  console.log()
+  console.log('The files are all there, but the packages are not: the prototype will not start yet.')
+  console.log('Nothing is lost — ask for it again when there is a way to the registry, and this')
+  console.log('picks up where it stopped.')
+} else if (created.length) {
   console.log()
   console.log('open it: npm run dev — the Context button is already in the bottom right')
 }

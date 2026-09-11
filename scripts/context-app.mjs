@@ -52,8 +52,24 @@ const NL = String.fromCharCode(10)
 const OUT = 'public/context-app-data'
 const STAND = 'https://prototype.xsolla.dev/context-app/embed.js'
 
+// state.json is hand-editable and sometimes hand-broken — a trailing comma is enough. Parsed
+// without care it killed this script with a stack trace addressed to nobody: a designer who
+// does not use a terminal cannot read "Expected double-quoted property name at position 48",
+// and the line does not even name the file.
+function readState(file) {
+  if (!fs.existsSync(file)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch (e) {
+    console.error('state.json cannot be read: ' + String(e.message || e))
+    console.error('It holds the mode, the design system and the current feature, so nothing here')
+    console.error('can run until it is valid JSON again. Usually a stray comma or a missing quote.')
+    process.exit(1)
+  }
+}
+
 const statePath = path.join(root, 'state.json')
-const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {}
+const state = readState(statePath)
 // The in-memory snapshot changes too: without that the second write of a run overwrote the
 // first — prototypeId was saved and the deploy folder disappeared right after.
 const saveState = (patch) => {
@@ -144,7 +160,13 @@ function flowMapOf(featureId) {
   }
 
   // No state documents — put the screens themselves on the map so it can be walked at all.
-  if (!nodes.length) {
+  //
+  // Only while there is one feature to put them under. With two, this handed every screen in
+  // the project to whichever feature had no documents yet: a designer opened the map of a
+  // feature started this morning and found last month's screens on it, each one promising to
+  // belong there.
+  const featureCount = dirs('docs/features').length
+  if (!nodes.length && featureCount < 2) {
     dirs('src/screens').forEach((screen, col) => {
       flows.push({ id: screen, label: screen })
       nodes.push({ id: screen, label: screen, flowId: screen, isEntryPoint: true, position: at(col, 0), target: { sectionId: screen } })
@@ -232,11 +254,14 @@ function summaryOf(featureId) {
 }
 
 function buildRegistry() {
-  const features = dirs('docs/features').map((id) => {
+  const featureIds = dirs('docs/features')
+  const features = featureIds.map((id) => {
     const feature = { id, title: id, summary: summaryOf(id) }
     const map = flowMapOf(id)
     if (map) feature.flowMap = map
-    else if (dirs('src/screens')[0]) feature.entrySectionId = dirs('src/screens')[0]
+    // And the same for the card's own "open it" link: with one feature the first screen of the
+    // prototype is a fair guess, with two it points at somebody else's screen.
+    else if (featureIds.length < 2 && dirs('src/screens')[0]) feature.entrySectionId = dirs('src/screens')[0]
     return feature
   })
 
@@ -500,8 +525,20 @@ function cmdRefresh() {
   if (app !== 'downloaded') process.exit(1)
 }
 
+// Put the button's own lines back into the build config, and nothing else: no network, no
+// npm, no rebuilding of the data. A kit update rewrites vite.config.ts when the kit wrote it
+// and the designer never touched it — and everything the button added to that file would be
+// gone with it. This is how it goes back on, straight after.
+function cmdWire() {
+  if (!exists('public/context-app')) return          // the button was never connected here
+  ensureSourceMeta()
+  const warning = ensureViteFix()
+  if (warning) console.log('Note: ' + warning)
+}
+
 const [cmd, arg] = process.argv.slice(2)
 if (cmd === 'connect') cmdConnect(arg && !arg.startsWith('--') ? arg : undefined)
+else if (cmd === 'wire') cmdWire()
 else if (cmd === 'export') cmdExport()
 else if (cmd === 'check') cmdCheck()
 else if (cmd === 'refresh') cmdRefresh()
@@ -510,4 +547,5 @@ else {
   console.log('node scripts/context-app.mjs export    rebuild the catalogue, docs and map')
   console.log('node scripts/context-app.mjs check     verify before a deploy')
   console.log('node scripts/context-app.mjs refresh   fetch the current copy of the button')
+  console.log('node scripts/context-app.mjs wire      put the button back into the build config')
 }

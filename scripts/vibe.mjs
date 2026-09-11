@@ -263,8 +263,18 @@ function cmdUpdate() {
   console.log('The gallery is current, and the search knows what is new on the shelf.')
 }
 
+// The gallery's alias, put back into the build config and the type config after a kit update
+// rewrote them. Local and idempotent: nothing is fetched and nothing is installed.
+function cmdWire() {
+  if (!fs.existsSync(VIBE)) return                   // the gallery was never connected here
+  const warning = ensureAlias()
+  ensureTsPaths()
+  if (warning) console.log('Note: ' + warning)
+}
+
 const [cmd, arg, flag] = process.argv.slice(2)
 if (cmd === 'connect') cmdConnect()
+else if (cmd === 'wire') cmdWire()
 else if (cmd === 'update') cmdUpdate()
 else if (cmd === 'promote') cmdPromote(arg, flag === '--pr')
 else {
@@ -272,4 +282,5 @@ else {
   console.log('node scripts/vibe.mjs update             pull what colleagues have added')
   console.log('node scripts/vibe.mjs promote <Name>     send your component to the shelf')
   console.log('node scripts/vibe.mjs promote <Name> --pr   ... and open a pull request')
+  console.log('node scripts/vibe.mjs wire               put the gallery alias back into the config')
 }

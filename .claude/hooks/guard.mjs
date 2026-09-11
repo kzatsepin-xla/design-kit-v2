@@ -83,7 +83,26 @@ if (!file) {
   process.exit(0)
 }
 
-const parts = path.relative(home, file).split(path.sep)
+// The project folder and the file are named by two different sides, and they do not have to
+// spell the same place the same way: on macOS /tmp is a link to /private/tmp, and Cursor hands
+// over the workspace root as typed while the tool reports the resolved path. Compared as
+// written, every file then looks like it lives outside the project — and the check stands
+// aside without a word, which is the worst answer it has.
+// The file is usually about to be created and does not exist yet, so the nearest folder that
+// does is resolved instead and the rest of the path put back on the end.
+function real(p) {
+  let head = path.resolve(p)
+  const tail = []
+  for (;;) {
+    try { return path.join(fs.realpathSync(head), ...tail) } catch {}
+    const up = path.dirname(head)
+    if (up === head) return path.resolve(p)
+    tail.unshift(path.basename(head))
+    head = up
+  }
+}
+
+const parts = path.relative(real(home), real(file)).split(path.sep)
 
 if (parts[0] === '..' || path.isAbsolute(parts[0])) process.exit(0)   // outside the project, none of our business
 

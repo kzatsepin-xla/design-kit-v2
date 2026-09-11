@@ -40,8 +40,24 @@ const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z
 const NL = String.fromCharCode(10)
 
 const catalog = JSON.parse(fs.readFileSync(path.join(here, 'stages.json'), 'utf8'))
+// state.json is hand-editable and sometimes hand-broken — a trailing comma is enough. Parsed
+// without care it killed this script with a stack trace addressed to nobody: a designer who
+// does not use a terminal cannot read "Expected double-quoted property name at position 48",
+// and the line does not even name the file.
+function readState(file) {
+  if (!fs.existsSync(file)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch (e) {
+    console.error('state.json cannot be read: ' + String(e.message || e))
+    console.error('It holds the mode, the design system and the current feature, so nothing here')
+    console.error('can run until it is valid JSON again. Usually a stray comma or a missing quote.')
+    process.exit(1)
+  }
+}
+
 const statePath = path.join(root, 'state.json')
-const state = fs.existsSync(statePath) ? JSON.parse(fs.readFileSync(statePath, 'utf8')) : {}
+const state = readState(statePath)
 
 const today = new Date().toISOString().slice(0, 10)
 const created = []
@@ -276,12 +292,34 @@ function collectIds(text, isIndex) {
 
 // ——— command: the check ———
 
+// Every feature the project has, not only the one being worked on today. The check used to
+// read state.json and look at that one — so the moment a second feature started, the first
+// stopped being checked by anything, while the run before a handoff still reported green.
 function cmdCheck() {
-  const feature = state.feature
-  if (!feature) { console.error('No feature selected — nothing to check.'); process.exit(1) }
+  const dir = path.join(root, 'docs', 'features')
+  const features = fs.existsSync(dir)
+    ? fs.readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name).sort()
+    : []
+  if (!features.length) {
+    console.error(state.feature
+      ? 'No documents yet: node scripts/docs.mjs start ' + state.feature
+      : 'No feature selected — nothing to check.')
+    process.exit(1)
+  }
+  let bad = 0
+  for (const feature of features) bad += checkFeature(feature) ? 0 : 1
+  process.exit(bad ? 1 : 0)
+}
+
+// One feature: returns whether it came out clean. Ids are numbered inside a feature, so each
+// one is read on its own — a BR-1 in two features is two different rules, not a repeat.
+function checkFeature(feature) {
   const base = path.join(root, 'docs', 'features', feature)
   const files = mdFiles(base)
-  if (!files.length) { console.error('No documents yet: node scripts/docs.mjs start ' + feature); process.exit(1) }
+  if (!files.length) {
+    console.log('Feature "' + feature + '": no documents yet — node scripts/docs.mjs start ' + feature)
+    return true
+  }
 
   const problems = []
   // Documents brought over from the previous kit repeat an id across files on purpose, and
@@ -347,7 +385,8 @@ function cmdCheck() {
     console.log(NL + 'Open questions for the designer: ' + open.length)
     for (const q of open.slice(0, 10)) console.log('  ' + q)
   }
-  process.exit(problems.length ? 1 : 0)
+  console.log('')
+  return problems.length === 0
 }
 
 // ——— the default command: where are we ———

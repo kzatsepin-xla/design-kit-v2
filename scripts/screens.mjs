@@ -61,8 +61,13 @@ function promises() {
       }
     } catch {}
   }
-  if (!out.length) {
-    for (const screen of dirs(path.join(root, 'src', 'screens'))) out.push({ id: screen, screen, state: null })
+  // A screen with no state matrix never reaches the map, and the map used to be the whole list:
+  // the screen was then checked by nobody at all, while the run still ended in "ready to show".
+  // Whatever the documents forgot, a folder in src/screens is a screen and is opened here too.
+  const named = new Set(out.map((p) => p.screen))
+  for (const screen of dirs(path.join(root, 'src', 'screens'))) {
+    if (named.has(screen)) continue
+    out.push({ id: screen, screen, state: null })
   }
   return out
 }
@@ -105,6 +110,10 @@ function staticCheck(list) {
     if (!sources.has(p.screen)) sources.set(p.screen, sourceOf(p.screen))
     const src = sources.get(p.screen)
     if (!src) continue
+    // The ordinary state is what a screen draws when it is asked for nothing in particular, so
+    // the word normal has no reason to appear in the code. Reported as a problem it failed every
+    // honest screen, and a run that always ends red is a run nobody reads.
+    if (p.state === 'normal') continue
     if (p.state && !src.includes("'" + p.state + "'") && !src.includes('"' + p.state + '"')) {
       problems.push([p.id, 'state "' + p.state + '" is described in the documents but never mentioned in the code — the screen may show it by default'])
     }
@@ -185,7 +194,7 @@ function handRolled() {
       if (own <= library) continue
       if (GAP_MARK.test(src)) continue
       const rel = path.relative(root, p).split(path.sep).join('/')
-      problems.push([rel, 'draws ' + own + ' elements of its own against ' + library + ' taken from '
+      problems.push([rel, 'draws ' + own + (own === 1 ? ' element' : ' elements') + ' of its own against ' + library + ' taken from '
         + 'the library — compose it from XUI, or say what the library is missing: // gap: what is missing'])
     }
   }
@@ -264,10 +273,19 @@ async function runtimeCheck(list) {
 
       const shot = await page.evaluate(() => {
         const root = document.getElementById('root')
-        return { text: (root?.innerText || '').replace(/\s+/g, ' ').trim(), nodes: root ? root.querySelectorAll('*').length : 0 }
+        return {
+          text: (root?.innerText || '').replace(/\s+/g, ' ').trim(),
+          nodes: root ? root.querySelectorAll('*').length : 0,
+          // A state can be wordless and still be the right screen: loading is a spinner, and the
+          // library offers nothing else for it. Counting words alone called that state empty on
+          // every run, which is the one state the library forces to look exactly like this.
+          wordless: root ? root.querySelectorAll('[role], [aria-label], svg, img, canvas').length : 0,
+        }
       })
 
-      if (!shot.nodes || shot.text.length < 3) problems.push([p.id, 'the screen is empty: ' + shot.nodes + ' elements in it'])
+      if (!shot.nodes || (shot.text.length < 3 && !shot.wordless)) {
+        problems.push([p.id, 'the screen is empty: ' + shot.nodes + (shot.nodes === 1 ? ' element' : ' elements') + ' in it'])
+      }
       // Warnings from our own tooling do not count as errors.
       // The inspector marks make React complain about an unknown prop — that is our own
       // instrument and in a report it only gets in the way. React prints the prop name as a
@@ -366,6 +384,15 @@ async function main() {
     const problems = missingScreens(list)
     for (const [id, what] of problems) console.log(id + ' — ' + what)
     process.exit(problems.length ? 1 : 0)
+  }
+
+  // Nothing below means anything without the packages: the screens cannot be opened, the types
+  // cannot be read, and `npm run dev` does not start. A run that ends in "nothing wrong in what
+  // could be checked" while the prototype cannot open at all is worse than no run.
+  if (fs.existsSync(path.join(root, 'package.json')) && !fs.existsSync(path.join(root, 'node_modules'))) {
+    console.log('the packages are not installed here, so the prototype does not start and nothing')
+    console.log('below could be checked. Install them once there is a way to the registry: npm install')
+    process.exit(1)
   }
 
   const list = promises()

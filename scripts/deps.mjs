@@ -17,9 +17,12 @@
 //    node scripts/deps.mjs --majors     also take the steps that can break the prototype
 //
 //  WHAT IT WILL NOT DO WITHOUT ASKING
-//  A package that changes its first number — React 19 to 20, the design system to a new
-//  generation — can break a working prototype in ways only your eyes will catch. Those are
-//  named in the report and left where they are. Taking them is a separate yes.
+//  A package that moves to a new generation — React 19 to 20, the design system from 0.216 to
+//  0.217 — can break a working prototype in ways only your eyes will catch. Those are named in
+//  the report and left where they are. Taking them is a separate yes.
+//  Which number counts is npm's own rule: the first one that is not zero. A library living at
+//  0.x breaks on its middle number, and reading only the leading one called every one of those
+//  steps ordinary.
 //
 //  WHAT ELSE IT REFRESHES
 //  The component catalogue, the design system team's guide, the local copy of the Context
@@ -59,7 +62,15 @@ function script(file, args = []) {
   return { ok: r.status === 0, text: ((r.stdout || '') + (r.stderr || '')).trim() }
 }
 
-const major = (v) => parseInt(String(v || '').replace(/^[^0-9]*/, '').split('.')[0], 10)
+// Which generation of a package a version belongs to, by npm's own rule: the first number
+// that is not zero is the one that breaks. The design system sits at 0.216, so comparing the
+// leading number alone said 0.216 -> 0.300 was an ordinary step and moved the whole library
+// under a working prototype without asking — the one case the report at the end exists for.
+function generation(v) {
+  const parts = String(v || '').replace(/^[^0-9]*/, '').split('.').map((n) => parseInt(n, 10) || 0)
+  const at = parts.findIndex((n) => n > 0)
+  return at === -1 ? 'zero' : at + ':' + parts.slice(0, at + 1).join('.')
+}
 
 if (!has('package.json')) {
   console.log('No prototype here yet, so there are no packages to update.')
@@ -95,7 +106,7 @@ const rows = Object.entries(behind)
   .filter(([name]) => name in declared)
   .map(([name, info]) => {
     const i = Array.isArray(info) ? info[0] : info
-    return { name, current: i.current, latest: i.latest, breaking: major(i.latest) > major(i.current) }
+    return { name, current: i.current, latest: i.latest, breaking: generation(i.latest) !== generation(i.current) }
   })
   .filter((r) => r.latest && r.current !== r.latest)
 
@@ -168,7 +179,7 @@ for (const f of failed) console.log('Could not refresh ' + f)
 
 if (held.length && !withMajors) {
   console.log('')
-  console.log('Left alone, because these change their first number and can break the prototype:')
+  console.log('Left alone, because these move to a new generation and can break the prototype:')
   for (const r of held) console.log('  ' + r.name + ' ' + r.current + ' -> ' + r.latest)
   console.log('Taking that step is a decision, not a routine — it needs the designer\'s yes.')
 }

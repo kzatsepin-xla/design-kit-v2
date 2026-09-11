@@ -60,7 +60,13 @@ const changed = Math.max(
   newest(path.join(root, 'docs', 'features')),
   newest(path.join(root, 'src', 'screens')),
 )
-if (changed <= built) process.exit(0)
+// Lines are collected and sent at the end, never printed on the way — and for a long time the
+// end was an `exit` standing in front of the send, so every word this check found died here.
+// The drift between documents and screens was the loudest of them: the whole reason the check
+// runs at the end of a turn, and the agent never heard it once.
+const done = () => { flush('Stop'); process.exit(0) }
+
+if (changed <= built) done()
 
 const run = spawnSync(process.execPath, ['scripts/context-app.mjs', 'export'], {
   cwd: root,
@@ -68,13 +74,11 @@ const run = spawnSync(process.execPath, ['scripts/context-app.mjs', 'export'], {
 })
 if (run.status !== 0) {
   say('[context-app] could not rebuild the data — take a look: node scripts/context-app.mjs export')
-  process.exit(0)
+  done()
 }
 
 // Take the node count out of the exporter's report — that is the useful part.
 const nodes = /nodes on the map: (\d+)/.exec(run.stdout || '')
 say('[context-app] data rebuilt' + (nodes ? ', nodes on the map: ' + nodes[1] : ''))
 
-process.exit(0)
-
-flush('Stop')
+done()

@@ -175,22 +175,48 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
 // The signal is a colour literal, nothing else. Inline styles are not touched: screens that
 // follow the theme use them constantly, and denying those would be a tax on the honest.
 const COLOUR = /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?![0-9a-zA-Z_-])|(?:rgba?|hsla?)[(]/
+
+// Which design system this project builds on, if any. A colour is only wrong where a token
+// exists to take instead: a project started from scratch has no theme at all, and the rule
+// as written refused every colour in it while advising a hook from a library nobody installed.
+// That is a project the kit offers as one of three ways to work, made unworkable by a check.
+function designSystem() {
+  try {
+    const kind = JSON.parse(fs.readFileSync(path.join(root, 'state.json'), 'utf8')).designSystem?.kind
+    if (kind) return kind
+  } catch { /* hand-edited into invalid JSON — the packages still answer */ }
+  // No answer from the state file is not an answer of "none": a project with the design system
+  // installed would then lose the rule entirely, which is how a check quietly stops running.
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'))
+    const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
+    if (deps.some((d) => d.startsWith('@xsolla/xui-'))) return 'xui'
+  } catch {}
+  return 'none'
+}
+
 if (toolOf() === 'Write' || toolOf() === 'Edit') {
   const painted = bodyOf()
   const where = String(fileOf() || '').split(path.sep).join('/')
   const mine = /[/]src[/]/.test(where) && !/[/]src[/]kit[/]/.test(where) && /[.]tsx?$/.test(where)
-  if (mine && COLOUR.test(painted)) {
-    deny(
-      'A colour written out by hand. Take it from the theme instead:' + NL +
-      "  const { theme } = useResolvedTheme({})  →  theme.colors.background.primary for a surface," + NL +
-      '  theme.colors.content.primary for text — there is no theme.colors.text, and reaching for it' + NL +
-      '  gives undefined and no colour at all. theme.colors.control[tone][variant] for anything the' + NL +
-      '  player presses, theme.colors.border.* for a line.' + NL +
-      'The mockup shows a shade the theme has no token for — that is a question for the designer' + NL +
-      'and for the design system team, not a value to invent. Ask, and say which shade and where.' + NL +
-      'Content that genuinely carries its own colour — cover art, a game logo — belongs in an' + NL +
-      'image or in a data file, not in the screen.',
-    )
+  const kind = designSystem()
+  if (mine && kind !== 'none' && COLOUR.test(painted)) {
+    deny(kind === 'xui'
+      ? 'A colour written out by hand. Take it from the theme instead:' + NL +
+        "  const { theme } = useResolvedTheme({})  →  theme.colors.background.primary for a surface," + NL +
+        '  theme.colors.content.primary for text — there is no theme.colors.text, and reaching for it' + NL +
+        '  gives undefined and no colour at all. theme.colors.control[tone][variant] for anything the' + NL +
+        '  player presses, theme.colors.border.* for a line.' + NL +
+        'The mockup shows a shade the theme has no token for — that is a question for the designer' + NL +
+        'and for the design system team, not a value to invent. Ask, and say which shade and where.' + NL +
+        'Content that genuinely carries its own colour — cover art, a game logo — belongs in an' + NL +
+        'image or in a data file, not in the screen.'
+      : 'A colour written out by hand, in a project built on a design system of its own —' + NL +
+        'the link to it is in state.json. Take the colour from its tokens: picked by hand it stops' + NL +
+        'following the product theme, and nobody can tell later which shade was meant and which' + NL +
+        'was guessed. No token covers this shade — that is a question for the designer, not a' + NL +
+        'value to invent. Content that carries its own colour — cover art, a logo — belongs in an' + NL +
+        'image or in a data file, not in the screen.')
   }
 }
 
@@ -236,7 +262,9 @@ if (!file.includes('/src/components/')) process.exit(0)
 if (!fs.existsSync(path.join(root, 'scripts', 'new-component.mjs'))) process.exit(0)
 
 deny(
-  'A new component is created by a script: `node scripts/new-component.mjs ' + Name + '`.\n' +
+  'A new component is created by a script:\n' +
+  '  node scripts/new-component.mjs ' + Name + ' "what the library was missing"\n' +
   'It checks the design-system registry once more and creates the folder with the component,\n' +
-  'a story and a readme, in the shape the team gallery expects.',
+  'a story and a readme, in the shape the team gallery expects. The sentence you pass lands in\n' +
+  'the file as a // gap: mark and goes to the design system team.',
 )

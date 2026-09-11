@@ -43,7 +43,23 @@ const SOURCE = {
 }
 
 const root = process.cwd()
-const state = fs.existsSync('state.json') ? JSON.parse(fs.readFileSync('state.json', 'utf8')) : {}
+// state.json is hand-editable and sometimes hand-broken — a trailing comma is enough. Parsed
+// without care it killed this script with a stack trace addressed to nobody: a designer who
+// does not use a terminal cannot read "Expected double-quoted property name at position 48",
+// and the line does not even name the file.
+function readState(file) {
+  if (!fs.existsSync(file)) return {}
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch (e) {
+    console.error('state.json cannot be read: ' + String(e.message || e))
+    console.error('It holds the mode, the design system and the current feature, so nothing here')
+    console.error('can run until it is valid JSON again. Usually a stray comma or a missing quote.')
+    process.exit(1)
+  }
+}
+
+const state = readState('state.json')
 const kind = state.designSystem?.kind ?? 'none'
 const source = SOURCE[kind]
 
