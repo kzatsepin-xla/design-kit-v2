@@ -34,10 +34,11 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 | Screens vs documents | `node scripts/screens.mjs` |
 | Everything before a handoff | `node scripts/preflight.mjs` |
 | Update the kit | `node scripts/kit.mjs update` · `check` |
+| Update the packages | `node scripts/deps.mjs` · `--check` · `--majors` |
 | Refresh the Cursor side | `node scripts/cursor.mjs` |
 | What you decided for them | `node scripts/debt.mjs` |
 | Context button, map, docs | `node scripts/context-app.mjs connect` · `export` · `check` |
-| Team gallery | `node scripts/vibe.mjs connect` · `promote <Name>` |
+| Team gallery | `node scripts/vibe.mjs connect` · `update` · `promote <Name>` |
 | Compare a screen to its mockup | `/review <screen>` |
 | Interface copy | `/ux` — only when they ask |
 

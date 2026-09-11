@@ -274,9 +274,9 @@ function extraProblems(manifest) {
 // on the stand the button works without a local copy.
 const APP_URL = 'http://34.102.7.243/context-app-open/context-app-dist.tgz'
 
-function fetchApp() {
+function fetchApp(force) {
   const dest = path.join(root, 'public', 'context-app')
-  if (fs.existsSync(path.join(dest, 'embed.js'))) return 'already there'
+  if (!force && fs.existsSync(path.join(dest, 'embed.js'))) return 'already there'
   const tmp = path.join(os.tmpdir(), 'context-app-' + process.pid)
   const tgz = path.join(tmp, 'app.tgz')
   try {
@@ -485,12 +485,27 @@ async function cmdCheck() {
   process.exit(1)
 }
 
+// The copy of the app in public/ is a snapshot: the stand moves on, and a button a season old
+// stops matching what the team sees. Fetching it again is the whole of this command.
+function cmdRefresh() {
+  if (!fs.existsSync(path.join(root, 'public', 'context-app'))) {
+    console.log('The Context button is not connected here — nothing to refresh.')
+    return
+  }
+  const app = fetchApp(true)
+  if (app === 'downloaded') console.log('The Context button was replaced with the current one.')
+  else console.log('Could not fetch the current button (' + app + ') — the copy you have still works.')
+  if (app !== 'downloaded') process.exit(1)
+}
+
 const [cmd, arg] = process.argv.slice(2)
 if (cmd === 'connect') cmdConnect(arg && !arg.startsWith('--') ? arg : undefined)
 else if (cmd === 'export') cmdExport()
 else if (cmd === 'check') cmdCheck()
+else if (cmd === 'refresh') cmdRefresh()
 else {
   console.log('node scripts/context-app.mjs connect   connect the Context button to the prototype')
   console.log('node scripts/context-app.mjs export    rebuild the catalogue, docs and map')
   console.log('node scripts/context-app.mjs check     verify before a deploy')
+  console.log('node scripts/context-app.mjs refresh   fetch the current copy of the button')
 }

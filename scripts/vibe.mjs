@@ -231,11 +231,32 @@ function cmdPromote(name, withPr) {
   console.log('Pull request opened: ' + (pr.stdout || '').trim())
 }
 
+// Colleagues keep putting components on the shelf, and a gallery fetched in March shows March.
+// Pulling it forward is safe on its own: nothing of yours lives in that folder.
+function cmdUpdate() {
+  if (!connected()) {
+    console.log('The gallery is not connected here — nothing to update.')
+    return
+  }
+  const inRepo = git(['rev-parse', '--is-inside-work-tree']).status === 0
+  const r = inRepo && fs.existsSync(path.join(root, '.gitmodules'))
+    ? git(['submodule', 'update', '--remote', '--init', 'vendor/xui-vibe'])
+    : git(['pull', '--ff-only'], VIBE)
+  if (r.status !== 0) {
+    console.error('Could not update the gallery: ' + (r.stderr || '').trim().split(NL).slice(-1)[0])
+    process.exit(1)
+  }
+  spawnSync(process.execPath, ['scripts/ds-index.mjs'], { cwd: root, encoding: 'utf8' })
+  console.log('The gallery is current, and the search knows what is new on the shelf.')
+}
+
 const [cmd, arg, flag] = process.argv.slice(2)
 if (cmd === 'connect') cmdConnect()
+else if (cmd === 'update') cmdUpdate()
 else if (cmd === 'promote') cmdPromote(arg, flag === '--pr')
 else {
   console.log('node scripts/vibe.mjs connect            connect the team gallery')
+  console.log('node scripts/vibe.mjs update             pull what colleagues have added')
   console.log('node scripts/vibe.mjs promote <Name>     send your component to the shelf')
   console.log('node scripts/vibe.mjs promote <Name> --pr   ... and open a pull request')
 }
