@@ -51,10 +51,9 @@ const listing = (dir) => (fs.existsSync(dir) ? fs.readdirSync(dir) : [])
 // disagree: a check added for Claude Code and forgotten here would simply never run in Cursor,
 // and nothing would say so.
 //
-// The events are the same moments under different names. Two differences are worth knowing:
-// Cursor has no separate event for an edit that has not happened yet, so a shell command is a
-// different event from a file write; and it hands no transcript to a stop hook, so the findings
-// check has nothing to read there and stays quiet.
+// The events are the same moments under different names, with one difference worth knowing:
+// Cursor splits what Claude Code calls a pending tool call, so a shell command is one event and
+// a file write another, and a check that watches both has to be listed under both.
 const EVENTS = {
   SessionStart: () => ['sessionStart'],
   UserPromptSubmit: () => ['beforeSubmitPrompt'],
@@ -131,7 +130,13 @@ function main() {
   let rules = 0
   for (const name of listing(path.join(root, '.claude', 'rules'))) {
     if (!name.endsWith('.md')) continue
-    write('.cursor/rules/' + name.replace(/\.md$/, '.mdc'), toMdc(read(path.join(root, '.claude', 'rules', name)), name))
+    const banner = '<!-- Generated from .claude/rules/' + name + ' by scripts/cursor.mjs. Edit the'
+      + ' original, not this: findings and decisions live in .claude/ and are read by both agents. -->'
+    write(
+      '.cursor/rules/' + name.replace(/\.md$/, '.mdc'),
+      toMdc(read(path.join(root, '.claude', 'rules', name)), name)
+        .replace(NL + '---' + NL, NL + '---' + NL + banner + NL, 1),
+    )
     rules += 1
   }
 

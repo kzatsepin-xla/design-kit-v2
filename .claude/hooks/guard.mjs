@@ -98,7 +98,24 @@ if (!protectedRoot || isNotes) process.exit(0)
 
 denyKit(parts.join('/'))
 
+// A denial inside .cursor/ needs different words. That folder is not the kit's own work, it is a
+// copy of it written from .claude/ on every update — so an edit there is not dangerous, it is
+// pointless, and the agent that tried it usually wanted to record a finding or a decision and
+// reached for the file it had just read.
+function originalOf(rel) {
+  if (rel === '.cursor/hooks.json') return '.claude/settings.json'
+  return rel.replace(/^[.]cursor\//, '.claude/').replace(/[.]mdc$/, '.md')
+}
+
 function denyKit(rel) {
+  if (rel.startsWith('.cursor/')) {
+    deny(
+      `${rel} is the copy Cursor reads. It is written from ${originalOf(rel)} on every update, ` +
+      `so an edit here is gone by the next one. A finding or a decision belongs in ` +
+      `.claude/ds/findings.md or .claude/rules/decisions-*.md, which both agents read. ` +
+      `Anything else about the kit is the designer's call, not yours.`,
+    )
+  }
   deny(
     `${rel} belongs to the kit and is not yours to edit while working on the prototype. ` +
     `It ships to every designer, so a change that looks right on this machine can break theirs. ` +

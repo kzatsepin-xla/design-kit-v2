@@ -4,6 +4,9 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.1.2 — 2026-09-11
+
+- In Cursor, the copy of a rule now says where the original is, so findings and decisions land in the file both agents read.
 ## 2.1.1 — 2026-09-11
 
 - A check added for Claude Code now reaches Cursor by itself.
