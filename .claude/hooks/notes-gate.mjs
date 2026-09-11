@@ -111,6 +111,11 @@ const message = (
   `Ask them — do not decide yourself and do not write anything unasked. One AskUserQuestion call, ` +
   `one question per finding worth keeping (at most two; drop the rest).
 ` +
+  `One finding, one question, two options — never one question with the findings as ticks. The ` +
+  `dialog draws a multiple choice and a single choice exactly alike, so a list of ticks reads as ` +
+  `"pick one of these" and comes back answered as one. Nothing else belongs in this call either: ` +
+  `a question of your own waits for its own turn.
+` +
   `Speak their language: they are a designer or a manager, not a developer. Say in one sentence what ` +
   `the interface does that you did not expect, and in one more what it saves next time — no package ` +
   `names, no props, no versions in the question itself.
