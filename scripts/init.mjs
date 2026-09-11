@@ -98,6 +98,14 @@ write('index.html', `<!doctype html>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${screen}</title>
+    <!-- The browser's own 8px margin around the page is not a design decision. And padding
+         counts inside the height: a full-height screen is otherwise always taller than the
+         window by its own padding, which the Context App preview turns into a frame that
+         grows on every measurement. -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body { margin: 0; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
@@ -110,13 +118,32 @@ const mount = ds === 'xui'
   ? [
       "import { StrictMode } from 'react'",
       "import { createRoot } from 'react-dom/client'",
-      "import { XUIProvider } from '@xsolla/xui-core'",
+      "import { ThemeProvider, createGlobalStyle } from 'styled-components'",
+      "import { XUIProvider, useResolvedTheme } from '@xsolla/xui-core'",
       "import { App } from './app'",
+      '',
+      '// The page behind the screen: the background token, so a scrolled page never shows a',
+      '// strip of the browser default underneath.',
+      'const GlobalStyle = createGlobalStyle`',
+      '  body {',
+      '    background: ${(p) => p.theme.colors.background.primary};',
+      '  }',
+      '`',
+      '',
+      '// XUI hands its tokens out through a hook, not through styled-components. Components of',
+      '// your own want them under `p.theme`, so the resolved theme is passed on once, here.',
+      'function Themed({ children }: { children: React.ReactNode }) {',
+      '  const { theme } = useResolvedTheme({})',
+      '  return <ThemeProvider theme={theme}>{children}</ThemeProvider>',
+      '}',
       '',
       "createRoot(document.getElementById('root')!).render(",
       '  <StrictMode>',
       '    <XUIProvider>',
-      '      <App />',
+      '      <Themed>',
+      '        <GlobalStyle />',
+      '        <App />',
+      '      </Themed>',
       '    </XUIProvider>',
       '  </StrictMode>,',
       ')',
