@@ -127,13 +127,19 @@ if (avail.length) {
 
 if (inGallery.length) {
   if (found.length) console.log('')
-  console.log('IN THE TEAM GALLERY — import from @xui-vibe, do not write it again:')
+  console.log('IN THE TEAM GALLERY — import it, do not write it again:')
   for (const c of inGallery) {
     const p = c.props.slice(0, 8).map((x) => x.name + (x.optional ? '?' : '') + ': ' + x.type)
-    console.log('  ' + c.name + (c.group ? '  (' + c.group + ')' : '') + (c.exported ? '' : '  ⚠ not exported from @xui-vibe, import by path'))
+    console.log('  ' + c.name + (c.group ? '  (' + c.group + ')' : ''))
     if (p.length) console.log('    ' + p.join(' · '))
+    // The shelf is one repository: `@xui-vibe` on its own is the barrel that re-exports every
+    // component on it, including ones built on packages this project never installed — and the
+    // build stops on the first of them. The path reaches this component and nothing else.
+    if (c.at) console.log("    import { " + c.name + " } from '@xui-vibe/" + c.at + "'")
   }
   console.log('  The system has no such components: this is a colleague-s work, not the design system.')
+  console.log('  Import by the path above, not from "@xui-vibe": the short form pulls in the whole')
+  console.log('  shelf and stops the build on a component that needs a package you do not have.')
 }
 
 if (ready.some((f) => f.inst.ownStyled)) {

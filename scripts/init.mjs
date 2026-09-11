@@ -222,6 +222,19 @@ const appTsx = () => [
 // mistake that stops the screen drawing.
 const TYPE_DEPS = { typescript: 'latest', '@types/react': 'latest', '@types/react-dom': 'latest' }
 
+// styled-components knows nothing about the theme it is handed: `p.theme` is an empty type
+// until somebody says what the theme is, and every component of yours that reads a colour off
+// it fails to compile. One declaration says it once, for the whole project.
+const themeTypes = () => [
+  "import 'styled-components'",
+  "import type { Theme } from '@xsolla/xui-core'",
+  '',
+  "declare module 'styled-components' {",
+  '  export interface DefaultTheme extends Theme {}',
+  '}',
+  '',
+].join(newline)
+
 const tsconfig = () => JSON.stringify({
   compilerOptions: {
     target: 'ES2022',
@@ -236,6 +249,10 @@ const tsconfig = () => JSON.stringify({
     strict: false,
   },
   include: ['src'],
+  // A story is written for the gallery, which has its own build and its own packages. This
+  // project installs none of them, so every component of your own would otherwise add a
+  // permanent complaint about an import that was never meant to resolve here.
+  exclude: ['**/*.stories.tsx'],
 }, null, 2) + newline
 
 const SHELL = {
@@ -288,6 +305,14 @@ function ensureTypes() {
     fs.writeFileSync(path.join(root, 'tsconfig.json'), tsconfig())
     out.push('Added tsconfig.json: nothing was checking the types here, so a wrong prop only')
     out.push('showed up in the browser.')
+  }
+
+  const themeFile = path.join(root, 'src', 'kit', 'styled-theme.d.ts')
+  if (ds === 'xui' && !fs.existsSync(themeFile)) {
+    fs.mkdirSync(path.dirname(themeFile), { recursive: true })
+    fs.writeFileSync(themeFile, themeTypes())
+    out.push('Told styled-components what the theme is, so a colour read off `p.theme` in a')
+    out.push('component of your own is no longer a type error.')
   }
 
   let pkg
@@ -386,6 +411,7 @@ write('index.html', `<!doctype html>
 
 write('src/main.tsx', mainTsx())
 write('src/app.tsx', appTsx())
+if (ds === 'xui') write('src/kit/styled-theme.d.ts', themeTypes())
 
 for (const name of screens) {
   write(`src/screens/${name}/screen.tsx`, `export function Screen() {

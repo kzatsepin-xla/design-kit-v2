@@ -162,8 +162,10 @@ if (toolOf() === 'Write' || toolOf() === 'Edit') {
   if (mine && COLOUR.test(painted)) {
     deny(
       'A colour written out by hand. Take it from the theme instead:' + NL +
-      "  const { theme } = useResolvedTheme({})  →  theme.colors.background.primary, theme.colors.text.primary," + NL +
-      '  theme.colors.control[tone][variant] for anything the player presses.' + NL +
+      "  const { theme } = useResolvedTheme({})  →  theme.colors.background.primary for a surface," + NL +
+      '  theme.colors.content.primary for text — there is no theme.colors.text, and reaching for it' + NL +
+      '  gives undefined and no colour at all. theme.colors.control[tone][variant] for anything the' + NL +
+      '  player presses, theme.colors.border.* for a line.' + NL +
       'The mockup shows a shade the theme has no token for — that is a question for the designer' + NL +
       'and for the design system team, not a value to invent. Ask, and say which shade and where.' + NL +
       'Content that genuinely carries its own colour — cover art, a game logo — belongs in an' + NL +

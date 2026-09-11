@@ -4,6 +4,13 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.3.1 — 2026-09-11
+
+- The type check no longer starts red: the kit tells styled-components what the theme is, and complaints from the team gallery's own code are left out of the report.
+- The search shows what a gallery component takes and the import line that reaches it, instead of the whole shelf, which used to stop the build.
+- There is no theme.colors.text — the advice that named it now names theme.colors.content, which is where the text colours are.
+- A decision mark in a document is no longer listed as an open question of its own.
+- A component of your own no longer leaves a permanent complaint behind it: the story file next to it is written for the gallery and is not type-checked here.
 ## 2.3.0 — 2026-09-11
 
 - A freshly created set of documents passes its own check: the scenario index is read as an index, not as a second set of scenarios.

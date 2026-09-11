@@ -101,12 +101,21 @@ if (fs.existsSync(vibeSrc)) {
       const inner = path.join(dir, entry.name)
       const file = path.join(inner, entry.name + '.tsx')
       if (fs.existsSync(file)) {
+        // Most of the shelf keeps its props in a types.ts next to the component, so reading the
+        // component file alone answered "no props" for two thirds of it — and the agent, told to
+        // use the component and shown nothing about it, guessed the prop names.
         let props = []
-        try { props = propsOf(fs.readFileSync(file, 'utf8'), entry.name) } catch {}
+        for (const from of [file, path.join(inner, 'types.ts'), path.join(inner, 'types.tsx')]) {
+          if (props.length) break
+          try { props = propsOf(fs.readFileSync(from, 'utf8'), entry.name) } catch {}
+        }
         gallery.push({
           name: entry.name,
           group: group || null,
           exported: publicSurface.includes('/' + entry.name),
+          // Where the component actually sits, so the search can print an import that reaches
+          // this one component instead of the whole shelf.
+          at: path.relative(vibeSrc, file).split(path.sep).join('/').replace(/\.tsx$/, ''),
           props,
         })
       } else if (!group) {

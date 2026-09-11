@@ -303,7 +303,12 @@ function typeCheck() {
   if (!fs.existsSync(path.join(root, 'node_modules', 'typescript'))) return null
   const r = spawnSync('npx', ['tsc', '--noEmit'], { cwd: root, encoding: 'utf8', shell: true })
   if (r.status === 0) return []
-  return (r.stdout || '').split(NL).filter((l) => l.includes('error TS')).slice(0, 10)
+  // The team gallery is a repository of its own inside this one, and it is written against
+  // packages this project never installed. Importing one component from it drags the whole
+  // folder into the check, and a dozen complaints about somebody else's code bury the one
+  // line that is actually about this screen.
+  const mine = (l) => !/^(vendor|node_modules)[\\/]/.test(l)
+  return (r.stdout || '').split(NL).filter((l) => l.includes('error TS')).filter(mine).slice(0, 10)
 }
 
 // ——— fetching the browser ———

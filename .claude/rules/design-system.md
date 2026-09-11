@@ -10,6 +10,7 @@ paths:
 | Not this | This |
 |---|---|
 | `var(--xui-color-*)`, `--xui-spacing-*`, `--xui-radius-*` | they do not exist: `theme.colors.*`, `theme.spacing.*` |
+| `theme.colors.text.*` | no such group. Text is `theme.colors.content.*`; the groups are `background`, `content`, `border`, `overlay`, `layer`, `control`, `data` |
 | `theme.radius.*` | does not exist either: radii live in `theme.shape` — `shape.button.<size>.borderRadius`, `shape.cell.borderRadius`. The 12px card radius is the separate `radius` export from `@xsolla/xui-core` |
 | `import "./Component.css"`, CSS Modules, Tailwind | styled-components plus theme tokens |
 | `background: "#0F0F0F"`, `padding: 16px` | a token, never a value of your own |

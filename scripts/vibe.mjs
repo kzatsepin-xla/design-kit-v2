@@ -96,8 +96,9 @@ function ensureTsPaths() {
   try { cfg = JSON.parse(read(file)) } catch { return }
   const opts = (cfg.compilerOptions ||= {})
   if (opts.paths?.['@xui-vibe']) return
-  // No baseUrl: typescript dropped the option, and a path is read from where the config sits.
-  opts.paths = { ...(opts.paths || {}), '@xui-vibe': ['vendor/xui-vibe/src/index.ts'], '@xui-vibe/*': ['vendor/xui-vibe/src/*'] }
+  // No baseUrl: typescript dropped the option. Without it a target is read from where the
+  // config sits and has to say so — a bare `vendor/...` is refused as non-relative.
+  opts.paths = { ...(opts.paths || {}), '@xui-vibe': ['./vendor/xui-vibe/src/index.ts'], '@xui-vibe/*': ['./vendor/xui-vibe/src/*'] }
   fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + NL)
 }
 

@@ -317,6 +317,9 @@ function cmdCheck() {
   for (const file of files) {
     const text = fs.readFileSync(file, 'utf8')
     for (const line of text.split(NL)) {
+      // A decision mark mentioning the question it is waiting on is not the question itself:
+      // listing it here shows the designer the same OQ twice, once as a comment.
+      if (line.trim().startsWith('<!--')) continue
       if (/\bOQ-\d+\b/.test(line) && /\bOpen\b/i.test(line)) open.push(line.trim().slice(0, 100))
     }
   }
