@@ -64,6 +64,17 @@ function cmdInstall() {
     if (!fs.existsSync(from)) continue
     fs.rmSync(path.join(DEST, part), { recursive: true, force: true })
     fs.cpSync(from, path.join(DEST, part), { recursive: true })
+    // The rulebook is written for a machine where it is installed as an agent skill, and it
+    // sends the reader to ~/.claude/skills/<part>/references/ for the pages it leans on. Here
+    // it lives in the project instead, and that folder is not on the designer's machine at
+    // all: the check then ran with none of its references, or stopped and said it had none.
+    // Only the address is changed, never a word of the rules themselves.
+    const skill = path.join(DEST, part, 'SKILL.md')
+    try {
+      const text = fs.readFileSync(skill, 'utf8')
+      const fixed = text.replace(/~\/\.claude\/skills\/([a-z-]+)\/references\//g, 'vendor/uxw/$1/references/')
+      if (fixed !== text) fs.writeFileSync(skill, fixed)
+    } catch {}
     copied++
   }
   const head = (git(['rev-parse', '--short', 'HEAD'], tmp).stdout || '').trim()

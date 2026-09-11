@@ -4,6 +4,11 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.7.1 — 2026-09-11
+
+- A project whose folder name carries a space or a Cyrillic letter works now: the document, package and pre-flight commands were reading their own location out of a web address, where a space is %20, and looked for their files under a name that does not exist.
+- The interface copy rulebook points at the pages it actually ships with, instead of a folder in the home directory that a designer's machine does not have — the check used to run with none of its references.
+
 ## 2.7.0 — 2026-09-11
 
 - Markup of your own pushed into a library component is now seen wherever it sits, not only as the first thing inside it: further down among its children, behind a condition, built inside a map, returned from a function, or kept in a name a line above.

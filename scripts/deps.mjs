@@ -36,11 +36,16 @@
 //
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 
 const root = process.cwd()
 const NL = String.fromCharCode(10)
-const here = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'))
+// The folder this script sits in. Read through fileURLToPath rather than off the URL's own
+// path: a URL keeps a space as %20 and a Cyrillic letter as six characters of percent-escape,
+// and a project living in "Мои прототипы" then looked for its files under a name that does
+// not exist. Windows drive letters come out right through the same door.
+const here = path.dirname(fileURLToPath(import.meta.url))
 
 const flags = process.argv.slice(2)
 const checkOnly = flags.includes('--check')
