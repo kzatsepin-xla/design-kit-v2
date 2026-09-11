@@ -53,6 +53,10 @@ const inGallery = (index.gallery || []).filter((c) => hit(c.name) || (c.group &&
 // Findings no longer load into the session by themselves — this is where they arrive. The
 // filter is generous: a query word in the line, a package name, or a component name. Called
 // both when a component is found and when it is not: 'font' is not a component, but there is
+// a finding about fonts. A finding written down two versions ago is a lead, not a fact: the
+// library may have fixed it since. The file marks versions with `--- 0.216.1 ---` dividers and
+// ds-index.mjs appends a new one whenever the library moves, so anything above the last
+// divider is printed with that said out loud instead of arriving as current knowledge.
 function findings() {
   const file = path.join(root, '.claude', 'ds', 'findings.md')
   if (!fs.existsSync(file)) return []
@@ -60,8 +64,25 @@ function findings() {
     hit(l) ||
     found.some((f) => l.includes(f.short) || l.includes(f.pkg)) ||
     found.some((f) => f.names.some((n) => new RegExp('(^|[^A-Za-z])' + n + '([^A-Za-z]|$)').test(l)))
-  return fs.readFileSync(file, 'utf8').split('\n').filter((l) => l.startsWith('- ') && related(l))
+
+  const out = []
+  let section = null
+  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+    const mark = line.match(/^--- ([0-9][^ ]*)/)
+    if (mark) { section = mark[1]; continue }
+    if (line.startsWith('- ') && related(line)) out.push({ text: line.slice(2, 200), on: section })
+  }
+  // The last divider is the version in use; everything recorded above it is older.
+  return out.map((f) => ({ ...f, stale: f.on !== section, now: section }))
 }
+
+// The mark goes in front: a long finding is cut at 200 characters, and a caveat tacked on the
+// end would be the part that disappears. No dividers in the file at all — nothing to judge by,
+// so nothing is claimed.
+const sayFinding = (f) =>
+  (f.stale
+    ? '  ⚠ noted on ' + (f.on || 'an earlier version') + ', library is now ' + f.now + ' — re-check: '
+    : '  ') + f.text
 
 if (!found.length && !inGallery.length) {
   console.log('nothing like "' + query + '" in the design system or the team gallery.')
@@ -73,7 +94,7 @@ if (!found.length && !inGallery.length) {
   if (known.length) {
     console.log('')
     console.log('BUT SOMETHING IS ALREADY KNOWN ABOUT THIS:')
-    for (const l of known.slice(0, 4)) console.log('  ' + l.slice(2, 200))
+    for (const l of known.slice(0, 4)) console.log(sayFinding(l))
   }
   console.log('')
   console.log('Create your own: node scripts/new-component.mjs <Name>')
@@ -138,6 +159,6 @@ if (fs.existsSync(notes)) {
   if (lines.length) {
     console.log('')
     console.log('WHAT IS ALREADY KNOWN ABOUT THEM:')
-    for (const l of lines.slice(0, 6)) console.log('  ' + l.slice(2, 200))
+    for (const l of lines.slice(0, 6)) console.log(sayFinding(l))
   }
 }
