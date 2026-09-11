@@ -4,6 +4,10 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.4.2 — 2026-09-11
+
+- The list of open questions no longer pads itself: a rule that happens to say «still open» is a rule, not a question waiting for you.
+- A warning from node no longer prints in the middle of a check, where it read like something had gone wrong.
 ## 2.4.1 — 2026-09-11
 
 - The kit no longer leaves its own build tools in your project: tools/ is for building the kit, not for working in it, and an update takes the folder away.

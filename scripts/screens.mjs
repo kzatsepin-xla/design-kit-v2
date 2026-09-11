@@ -212,7 +212,9 @@ function freePort() { return 5300 + Math.floor(Math.random() * 400) }
 // Our own server, not the first one around: port 5173 easily holds a neighbouring project,
 // and the check then silently inspects someone else's screens. That has happened.
 function startServer(port) {
-  const child = spawn('npm', ['run', 'dev', '--', '--port', String(port), '--strictPort'], {
+  // One command line rather than a command and its arguments: under a shell node warns
+  // about the second form, and the warning landed in the middle of the check's output.
+  const child = spawn('npm run dev -- --port ' + port + ' --strictPort', {
     cwd: root, stdio: 'ignore', shell: true, detached: false,
   })
   return child
@@ -326,7 +328,7 @@ async function runtimeCheck(list) {
 
 function typeCheck() {
   if (!fs.existsSync(path.join(root, 'node_modules', 'typescript'))) return null
-  const r = spawnSync('npx', ['tsc', '--noEmit'], { cwd: root, encoding: 'utf8', shell: true })
+  const r = spawnSync('npx tsc --noEmit', { cwd: root, encoding: 'utf8', shell: true })
   if (r.status === 0) return []
   // The team gallery is a repository of its own inside this one, and it is written against
   // packages this project never installed. Importing one component from it drags the whole
@@ -340,9 +342,9 @@ function typeCheck() {
 
 function install() {
   console.log('installing a browser for the screen check, one time, a couple of minutes…')
-  const a = spawnSync('npm', ['install', '-D', 'playwright', '--no-audit', '--no-fund'], { cwd: root, stdio: 'inherit', shell: true })
+  const a = spawnSync('npm install -D playwright --no-audit --no-fund', { cwd: root, stdio: 'inherit', shell: true })
   if (a.status !== 0) { console.error('could not install playwright'); process.exit(1) }
-  const b = spawnSync('npx', ['playwright', 'install', 'chromium'], { cwd: root, stdio: 'inherit', shell: true })
+  const b = spawnSync('npx playwright install chromium', { cwd: root, stdio: 'inherit', shell: true })
   if (b.status !== 0) { console.error('could not download Chromium'); process.exit(1) }
   console.log('done: node scripts/screens.mjs')
 }

@@ -233,7 +233,9 @@ function cmdPromote(name, withPr) {
   const pr = spawnSync('gh', ['pr', 'create', '--repo', 'xsolla/xui-vibe', '--base', base, '--head', branch,
     '--title', name + ' from the ' + path.basename(root) + ' prototype',
     '--body', 'Component ' + name + ', built in a prototype. The design system has no such component — checked against the registry.'],
-    { cwd: VIBE, encoding: 'utf8', shell: true })
+    // No shell here: the title and the body carry a component name and a folder name, and
+    // gh is a real executable that needs no shell to start.
+    { cwd: VIBE, encoding: 'utf8' })
   if (pr.status !== 0) {
     console.log('Branch pushed, but the pull request did not open (no gh, or no rights).')
     console.log('Open it by hand: ' + REPO + '/compare/' + base + '...' + branch)

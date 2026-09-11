@@ -320,7 +320,15 @@ function cmdCheck() {
       // A decision mark mentioning the question it is waiting on is not the question itself:
       // listing it here shows the designer the same OQ twice, once as a comment.
       if (line.trim().startsWith('<!--')) continue
-      if (/\bOQ-\d+\b/.test(line) && /\bOpen\b/i.test(line)) open.push(line.trim().slice(0, 100))
+      // The register is a table — id, question, status — so a question is read from
+      // its cells and not from the sentence. Looking for the word "open" anywhere on the
+      // line counted a settled rule that said "while the window is still open", and a line
+      // about a manager who can open the list: eleven questions where there were nine.
+      const cells = line.split('|').map((c) => c.trim())
+      if (cells.length < 4) continue
+      if (!/^OQ-\d+$/.test(cells[1])) continue
+      if (!cells.slice(2).some((c) => /^open$/i.test(c))) continue
+      open.push(line.trim().slice(0, 100))
     }
   }
 

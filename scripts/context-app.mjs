@@ -379,7 +379,9 @@ function ensureViteFix() {
 function ensureBabel() {
   if (fs.existsSync(path.join(root, 'node_modules', '@babel', 'core'))) return 'already installed'
   if (!fs.existsSync(path.join(root, 'package.json'))) return 'no package.json — skipping'
-  const r = spawnSync('npm', ['install', '-D', '@babel/core', '--no-audit', '--no-fund'],
+  // One command line, not a command and a list of arguments: node now warns about the
+  // second form under a shell, and the warning printed into the designer's report.
+  const r = spawnSync('npm install -D @babel/core --no-audit --no-fund',
     { cwd: root, stdio: 'ignore', shell: true })
   return r.status === 0 ? 'installed' : 'could not install'
 }
