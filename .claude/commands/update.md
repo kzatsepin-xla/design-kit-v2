@@ -1,5 +1,5 @@
 ---
-description: Update the kit to the newest version, keeping this project's work.
+description: Pull a newer kit. Decisions, findings, documents and screens stay where they are.
 ---
 
 Run `node scripts/kit.mjs update`, then `node scripts/kit.mjs check`.

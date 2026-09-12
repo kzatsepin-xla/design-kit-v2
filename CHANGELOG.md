@@ -4,6 +4,11 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.9.2 — 2026-09-12
+
+- The commands say what they do again. Cursor shows the first line of a command file as its description in the palette, and the kit was putting its own "generated from" note there — so every command in the list read the same meaningless line. The note moved to the end of the file, and the descriptions themselves are written for whoever reads the list rather than for whoever builds the kit.
+- The copy command is /uxw, not /ux — the same name as the rulebook it opens and the folder it lives in. An update takes the old name away with it.
+
 ## 2.9.1 — 2026-09-12
 
 - The findings a new project starts with are down to one: the rest was either something the search and the type checker answer better, or something the library has since fixed — five runs in a row disproved the line about there being no plain surface. A wrong line there is worse than a missing one, because the next agent believes it, so from now on a line that stops being true is deleted rather than struck through. A project that already has the file keeps its own.

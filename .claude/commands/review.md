@@ -1,5 +1,5 @@
 ---
-description: Compare a screen against its mockup and fix the differences up to 9/10.
+description: Compare a screen with its Figma frame and close the differences until a judge scores it nine.
 ---
 
 Compare the screen "$ARGUMENTS" (no argument — the one last worked on) against its mockup.

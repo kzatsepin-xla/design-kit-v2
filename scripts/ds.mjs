@@ -174,6 +174,20 @@ if (!found.length && !inGallery.length) {
   process.exit(0)
 }
 
+// Some things have no component and never will: the frame of a page, the grid it lays its
+// cards on, the row that spaces two of them apart. The search used to answer a question about
+// those with a package that only passes work to its neighbours, under the words "install it,
+// do not draw your own" — a run installed it, got nothing, and said so. The honest answer is
+// said first, before any package list.
+const NO_COMPONENT_FOR = /^(page|layout|frame|shell|wrapper|container|grid|column|stack|spacer|gutter)$/
+if ([query, ...query.split(/[\s_-]+/)].some((w) => NO_COMPONENT_FOR.test(w))) {
+  console.log('The frame of a page, the grid and the rows that space things apart are the screen\'s')
+  console.log('own layout — the system has no component for them, and a package whose name sounds')
+  console.log('like one only passes work to its neighbours. Everything standing inside your layout')
+  console.log('comes from the library, and that is what the rule asks for.')
+  console.log('')
+}
+
 const ready = found.filter((f) => f.inst)
 const avail = found.filter((f) => !f.inst)
 

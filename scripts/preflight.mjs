@@ -23,7 +23,7 @@
 //  documents is a legitimate way to work here, not an error.
 //
 //  WHAT IT DOES NOT RUN
-//  The interface copy. Checking it is /ux, and it stays a request, never a routine — that was
+//  The interface copy. Checking it is /uxw, and it stays a request, never a routine — that was
 //  a deliberate decision, not an omission.
 //
 import fs from 'node:fs'
@@ -126,5 +126,5 @@ console.log(
       ? 'Nothing wrong in what could be checked — read the notes above before calling it ready.'
       : 'Ready to show.',
 )
-if (!failed.length) console.log('The interface copy is not checked here — that is /ux, when you ask for it.')
+if (!failed.length) console.log('The interface copy is not checked here — that is /uxw, when you ask for it.')
 process.exit(failed.length ? 1 : 0)

@@ -1,5 +1,5 @@
 ---
-description: Update the design system packages, the catalogue and the vendored tools.
+description: Pull newer packages: the design system, the component catalogue, the Context button, the copy rulebook.
 ---
 
 Run `node scripts/deps.mjs`.

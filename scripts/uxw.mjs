@@ -17,7 +17,7 @@
 //  WHY IT IS NOT AMONG THE AGENT'S SKILLS
 //  On purpose. The rulebook is about 160 KB, and placed where the agent always sees it, it
 //  starts editing your wording unasked. So the files sit in vendor/uxw/ — the agent opens
-//  them only when you ask: check the copy, write a button label, the /ux command. Before work
+//  them only when you ask: check the copy, write a button label, the /uxw command. Before work
 //  leaves the machine it offers a check itself, but the decision is always yours.
 //
 //
@@ -97,7 +97,7 @@ function cmdInstall() {
   }
 
   console.log('copy rulebook: ' + copied + ' parts, version ' + head + ' -> vendor/uxw/')
-  console.log('  runs only when you ask: check the copy, or /ux')
+  console.log('  runs only when you ask: check the copy, or /uxw')
   return true
 }
 

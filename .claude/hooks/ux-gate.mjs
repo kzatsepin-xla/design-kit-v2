@@ -51,7 +51,7 @@ fs.writeFileSync(flag, '1')
 context(
   'Work is going out and the interface copy has not been checked against the Xsolla ' +
   'rulebook in this conversation. Once the command is done, offer the designer one question: ' +
-  'review the copy (`/ux`) or send it as is. Do not decide for them and do not rewrite wording ' +
+  'review the copy (`/uxw`) or send it as is. Do not decide for them and do not rewrite wording ' +
   'on your own initiative. If they decline, drop the subject for the rest of the conversation.',
   'PreToolUse',
 )

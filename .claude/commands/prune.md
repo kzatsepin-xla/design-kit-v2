@@ -1,5 +1,5 @@
 ---
-description: Strip the instruction files of everything an agent already knows.
+description: Trim the instruction files: cut what any agent knows already or a check enforces anyway.
 ---
 
 Target: "$ARGUMENTS" — a file, a folder, or empty for every instruction file in the kit

@@ -41,7 +41,7 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 | Context button, map, docs | `node scripts/context-app.mjs connect` · `export` · `check` |
 | Team gallery | `node scripts/vibe.mjs connect` · `update` · `promote <Name>` |
 | Compare a screen to its mockup | `/review <screen>` |
-| Interface copy | `/ux` — only when they ask |
+| Interface copy | `/uxw` — only when they ask |
 
 ## Picking a component — in this order, no skipping
 

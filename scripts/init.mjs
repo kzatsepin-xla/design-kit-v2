@@ -543,7 +543,7 @@ if (ds === 'custom') {
 }
 
 // The interface copy rulebook. It lives in vendor/ and never starts by itself:
-// the agent opens it only when the designer asks — see .claude/commands/ux.md.
+// the agent opens it only when the designer asks — see .claude/commands/uxw.md.
 try {
   execSync('node scripts/uxw.mjs install', { stdio: 'inherit' })
 } catch {}

@@ -1,5 +1,5 @@
 ---
-description: Write or check interface copy against the Xsolla rulebook.
+description: Write or check the words on a screen against the Xsolla copy rulebook.
 ---
 
 The designer's request: "$ARGUMENTS". Empty — check the copy of the screen last worked on.

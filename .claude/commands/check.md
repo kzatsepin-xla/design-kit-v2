@@ -1,5 +1,5 @@
 ---
-description: Check everything before showing the work: documents, screens, the map.
+description: Before showing the work: documents, screens and the map in one answer.
 ---
 
 Run `node scripts/preflight.mjs` and tell the designer the answer in their own words.
@@ -7,7 +7,7 @@ Run `node scripts/preflight.mjs` and tell the designer the answer in their own w
 **Run it, do not describe it.** They do not use the terminal: no command lines in the reply,
 no "you can run". Something the script needs is missing — fetch or install it yourself.
 
-**Green** — one line, plus what the run does not cover: the interface copy (`/ux`, only if they
+**Green** — one line, plus what the run does not cover: the interface copy (`/uxw`, only if they
 want it) and the mockup comparison (`/review`).
 
 **Red** — the script prints file names and ids. Turn each into what it means for them and what

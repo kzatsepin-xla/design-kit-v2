@@ -26,7 +26,7 @@
 //  WHAT APPEARS
 //    .cursor/hooks.json      the same checks, on Cursor's events
 //    .cursor/rules/*.mdc     the same rules, with Cursor's frontmatter
-//    .cursor/commands/*.md   /review, /check, /ux and the rest
+//    .cursor/commands/*.md   /review, /check, /uxw and the rest
 //    .cursor/skills/         the entry questionnaire
 //
 //  Everything in `.cursor/` is generated. Edit the originals under `.claude/`, then run this.
@@ -148,7 +148,12 @@ function main() {
   let commands = 0
   for (const name of listing(path.join(root, '.claude', 'commands'))) {
     if (!name.endsWith('.md')) continue
-    write('.cursor/commands/' + name, generated + NL + read(path.join(root, '.claude', 'commands', name)))
+    // The note goes at the end, not the top. Cursor's command palette shows the first line of
+    // the file as the command's description, so a banner there made every command in the list
+    // read "Generated from .claude/…" and nothing else — three commands, one description,
+    // none of them saying what they do. Seen in a live Cursor session.
+    write('.cursor/commands/' + name,
+      read(path.join(root, '.claude', 'commands', name)).replace(/\s*$/, NL) + NL + generated + NL)
     commands += 1
   }
 
