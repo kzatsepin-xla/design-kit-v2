@@ -4,27 +4,27 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
-## 2.9.4 — 2026-09-12
+## 2.0.22 — 2026-09-12
 
 - A prototype can be built into the team's preview container again. The image and its ignore list come with the project now, carried over from the first version of the kit and adjusted for this one: there is no scaffold folder to unpack here, the type config is called something else, and the documents the Context button reads are kept in the image while the writing they are built from is left out.
 - The build config understands the two settings that preview needs and a laptop must not have: a port that never slides to the next free one, because the service in front of the container targets one port and a fallback leaves a pod that looks healthy and answers nobody, and the host names the dev server is allowed to answer on. Both are switched on by the image alone — checked both ways: at home a preview host name is refused, in the container it is served.
 
-## 2.9.3 — 2026-09-12
+## 2.0.21 — 2026-09-12
 
 - The console of a running prototype is quiet again. The mark the inspector stamps on every call site is a React prop by design, and a library component that passes the rest of its props to a plain tag handed it to the browser, where React called it a typo — every prototype ran with that on repeat. The mark now stops at the style layer and never reaches the page, one React message is silenced by its exact shape, and the Context button still finds the component. Taken from the first version of the kit, where a colleague had already solved it.
 - A new command counts which half of the design system the screens are written in: the primitives the design system's own guide recommends, or the composed components the toolkit's guide recommends. Two live documents disagree and nobody had numbers. node scripts/vocabulary.mjs prints them and judges nothing — across thirty-four prototypes built this week the answer was composed components in a hundred and twenty-eight files out of a hundred and twenty-eight.
 - A component of your own counts as a building block only if it is itself built on the library or says what the library was missing. Moving hand-drawn boxes into a file next door and importing it made a screen read as composed from the system while every surface on it was the project's own.
 
-## 2.9.2 — 2026-09-12
+## 2.0.20 — 2026-09-12
 
 - The commands say what they do again. Cursor shows the first line of a command file as its description in the palette, and the kit was putting its own "generated from" note there — so every command in the list read the same meaningless line. The note moved to the end of the file, and the descriptions themselves are written for whoever reads the list rather than for whoever builds the kit.
 - The copy command is /uxw, not /ux — the same name as the rulebook it opens and the folder it lives in. An update takes the old name away with it.
 
-## 2.9.1 — 2026-09-12
+## 2.0.19 — 2026-09-12
 
 - The findings a new project starts with are down to one: the rest was either something the search and the type checker answer better, or something the library has since fixed — five runs in a row disproved the line about there being no plain surface. A wrong line there is worse than a missing one, because the next agent believes it, so from now on a line that stops being true is deleted rather than struck through. A project that already has the file keeps its own.
 
-## 2.9.0 — 2026-09-11
+## 2.0.18 — 2026-09-11
 
 - A section that holds nothing but an empty table is empty again: the header row is the template's own writing, and counting it as an answer let a screen contract pass with its blocks, its actions and its data untouched — three quarters of a contract, and the actions table is where the map's arrows come from.
 - The screen check brings the map level with the documents before it judges anything. Write the state matrices, run the check in the same breath, and it used to read yesterday's map: three screens looked at instead of twenty-seven states, and a green answer for work nobody had opened.
@@ -44,7 +44,7 @@ update quotes the entries between the version a project has and the one it is ge
 - An in-place shell edit of a screen is refused the way a heredoc already was: a run reported reaching for sed the moment the redirect was stopped.
 - A stage that is waiting for its first screen no longer says it was not filled in — it says what it is waiting for, and a stage nobody took says that instead.
 
-## 2.8.0 — 2026-09-11
+## 2.0.17 — 2026-09-11
 
 - The page of design-system details no longer names a component, a prop or a token: those move with the library and a page that names them goes stale unnoticed. What moves is answered by the catalogue, the package types and the findings file, all three about the version installed today; what stays on the page is how to work with a design system at all.
 - The guide the kit fetches from the design system team now opens with a line saying it can describe an older library than the one installed, and that the package types are what compiles — ten runs out of twenty were sent by it to a token the library does not have.
@@ -63,12 +63,12 @@ update quotes the entries between the version a project has and the one it is ge
 - The rules say which stage each family of ids belongs to, so a project that did not take the domain stage writes its rules as words instead of inventing a BR-3 with nowhere to point.
 - A picture of a map node that came back empty no longer accuses the map of drawing the same thing twice: under load the node is still resolving, and an empty capture says nothing either way.
 
-## 2.7.1 — 2026-09-11
+## 2.0.16 — 2026-09-11
 
 - A project whose folder name carries a space or a Cyrillic letter works now: the document, package and pre-flight commands were reading their own location out of a web address, where a space is %20, and looked for their files under a name that does not exist.
 - The interface copy rulebook points at the pages it actually ships with, instead of a folder in the home directory that a designer's machine does not have — the check used to run with none of its references.
 
-## 2.7.0 — 2026-09-11
+## 2.0.15 — 2026-09-11
 
 - Markup of your own pushed into a library component is now seen wherever it sits, not only as the first thing inside it: further down among its children, behind a condition, built inside a map, returned from a function, or kept in a name a line above.
 - An edit is read as the file will be once it lands, so a marker dropped into a card one line at a time no longer goes through — and a fault that was already in the file does not block an unrelated edit to it.
@@ -76,15 +76,15 @@ update quotes the entries between the version a project has and the one it is ge
 - A modal, a drawer or a popover is left alone: holding whatever the screen puts inside it is the whole job of one, and the check used to call that a fault.
 - A line of the rule quoted in a comment is no longer read as a breach of it.
 
-## 2.6.2 — 2026-09-11
+## 2.0.14 — 2026-09-11
 
 - Putting something of your own inside a library component is now stopped as it is typed, and named in the screen check for anything already on disk. A component takes what it declares; what the library has no place for comes to you as a question.
 
-## 2.6.1 — 2026-09-11
+## 2.0.13 — 2026-09-11
 
 - A library component is now used only as it is: nothing of ours goes inside it. When the library has no place for something the mockup shows, you get the question instead of a look-alike built from pieces.
 
-## 2.6.0 — 2026-09-11
+## 2.0.12 — 2026-09-11
 
 - The search no longer answers for a library this project does not use: a prototype on another design system is pointed at its own documentation instead of a list of Xsolla packages to install.
 - The page of design-system details says in its first line which system it is about, so a project built on another one is not told to follow rules that do not apply to it.
@@ -96,7 +96,7 @@ update quotes the entries between the version a project has and the one it is ge
 - A step that moves the design system to a new generation waits for your yes again — in a library living at 0.x that is the middle number, and it was being read as the first one.
 - An update now tells you the version this project is on, not the one that happens to be on the server.
 
-## 2.5.0 — 2026-09-11
+## 2.0.11 — 2026-09-11
 
 - The end-of-turn check speaks again: a screen that drifted away from its documents, and the map being rebuilt, were both worked out and then thrown away instead of being said.
 - A screen nobody described in the documents is checked too — it used to be invisible to every check while the run still ended in "ready to show".
@@ -108,26 +108,26 @@ update quotes the entries between the version a project has and the one it is ge
 - The search answers what was asked: a package found through one of its exports shows that export, not its whole contents, and a package that only passes work to its neighbours says so.
 - A kit file reached through a link in the path is protected again — the check used to decide the file was outside the project and stand aside.
 
-## 2.4.2 — 2026-09-11
+## 2.0.10 — 2026-09-11
 
 - The list of open questions no longer pads itself: a rule that happens to say «still open» is a rule, not a question waiting for you.
 - A warning from node no longer prints in the middle of a check, where it read like something had gone wrong.
-## 2.4.1 — 2026-09-11
+## 2.0.9 — 2026-09-11
 
 - The kit no longer leaves its own build tools in your project: tools/ is for building the kit, not for working in it, and an update takes the folder away.
-## 2.4.0 — 2026-09-11
+## 2.0.8 — 2026-09-11
 
 - Anything drawn by hand in a prototype is now visible to the inspector: point at a self-made top bar and it says what it is and which file it lives in, instead of saying nothing at all.
 - The screen check stops being satisfied by a single import: it counts what a file draws itself against what it takes from the library, so a hand-drawn page frame with one badge in it no longer passes as built on the design system.
 - Drawing the frame of the page from scratch is stopped where it starts: a header, a nav or a sidebar written by hand asks you first, because the system ships navigation.
-## 2.3.1 — 2026-09-11
+## 2.0.7 — 2026-09-11
 
 - The type check no longer starts red: the kit tells styled-components what the theme is, and complaints from the team gallery's own code are left out of the report.
 - The search shows what a gallery component takes and the import line that reaches it, instead of the whole shelf, which used to stop the build.
 - There is no theme.colors.text — the advice that named it now names theme.colors.content, which is where the text colours are.
 - A decision mark in a document is no longer listed as an open question of its own.
 - A component of your own no longer leaves a permanent complaint behind it: the story file next to it is written for the gallery and is not type-checked here.
-## 2.3.0 — 2026-09-11
+## 2.0.6 — 2026-09-11
 
 - A freshly created set of documents passes its own check: the scenario index is read as an index, not as a second set of scenarios.
 - A finding about the library written today is no longer stamped "noted on an older version" — new lines go at the end of the file, where the version divider expects them.
@@ -137,16 +137,16 @@ update quotes the entries between the version a project has and the one it is ge
 - The prototype now has type checking that actually runs: a prop that does not exist is caught by the screen check instead of by the browser.
 - A prototype can be created with all its screens at once, not one folder and four by hand.
 - The report after creating documents no longer stops mid-sentence.
-## 2.2.0 — 2026-09-11
+## 2.0.5 — 2026-09-11
 
 - In Cursor the checks now keep their place in a session, the design system guide survives an update and arrives whole, and a judge that may only look cannot write.
-## 2.1.2 — 2026-09-11
+## 2.0.4 — 2026-09-11
 
 - In Cursor, the copy of a rule now says where the original is, so findings and decisions land in the file both agents read.
-## 2.1.1 — 2026-09-11
+## 2.0.3 — 2026-09-11
 
 - A check added for Claude Code now reaches Cursor by itself.
-## 2.1.0 — 2026-09-11
+## 2.0.2 — 2026-09-11
 
 - The Cursor side is built in your project now, so it can no longer fall behind the rules it copies.
 ## 2.0.1 — 2026-09-11

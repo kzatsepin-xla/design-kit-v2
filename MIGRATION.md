@@ -70,7 +70,7 @@ List them at the end and ask.
 Only after step 2, otherwise the install refuses on purpose:
 
 ```
-git clone --depth 1 https://github.com/kzatsepin-xla/design-kit-v2 <a temp folder>
+git clone --depth 1 https://github.com/xsolla/product-design-starter <a temp folder>
 node <temp folder>/scripts/kit.mjs install .
 ```
 

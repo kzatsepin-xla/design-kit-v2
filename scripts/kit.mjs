@@ -54,7 +54,7 @@ const NL = String.fromCharCode(10)
 const here = path.dirname(fileURLToPath(import.meta.url))
 const kitRoot = path.resolve(here, '..')
 
-const DEFAULT_REPO = 'https://github.com/kzatsepin-xla/design-kit-v2.git'
+const DEFAULT_REPO = 'https://github.com/xsolla/product-design-starter.git'
 const MARKER = '.claude/kit.json'
 const MANIFEST = '.claude/kit-manifest.json'
 const DAY = 24 * 60 * 60 * 1000
