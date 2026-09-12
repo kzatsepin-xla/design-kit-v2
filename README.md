@@ -2,7 +2,7 @@
 
 # 🎨 Xsolla Product Design Starter Pack
 
-### Version two. Talk to an agent, get a clickable prototype and the documents under it.
+### Talk to an agent — get a clickable prototype and the documents under it.
 
 *React · Vite · the Xsolla design system · the agent works, you decide.*
 
@@ -14,9 +14,6 @@ This is not an application. There are no screens here, no React, no configuratio
 working setup a designer needs: the checks that keep a screen on the design system, the product
 documents and how they hold together, the Context button, and the search over the component
 catalogue. The prototype appears when the work starts, shaped by the task at hand.
-
-**Version one is still here**, on the `v1` branch, with its own README, its own scripts and its
-own pipeline. A project built on it keeps working; nothing needs moving today.
 
 ## Put it into a project
 
@@ -34,18 +31,6 @@ If you would rather do it yourself:
 git clone --depth 1 https://github.com/xsolla/product-design-starter /tmp/starter
 node /tmp/starter/scripts/kit.mjs install .
 ```
-
-## Already on version one?
-
-Then this is a move, not an update, and installing over it would break the project: version one
-keeps its own scripts and its own npm entries, and an install would replace the scripts folder
-whole. Open the project and ask:
-
-> Move this project onto version two:
-> https://github.com/xsolla/product-design-starter
-
-The agent follows `MIGRATION.md`: it commits what you have first, keeps the old files instead of
-deleting them, and tells you afterwards what changed and what is left for you to decide.
 
 ## After that, no terminal
 
@@ -118,3 +103,19 @@ scripts/           everything you can run by hand — each file opens with why i
 A prototype built with this can be served to the team through the internal preview: the image
 and its ignore list are written into the project, and the build config knows the two settings
 the container needs and a laptop must not have.
+
+## Coming from the previous starter pack
+
+The one before this is not gone: it lives on the `starter-pack-v1-old` branch, whole, with its
+own README, its own scripts and the pipeline that came with it. A project built on it keeps
+working, and nothing about it has to move today.
+
+Moving one across is a move, not an update — the older pack keeps its own scripts and its own
+npm entries, and installing over it would replace the scripts folder whole. Open the project and
+ask:
+
+> Move this project onto the current starter pack:
+> https://github.com/xsolla/product-design-starter
+
+The agent follows `MIGRATION.md`: it commits what you have first, keeps the old files instead of
+deleting them, and tells you afterwards what changed and what is left for you to decide.
