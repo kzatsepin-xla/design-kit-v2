@@ -442,9 +442,57 @@ function lookForNewer(target, marker) {
   return latest === 'newer' || compare(latest, marker.version) > 0 ? latest : null
 }
 
+// A repository made from the template — GitHub's "Use this template" — arrives with every kit
+// file in place and no marker beside them, because the marker is written by an install that
+// never ran. Without it the kit calls itself broken, an update has nothing to compare against,
+// and the files the kit writes into the prototype stop being refreshable. So a copy adopts
+// itself: the manifest is sitting right there and says which version these files are.
+//
+// The kit's own repository must not do this — there the files are the work, not an installation
+// — and it is told apart by two things a copy cannot inherit. Its origin points at the kit's
+// home, and its history has been changing the manifest for the kit's whole life; a copy
+// receives the same manifest in a single commit, or has no history at all.
+function isTheKitItself(target) {
+  const origin = git(['remote', 'get-url', 'origin'], target)
+  const bare = (url) => (url || '').replace(/[.]git$/, '')
+  if (origin && bare(origin) === bare(DEFAULT_REPO)) return true
+  const log = git(['log', '-n', '4', '--format=%h', '--', MANIFEST], target)
+  return Boolean(log) && log.split(NL).filter(Boolean).length > 2
+}
+
+function adopt(target) {
+  if (readMarker(target)) return null
+  const manifest = readJson(path.join(target, MANIFEST), null)
+  if (!manifest) return null
+  if (isTheKitItself(target)) return null
+  const marker = {
+    repo: DEFAULT_REPO,
+    version: manifest.version,
+    sha: 'template',
+    installedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    // Born current: every migration written so far describes a change these files already have.
+    migrations: migrationsIn(target),
+    // The files the kit puts down for the project to own are pristine in a fresh copy, so this
+    // is the one moment their hash truly is the kit's handwriting. Recorded later — on the
+    // first update — an edit made in between would be recorded as ours and refreshed away.
+    seeded: Object.fromEntries((manifest.seeded || [])
+      .map((rel) => [rel, hashOf(path.join(target, rel))])
+      .filter(([, h]) => h)),
+  }
+  fs.mkdirSync(path.join(target, '.claude'), { recursive: true })
+  fs.writeFileSync(path.join(target, MARKER), JSON.stringify(marker, null, 2) + NL)
+  return marker
+}
+
 function check(argv) {
   const brief = argv.includes('--brief')
   const target = process.cwd()
+  const adopted = adopt(target)
+  if (adopted && !brief) {
+    console.log('These files came from the template rather than from an install, so the kit has')
+    console.log('written down what it is: version ' + adopted.version + '. Updates work from here on.')
+  }
   const marker = readMarker(target)
   const manifest = manifestOf(target)
   const problems = []
@@ -529,6 +577,7 @@ if (cmd === 'install') await install(rest)
 else if (cmd === 'update') update(rest)
 else if (cmd === 'apply') await apply(rest)
 else if (cmd === 'check') check(rest)
+else if (cmd === 'adopt') { const m = adopt(process.cwd()); console.log(m ? 'Recorded: version ' + m.version + '.' : 'Nothing to adopt — this is an installed project or the kit itself.') }
 else if (cmd === 'release') release(rest)
 else {
   console.log([

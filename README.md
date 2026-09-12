@@ -15,17 +15,24 @@ working setup a designer needs: the checks that keep a screen on the design syst
 documents and how they hold together, the Context button, and the search over the component
 catalogue. The prototype appears when the work starts, shaped by the task at hand.
 
-## Put it into a project
+## Start a project
 
-Open the new project folder in Claude Code or Cursor and ask for it in your own words:
+**A repository of your own.** Press **Use this template** on
+[the starter pack](https://github.com/xsolla/product-design-starter), name your copy, and clone
+it to your machine. Nothing has to be installed: the files are already there, and the kit
+writes down what version it is the first time it is asked, so updates work from day one.
+
+**A folder that already exists.** Open it in Claude Code or Cursor and ask in your own words:
 
 > Put the design starter pack into this folder:
 > https://github.com/xsolla/product-design-starter
 
-It fetches the kit and installs it. Then say hello: it asks how you want to work, which design
-system to build on, and which documents this project needs. Three answers, all as buttons.
+It fetches the kit and installs it.
 
-If you would rather do it yourself:
+Either way, open the folder with the agent and say hello. It asks how you want to work, which
+design system to build on, and which documents this project needs. Three answers, all as buttons.
+
+If you would rather install it by hand:
 
 ```bash
 git clone --depth 1 https://github.com/xsolla/product-design-starter /tmp/starter

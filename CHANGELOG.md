@@ -4,6 +4,10 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.0.23 — 2026-09-12
+
+- A new project can start from the repository itself: GitHub's Use this template button makes a copy of the starter pack under your own name, and the copy is a working project rather than a pile of files — it records which version it is the first time it is asked, so an update knows what it is updating from and the files the kit writes into your prototype stay refreshable. The kit's own repository is left out of that: it is the work, not an installation.
+
 ## 2.0.22 — 2026-09-12
 
 - A prototype can be built into the team's preview container again. The image and its ignore list come with the project now, carried over from the first version of the kit and adjusted for this one: there is no scaffold folder to unpack here, the type config is called something else, and the documents the Context button reads are kept in the image while the writing they are built from is left out.

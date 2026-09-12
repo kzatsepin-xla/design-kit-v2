@@ -405,6 +405,15 @@ function marker() {
 }
 
 function rememberShell(files) {
+  // A copy made from the template has every kit file and no marker beside it, because nothing
+  // installed it. Without the marker there is nowhere to write these hashes down, and the
+  // shell files would be unrefreshable forever. Let the kit record what it is, then continue.
+  if (!marker()) {
+    const kit = path.join(root, 'scripts', 'kit.mjs')
+    if (fs.existsSync(kit)) {
+      try { execSync('node ' + JSON.stringify(kit) + ' adopt', { cwd: root, stdio: 'ignore' }) } catch {}
+    }
+  }
   const data = marker()
   if (!data) return
   data.shell = { ...(data.shell || {}) }
