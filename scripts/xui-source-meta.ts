@@ -45,7 +45,55 @@ export type XuiSourceMetaApi = {
   lookupFromElement(el: Element | null): XuiSourceMetaEntry | null;
 };
 
-const XUI_SRC_PROP = "__xuiSrc";
+/** Inspector join key stamped by the build plugin — a React prop, never a DOM attribute. */
+export const XUI_SRC_PROP = "__xuiSrc";
+
+/**
+ * Filter for `StyleSheetManager` / `withConfig({ shouldForwardProp })`.
+ *
+ * Returns true for every prop but the join key, so custom props on a
+ * `styled(SomeComponent)` wrapper keep flowing and only this one is dropped
+ * before it reaches the DOM. Do not reach for `@emotion/is-prop-valid` here:
+ * that one is written for host elements and would strip legitimate props from
+ * wrappers of React components.
+ */
+export function shouldForwardXuiSrcProp(prop: string): boolean {
+  return prop !== XUI_SRC_PROP;
+}
+
+/**
+ * React hands `console.error` the format string and the interpolated arguments
+ * separately, so the prop name arrives as its own argument; a build that
+ * pre-formats the whole sentence is covered by scanning them all.
+ */
+export function isXuiSrcUnknownPropWarning(args: unknown[]): boolean {
+  const format = args[0];
+  if (typeof format !== "string" || !format.includes("does not recognize the")) return false;
+  return args.some((arg) => typeof arg === "string" && arg.includes(XUI_SRC_PROP));
+}
+
+let unknownPropWarningMuted = false;
+
+/**
+ * Silence "React does not recognize the `__xuiSrc` prop on a DOM element".
+ *
+ * The key is a React prop on purpose: it has to ride the element's own fiber for
+ * the inspector to join it to this table. A component that spreads the rest of
+ * its props onto a host node — the library's own text component does — therefore
+ * hands it to the DOM, where React's development build reports it as a typo.
+ * There is nothing to fix at the call site and nothing to configure in React, so
+ * the console call it makes is the only lever. One message, by its exact shape;
+ * a real unknown prop still warns.
+ */
+export function muteXuiSrcUnknownPropWarning(): void {
+  if (unknownPropWarningMuted || typeof console === "undefined") return;
+  unknownPropWarningMuted = true;
+  const original = console.error;
+  console.error = (...args: unknown[]) => {
+    if (isXuiSrcUnknownPropWarning(args)) return;
+    original.apply(console, args);
+  };
+}
 
 const entries: Record<string, XuiSourceMetaEntry> = {};
 

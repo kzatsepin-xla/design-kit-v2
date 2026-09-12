@@ -4,6 +4,12 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.9.3 — 2026-09-12
+
+- The console of a running prototype is quiet again. The mark the inspector stamps on every call site is a React prop by design, and a library component that passes the rest of its props to a plain tag handed it to the browser, where React called it a typo — every prototype ran with that on repeat. The mark now stops at the style layer and never reaches the page, one React message is silenced by its exact shape, and the Context button still finds the component. Taken from the first version of the kit, where a colleague had already solved it.
+- A new command counts which half of the design system the screens are written in: the primitives the design system's own guide recommends, or the composed components the toolkit's guide recommends. Two live documents disagree and nobody had numbers. node scripts/vocabulary.mjs prints them and judges nothing — across thirty-four prototypes built this week the answer was composed components in a hundred and twenty-eight files out of a hundred and twenty-eight.
+- A component of your own counts as a building block only if it is itself built on the library or says what the library was missing. Moving hand-drawn boxes into a file next door and importing it made a screen read as composed from the system while every surface on it was the project's own.
+
 ## 2.9.2 — 2026-09-12
 
 - The commands say what they do again. Cursor shows the first line of a command file as its description in the palette, and the kit was putting its own "generated from" note there — so every command in the list read the same meaningless line. The note moved to the end of the file, and the descriptions themselves are written for whoever reads the list rather than for whoever builds the kit.

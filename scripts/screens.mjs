@@ -237,12 +237,47 @@ function usesXui() {
 
 // Names this file brought in from the design system, the team gallery, or another component
 // of the project — the three places a screen is allowed to take an element from.
-function fromTheLibrary(src) {
+// A component of the project's own is a fair building block — but only if it is itself built
+// on the library or admits what the library was missing. Counted as library without asking,
+// it became the way round this whole check: move the hand-drawn boxes into a component next
+// door, import it, and the screen reads as composed from the system while every surface on it
+// is the project's own. The first version of the kit closed this by asking the same question
+// of the imported file, recursively, and that is what happens here.
+const standsUp = new Map()
+
+function resolveImport(from, spec) {
+  const base = path.resolve(path.dirname(from), spec)
+  for (const candidate of [base + '.tsx', base + '.ts', path.join(base, 'index.tsx'), path.join(base, 'index.ts')]) {
+    if (fs.existsSync(candidate)) return candidate
+  }
+  return null
+}
+
+function composesFromLibrary(file, seen) {
+  if (standsUp.has(file)) return standsUp.get(file)
+  if (seen.has(file)) return true                 // a cycle: do not blame a file for itself
+  seen.add(file)
+  let src
+  try { src = read(file) } catch { return true }  // not a file of ours: a package, or gone
+  if (GAP_MARK.test(src)) { standsUp.set(file, true); return true }
+  const verdict = drawnByHand(src) <= fromTheLibrary(src, file, seen)
+  standsUp.set(file, verdict)
+  return verdict
+}
+
+function fromTheLibrary(src, file, seen = new Set()) {
   const names = new Set()
   const re = /import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g
   let m
   while ((m = re.exec(src))) {
-    if (!TRACKED_IMPORT.test(m[2])) continue
+    const spec = m[2]
+    if (!TRACKED_IMPORT.test(spec)) continue
+    // From the design system or the team gallery: a building block, no question asked. From a
+    // file of ours: only if that file answers the same question.
+    if (/^[.]/.test(spec)) {
+      const target = file ? resolveImport(file, spec) : null
+      if (target && !composesFromLibrary(target, seen)) continue
+    }
     for (const part of m[1].split(',')) {
       const name = part.trim().split(/\s+as\s+/).pop().trim()
       if (/^[A-Z]/.test(name)) names.add(name)
@@ -290,7 +325,7 @@ function handRolled() {
           + ' What it cannot say, the screen says another way, and the gap goes to the designer as an OQ-N'])
       }
       const own = drawnByHand(src)
-      const library = fromTheLibrary(src)
+      const library = fromTheLibrary(src, p)
       if (own <= library) continue
       if (GAP_MARK.test(src)) continue
       const rel = path.relative(root, p).split(path.sep).join('/')

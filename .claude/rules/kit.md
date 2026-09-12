@@ -38,6 +38,7 @@ the English term yourself before calling `ds.mjs` — "карточка", "卡�
 | Update the packages | `node scripts/deps.mjs` · `--check` · `--majors` |
 | Refresh the Cursor side | `node scripts/cursor.mjs` |
 | What you decided for them | `node scripts/debt.mjs` |
+| Which half of the library the screens use | `node scripts/vocabulary.mjs` |
 | Context button, map, docs | `node scripts/context-app.mjs connect` · `export` · `check` |
 | Team gallery | `node scripts/vibe.mjs connect` · `update` · `promote <Name>` |
 | Compare a screen to its mockup | `/review <screen>` |
