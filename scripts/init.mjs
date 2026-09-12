@@ -97,10 +97,100 @@ function write(rel, body) {
 // pictures, how the page is built. That is why they are the ones an update may refresh — and
 // why the rest of the prototype is never regenerated.
 
+// The prototype runs in two places: on the designer's machine, and in the preview container
+// the team looks at it through. The container needs two things a local machine must not have —
+// a port that never slides to the next free one, because the service in front of it targets
+// 5173 and a fallback would leave a pod that looks healthy and answers nobody; and a list of
+// host names the dev server accepts, because Vite refuses a Host header it was not told about
+// and a hosted preview is never localhost. Both are switched on by the image, never by default:
+// widening a designer's own dev server to a whole domain is the rebinding hole the check exists
+// to close.
 const viteConfig = () => `import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({ plugins: [react()] })
+// A deploy writing "true" where the image writes "1" must not silently switch a guard off.
+const flag = (value) => /^(1|true|yes|on)$/i.test((value ?? '').trim())
+
+// Set by Dockerfile.onebox. Gates both preview-only settings below.
+const hostedPreview = flag(process.env.VITE_ONEBOX_PREVIEW)
+const namedHost = (process.env.VITE_ALLOWED_HOST ?? '')
+  .split(',')
+  .map((h) => h.trim().replace(/^https?:\\/\\//, '').replace(/[/:].*$/, ''))
+  .filter(Boolean)
+
+// The leading dot allows the zone and its subdomains, and nothing that merely looks like them.
+const PREVIEW_HOSTS = ['.sandbox.xsolla.dev', '.prototype.xsolla.dev']
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    strictPort: process.env.VITE_STRICT_PORT === undefined
+      ? hostedPreview || namedHost.length > 0
+      : flag(process.env.VITE_STRICT_PORT),
+    allowedHosts: namedHost.length > 0 ? namedHost : hostedPreview ? PREVIEW_HOSTS : undefined,
+  },
+})
+`
+
+// The image the team's preview service builds a prototype into. It serves the dev server on
+// purpose: live editing is the point of a design preview, and the price is that source and the
+// hot-reload channel are exposed — acceptable only behind the internal sign-in the preview sits
+// behind. Carried over from the first version of the kit, where it was written and debugged
+// against real builds; what changed here is that this kit writes the app into the project root,
+// so there is no scaffold folder to deploy and no install hook to work around.
+const dockerfile = () => `# syntax=docker/dockerfile:1
+FROM node:22-alpine
+
+WORKDIR /app
+RUN chown node:node /app
+USER node
+
+# Manifests first, so the install layer survives every edit to a screen.
+COPY --chown=node:node package.json package-lock.json* ./
+RUN npm ci || npm install
+
+COPY --chown=node:node . .
+
+# Without this a build that lost a file — a wrong context, a rename, an over-eager
+# .dockerignore — would exit 0 and only fall over later inside the pod. These four are what
+# Vite needs to start and to serve anything.
+RUN set -eu; \\
+    for p in index.html vite.config.ts tsconfig.json src; do \\
+      if [ ! -e "$p" ]; then \\
+        echo "ERROR: '$p' missing at the image root — the prototype is not runnable" >&2; \\
+        exit 1; \\
+      fi; \\
+    done
+
+EXPOSE 5173
+
+# Read by vite.config.ts: the port never slides, and the dev server answers on the preview
+# host names. Neither applies to a designer running npm run dev at home.
+ENV VITE_ONEBOX_PREVIEW=1
+ENV VITE_STRICT_PORT=1
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+`
+
+const dockerignore = () => `node_modules
+.git
+.github
+dist
+.reports
+*.local
+.env
+.env.*
+Dockerfile*
+coverage
+*.log
+
+# The documents themselves stay out of the image — they are product writing, not the
+# prototype. What the Context button reads is a built copy under public/, and that has to
+# travel: without it the button opens onto an empty catalogue.
+docs
+*.md
+!public/context-app-data/**
 `
 
 const mainTsx = () => (ds === 'xui'
@@ -290,6 +380,8 @@ const tsconfig = () => JSON.stringify({
 
 const SHELL = {
   'vite.config.ts': viteConfig,
+  'Dockerfile.onebox': dockerfile,
+  '.dockerignore': dockerignore,
   'src/main.tsx': mainTsx,
   'src/app.tsx': appTsx,
 }
@@ -459,6 +551,9 @@ dist/
 `)
 
 write('vite.config.ts', viteConfig())
+
+write('Dockerfile.onebox', dockerfile())
+write('.dockerignore', dockerignore())
 
 write('index.html', `<!doctype html>
 <html lang="en">

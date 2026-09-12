@@ -4,6 +4,11 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.9.4 — 2026-09-12
+
+- A prototype can be built into the team's preview container again. The image and its ignore list come with the project now, carried over from the first version of the kit and adjusted for this one: there is no scaffold folder to unpack here, the type config is called something else, and the documents the Context button reads are kept in the image while the writing they are built from is left out.
+- The build config understands the two settings that preview needs and a laptop must not have: a port that never slides to the next free one, because the service in front of the container targets one port and a fallback leaves a pod that looks healthy and answers nobody, and the host names the dev server is allowed to answer on. Both are switched on by the image alone — checked both ways: at home a preview host name is refused, in the container it is served.
+
 ## 2.9.3 — 2026-09-12
 
 - The console of a running prototype is quiet again. The mark the inspector stamps on every call site is a React prop by design, and a library component that passes the rest of its props to a plain tag handed it to the browser, where React called it a typo — every prototype ran with that on repeat. The mark now stops at the style layer and never reaches the page, one React message is silenced by its exact shape, and the Context button still finds the component. Taken from the first version of the kit, where a colleague had already solved it.
