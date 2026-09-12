@@ -4,6 +4,10 @@ Newest first, one entry per release. Written for the designer reading an update 
 they will notice, not which files moved. `node scripts/kit.mjs release` adds an entry, and an
 update quotes the entries between the version a project has and the one it is getting.
 
+## 2.9.1 — 2026-09-12
+
+- The findings a new project starts with are down to one: the rest was either something the search and the type checker answer better, or something the library has since fixed — five runs in a row disproved the line about there being no plain surface. A wrong line there is worse than a missing one, because the next agent believes it, so from now on a line that stops being true is deleted rather than struck through. A project that already has the file keeps its own.
+
 ## 2.9.0 — 2026-09-11
 
 - A section that holds nothing but an empty table is empty again: the header row is the template's own writing, and counting it as an answer let a screen contract pass with its blocks, its actions and its data untouched — three quarters of a contract, and the actions table is where the map's arrows come from.
